@@ -1,0 +1,1955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Exponents & Radicals</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Source+Sans+3:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-deep: #07060b;
+    --bg-surface: #0f0d16;
+    --bg-card: #16131f;
+    --bg-elevated: #1e1a2a;
+    --accent: #e8443a;
+    --accent-glow: #ff5a50;
+    --accent-soft: rgba(232,68,58,0.12);
+    --accent-mid: rgba(232,68,58,0.35);
+    --text-primary: #f0edf5;
+    --text-secondary: #9b95a8;
+    --text-dim: #5e5870;
+    --border: rgba(255,255,255,0.06);
+    --border-accent: rgba(232,68,58,0.25);
+    --success: #3dd68c;
+    --warning: #f0b429;
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-body: 'Source Sans 3', 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-lg: 20px;
+    --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  html { font-size: 16px; scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 10%, rgba(232,68,58,0.06) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 50% at 80% 90%, rgba(120,60,180,0.04) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  #root { position: relative; z-index: 1; }
+
+  /* ---- Scrollbar ---- */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--text-dim); border-radius: 3px; }
+
+  /* ---- Keyframes ---- */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.05); }
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(30px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes growBar {
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(1); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-8px); }
+  }
+  @keyframes glowPulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(232,68,58,0.15); }
+    50%      { box-shadow: 0 0 40px rgba(232,68,58,0.3); }
+  }
+  @keyframes countUp {
+    from { opacity: 0; transform: scale(0.5); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  @keyframes treeLine {
+    from { stroke-dashoffset: 100; }
+    to   { stroke-dashoffset: 0; }
+  }
+</style>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+// ===================== CONSTANTS =====================
+const TOTAL_STEPS = 7;
+const STEP_TITLES = [
+  'Landing',
+  'Repeated Multiplication',
+  'Exponent Rules',
+  'Zero & Negative Exponents',
+  'Square Roots',
+  'Simplifying Radicals',
+  'Practice'
+];
+
+// ===================== UTILITY =====================
+function lerp(a, b, t) { return a + (b - a) * t; }
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+// ===================== PROGRESS BAR =====================
+function ProgressBar({ step }) {
+  const pct = ((step) / (TOTAL_STEPS - 1)) * 100;
+  return (
+    <div style={{
+      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
+      background: 'rgba(7,6,11,0.85)', backdropFilter: 'blur(12px)',
+      borderBottom: '1px solid var(--border)', padding: '0'
+    }}>
+      <div style={{
+        maxWidth: 960, margin: '0 auto', padding: '12px 24px',
+        display: 'flex', alignItems: 'center', gap: 16
+      }}>
+        <a href="index.html" style={{
+          color: 'var(--text-secondary)', textDecoration: 'none',
+          fontFamily: 'var(--font-body)', fontSize: 13, fontWeight: 500,
+          display: 'flex', alignItems: 'center', gap: 6,
+          transition: 'var(--transition)', whiteSpace: 'nowrap'
+        }}
+        onMouseEnter={e => e.target.style.color = 'var(--accent)'}
+        onMouseLeave={e => e.target.style.color = 'var(--text-secondary)'}
+        >
+          <span style={{ fontSize: 16 }}>&larr;</span> Lessons
+        </a>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{
+            flex: 1, height: 4, background: 'var(--bg-elevated)',
+            borderRadius: 2, overflow: 'hidden'
+          }}>
+            <div style={{
+              height: '100%', width: `${pct}%`,
+              background: 'linear-gradient(90deg, var(--accent), var(--accent-glow))',
+              borderRadius: 2, transition: 'width 0.5s cubic-bezier(0.4,0,0.2,1)'
+            }} />
+          </div>
+          <span style={{
+            fontFamily: 'var(--font-mono)', fontSize: 11,
+            color: 'var(--text-dim)', whiteSpace: 'nowrap'
+          }}>
+            {step + 1}/{TOTAL_STEPS}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ===================== NAVIGATION =====================
+function Navigation({ step, setStep, canProceed = true }) {
+  return (
+    <div style={{
+      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+      marginTop: 48, paddingTop: 24,
+      borderTop: '1px solid var(--border)'
+    }}>
+      {step > 0 ? (
+        <button onClick={() => setStep(step - 1)} style={{
+          background: 'var(--bg-elevated)', border: '1px solid var(--border)',
+          color: 'var(--text-secondary)', padding: '12px 28px',
+          borderRadius: 'var(--radius)', cursor: 'pointer',
+          fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 500,
+          transition: 'var(--transition)', display: 'flex', alignItems: 'center', gap: 8
+        }}
+        onMouseEnter={e => { e.target.style.borderColor = 'var(--text-dim)'; e.target.style.color = 'var(--text-primary)'; }}
+        onMouseLeave={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.color = 'var(--text-secondary)'; }}
+        >
+          <span>&larr;</span> Previous
+        </button>
+      ) : <div />}
+      {step < TOTAL_STEPS - 1 ? (
+        <button onClick={() => canProceed && setStep(step + 1)} style={{
+          background: canProceed
+            ? 'linear-gradient(135deg, var(--accent), #c0302a)'
+            : 'var(--bg-elevated)',
+          border: 'none',
+          color: canProceed ? '#fff' : 'var(--text-dim)',
+          padding: '12px 28px',
+          borderRadius: 'var(--radius)', cursor: canProceed ? 'pointer' : 'not-allowed',
+          fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 600,
+          transition: 'var(--transition)', display: 'flex', alignItems: 'center', gap: 8,
+          boxShadow: canProceed ? '0 4px 20px rgba(232,68,58,0.3)' : 'none'
+        }}
+        onMouseEnter={e => { if (canProceed) e.target.style.transform = 'translateY(-1px)'; }}
+        onMouseLeave={e => { e.target.style.transform = 'translateY(0)'; }}
+        >
+          Next <span>&rarr;</span>
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+// ===================== SECTION LABEL =====================
+function SectionLabel({ children }) {
+  return (
+    <div style={{
+      fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 600,
+      color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.15em',
+      marginBottom: 8
+    }}>{children}</div>
+  );
+}
+
+// ===================== MATH DISPLAY =====================
+function MathBlock({ children, large, glow }) {
+  return (
+    <div style={{
+      fontFamily: 'var(--font-mono)',
+      fontSize: large ? 32 : 22,
+      fontWeight: 600,
+      color: 'var(--text-primary)',
+      background: 'var(--bg-card)',
+      border: glow ? '1px solid var(--border-accent)' : '1px solid var(--border)',
+      borderRadius: 'var(--radius)',
+      padding: large ? '24px 32px' : '16px 24px',
+      textAlign: 'center',
+      animation: glow ? 'glowPulse 3s ease-in-out infinite' : 'none',
+      transition: 'var(--transition)'
+    }}>
+      {children}
+    </div>
+  );
+}
+
+// ===================== STEP 1: LANDING =====================
+function StepLanding({ setStep }) {
+  const canvasRef = useRef(null);
+  const animRef = useRef(null);
+  const [started, setStarted] = useState(false);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    let W, H;
+
+    function resize() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      W = rect.width;
+      H = 340;
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
+      canvas.style.width = W + 'px';
+      canvas.style.height = H + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    // Exponential growth: particles that double
+    let particles = [];
+    let generation = 0;
+    let lastSplit = 0;
+    const SPLIT_INTERVAL = 1200;
+    const MAX_GEN = 8;
+
+    function initParticle(x, y, vx, vy) {
+      return { x, y, vx, vy, radius: 4, alpha: 1, born: Date.now() };
+    }
+    particles.push(initParticle(W / 2, H / 2, 0, 0));
+    lastSplit = Date.now();
+
+    function draw(now) {
+      ctx.clearRect(0, 0, W, H);
+
+      // Background grid
+      ctx.strokeStyle = 'rgba(255,255,255,0.02)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < W; x += 40) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+      }
+      for (let y = 0; y < H; y += 40) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+      }
+
+      // Split particles
+      if (now - lastSplit > SPLIT_INTERVAL && generation < MAX_GEN) {
+        generation++;
+        lastSplit = now;
+        const newP = [];
+        particles.forEach(p => {
+          const angle1 = Math.random() * Math.PI * 2;
+          const angle2 = angle1 + Math.PI + (Math.random() - 0.5) * 1.2;
+          const speed = 0.3 + Math.random() * 0.5;
+          newP.push(initParticle(p.x, p.y, Math.cos(angle1) * speed, Math.sin(angle1) * speed));
+          newP.push(initParticle(p.x, p.y, Math.cos(angle2) * speed, Math.sin(angle2) * speed));
+        });
+        particles = newP;
+        if (particles.length > 500) particles = particles.slice(0, 500);
+      }
+
+      // Update and draw particles
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        // Soft bounds
+        if (p.x < 20) p.vx += 0.05;
+        if (p.x > W - 20) p.vx -= 0.05;
+        if (p.y < 20) p.vy += 0.05;
+        if (p.y > H - 20) p.vy -= 0.05;
+        p.vx *= 0.995;
+        p.vy *= 0.995;
+
+        const age = (now - p.born) / 1000;
+        const r = clamp(4 - generation * 0.3, 1.5, 4);
+
+        // Glow
+        const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 4);
+        grad.addColorStop(0, `rgba(232,68,58,${0.3})`);
+        grad.addColorStop(1, 'rgba(232,68,58,0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r * 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Core
+        ctx.fillStyle = `rgba(240,237,245,${0.9})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Count label
+      ctx.fillStyle = 'rgba(232,68,58,0.7)';
+      ctx.font = `600 13px 'JetBrains Mono', monospace`;
+      ctx.textAlign = 'right';
+      ctx.fillText(`2^${generation} = ${Math.pow(2, generation)} particles`, W - 20, H - 16);
+
+      animRef.current = requestAnimationFrame(draw);
+    }
+    animRef.current = requestAnimationFrame(draw);
+
+    return () => {
+      cancelAnimationFrame(animRef.current);
+      window.removeEventListener('resize', resize);
+    };
+  }, []);
+
+  return (
+    <div style={{
+      minHeight: '100vh', display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center', padding: '80px 24px 40px',
+      animation: 'fadeIn 0.8s ease-out'
+    }}>
+      <div style={{ position: 'relative', width: '100%', maxWidth: 700, marginBottom: 48 }}>
+        <canvas ref={canvasRef} style={{ width: '100%', borderRadius: 'var(--radius-lg)', display: 'block' }} />
+        <div style={{
+          position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center', pointerEvents: 'none'
+        }}>
+          <div style={{
+            fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 600,
+            color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.2em',
+            marginBottom: 12, opacity: 0.8
+          }}>Lesson 05</div>
+          <h1 style={{
+            fontFamily: 'var(--font-display)', fontSize: 'clamp(36px, 6vw, 56px)',
+            fontWeight: 900, lineHeight: 1.1, textAlign: 'center',
+            background: 'linear-gradient(135deg, #fff 30%, var(--accent-glow))',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
+          }}>
+            Exponents<br/>&amp; Radicals
+          </h1>
+        </div>
+      </div>
+
+      <p style={{
+        fontFamily: 'var(--font-body)', fontSize: 18, color: 'var(--text-secondary)',
+        textAlign: 'center', maxWidth: 500, lineHeight: 1.7, marginBottom: 40,
+        fontWeight: 300
+      }}>
+        Discover the power of repeated multiplication,
+        learn the rules that govern exponents, and unravel the
+        mysteries of square roots and radicals.
+      </p>
+
+      <button
+        onClick={() => setStep(1)}
+        style={{
+          background: 'linear-gradient(135deg, var(--accent), #c0302a)',
+          border: 'none', color: '#fff', padding: '16px 48px',
+          borderRadius: 'var(--radius)', cursor: 'pointer',
+          fontFamily: 'var(--font-body)', fontSize: 17, fontWeight: 600,
+          boxShadow: '0 6px 30px rgba(232,68,58,0.35)',
+          transition: 'var(--transition)',
+          animation: 'pulse 3s ease-in-out infinite'
+        }}
+        onMouseEnter={e => e.target.style.transform = 'translateY(-2px) scale(1.02)'}
+        onMouseLeave={e => e.target.style.transform = 'translateY(0) scale(1)'}
+      >
+        Begin Lesson
+      </button>
+    </div>
+  );
+}
+
+// ===================== STEP 2: REPEATED MULTIPLICATION =====================
+function StepRepeatedMult({ step, setStep }) {
+  const [base, setBase] = useState(2);
+  const [exp, setExp] = useState(3);
+  const [animPhase, setAnimPhase] = useState(0);
+  const timerRef = useRef(null);
+
+  const result = Math.pow(base, exp);
+  const expansion = Array.from({ length: exp }, () => base).join(' \u00d7 ');
+
+  useEffect(() => {
+    setAnimPhase(0);
+    if (timerRef.current) clearInterval(timerRef.current);
+    let phase = 0;
+    timerRef.current = setInterval(() => {
+      phase++;
+      setAnimPhase(phase);
+      if (phase >= exp) clearInterval(timerRef.current);
+    }, 500);
+    return () => clearInterval(timerRef.current);
+  }, [base, exp]);
+
+  // Visual: stacking blocks
+  const blocks = [];
+  let cumulative = 1;
+  for (let i = 0; i < exp; i++) {
+    cumulative *= base;
+    blocks.push({ index: i, value: cumulative, visible: i < animPhase });
+  }
+
+  return (
+    <div style={{ animation: 'fadeInUp 0.6s ease-out' }}>
+      <SectionLabel>Step 2 of 7</SectionLabel>
+      <h2 style={{
+        fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 700,
+        marginBottom: 8
+      }}>Repeated Multiplication</h2>
+      <p style={{
+        color: 'var(--text-secondary)', fontSize: 16, lineHeight: 1.7,
+        marginBottom: 32, maxWidth: 600
+      }}>
+        An exponent tells you how many times to multiply a number by itself.
+        The number being multiplied is the <strong style={{ color: 'var(--accent)' }}>base</strong>,
+        and the number of times is the <strong style={{ color: 'var(--accent)' }}>exponent</strong> (or power).
+      </p>
+
+      {/* Notation guide */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        gap: 4, marginBottom: 32,
+        background: 'var(--bg-card)', borderRadius: 'var(--radius)',
+        padding: '20px 32px', border: '1px solid var(--border)'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            fontFamily: 'var(--font-mono)', fontSize: 48, fontWeight: 700,
+            position: 'relative', display: 'inline-block'
+          }}>
+            <span style={{ color: 'var(--accent)' }}>{base}</span>
+            <sup style={{ fontSize: 24, color: 'var(--warning)', position: 'relative', top: -16 }}>{exp}</sup>
+          </div>
+          <div style={{ display: 'flex', gap: 24, marginTop: 8, justifyContent: 'center' }}>
+            <span style={{
+              fontFamily: 'var(--font-mono)', fontSize: 11,
+              color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.1em'
+            }}>base</span>
+            <span style={{
+              fontFamily: 'var(--font-mono)', fontSize: 11,
+              color: 'var(--warning)', textTransform: 'uppercase', letterSpacing: '0.1em'
+            }}>exponent</span>
+          </div>
+        </div>
+        <div style={{
+          fontFamily: 'var(--font-mono)', fontSize: 28, color: 'var(--text-dim)',
+          margin: '0 20px'
+        }}>=</div>
+        <div style={{
+          fontFamily: 'var(--font-mono)', fontSize: 20,
+          color: 'var(--text-secondary)'
+        }}>
+          {expansion}
+        </div>
+        <div style={{
+          fontFamily: 'var(--font-mono)', fontSize: 28, color: 'var(--text-dim)',
+          margin: '0 20px'
+        }}>=</div>
+        <div style={{
+          fontFamily: 'var(--font-mono)', fontSize: 36, fontWeight: 700,
+          color: 'var(--success)'
+        }}>
+          {result}
+        </div>
+      </div>
+
+      {/* Block visualization */}
+      <div style={{
+        background: 'var(--bg-card)', borderRadius: 'var(--radius)',
+        padding: 24, border: '1px solid var(--border)', marginBottom: 32,
+        minHeight: 160, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        gap: 16, flexWrap: 'wrap'
+      }}>
+        {blocks.map((b, i) => {
+          const size = clamp(20 + b.value * 2, 24, 120);
+          const dotCount = Math.min(b.value, 64);
+          const dotSize = Math.max(3, 10 - Math.floor(dotCount / 8));
+          const cols = Math.ceil(Math.sqrt(dotCount));
+          return (
+            <div key={i} style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+              opacity: b.visible ? 1 : 0.15,
+              transform: b.visible ? 'scale(1)' : 'scale(0.8)',
+              transition: 'all 0.5s cubic-bezier(0.34,1.56,0.64,1)'
+            }}>
+              <div style={{
+                fontFamily: 'var(--font-mono)', fontSize: 11,
+                color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.1em'
+              }}>
+                {base}{i > 0 ? <sup>{i + 1}</sup> : ''}
+              </div>
+              <div style={{
+                width: size, height: size,
+                display: 'grid',
+                gridTemplateColumns: `repeat(${cols}, ${dotSize}px)`,
+                gap: Math.max(1, 3 - Math.floor(dotCount / 16)),
+                justifyContent: 'center', alignContent: 'center',
+                background: 'var(--bg-elevated)',
+                borderRadius: 'var(--radius-sm)',
+                padding: 8,
+                border: b.visible ? '1px solid var(--border-accent)' : '1px solid var(--border)'
+              }}>
+                {Array.from({ length: dotCount }, (_, j) => (
+                  <div key={j} style={{
+                    width: dotSize, height: dotSize,
+                    borderRadius: '50%',
+                    background: b.visible ? 'var(--accent)' : 'var(--text-dim)',
+                    transition: 'background 0.3s'
+                  }} />
+                ))}
+              </div>
+              <div style={{
+                fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 600,
+                color: b.visible ? 'var(--text-primary)' : 'var(--text-dim)'
+              }}>
+                = {b.value}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Controls */}
+      <div style={{
+        display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 8
+      }}>
+        <div style={{
+          background: 'var(--bg-card)', borderRadius: 'var(--radius)',
+          padding: 20, border: '1px solid var(--border)'
+        }}>
+          <label style={{
+            fontFamily: 'var(--font-mono)', fontSize: 12,
+            color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.1em',
+            display: 'block', marginBottom: 12
+          }}>Base: {base}</label>
+          <input type="range" min={2} max={6} value={base}
+            onChange={e => setBase(Number(e.target.value))}
+            style={{ width: '100%', accentColor: 'var(--accent)' }}
+          />
+          <div style={{
+            display: 'flex', justifyContent: 'space-between',
+            fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-dim)', marginTop: 4
+          }}>
+            <span>2</span><span>6</span>
+          </div>
+        </div>
+        <div style={{
+          background: 'var(--bg-card)', borderRadius: 'var(--radius)',
+          padding: 20, border: '1px solid var(--border)'
+        }}>
+          <label style={{
+            fontFamily: 'var(--font-mono)', fontSize: 12,
+            color: 'var(--warning)', textTransform: 'uppercase', letterSpacing: '0.1em',
+            display: 'block', marginBottom: 12
+          }}>Exponent: {exp}</label>
+          <input type="range" min={1} max={6} value={exp}
+            onChange={e => setExp(Number(e.target.value))}
+            style={{ width: '100%', accentColor: 'var(--warning)' }}
+          />
+          <div style={{
+            display: 'flex', justifyContent: 'space-between',
+            fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-dim)', marginTop: 4
+          }}>
+            <span>1</span><span>6</span>
+          </div>
+        </div>
+      </div>
+
+      <Navigation step={step} setStep={setStep} />
+    </div>
+  );
+}
+
+// ===================== STEP 3: EXPONENT RULES =====================
+function StepExponentRules({ step, setStep }) {
+  const [activeRule, setActiveRule] = useState(0);
+  const [ruleA, setRuleA] = useState(2);
+  const [ruleM, setRuleM] = useState(3);
+  const [ruleN, setRuleN] = useState(2);
+
+  const rules = [
+    {
+      name: 'Product Rule',
+      formula: `a^m \u00d7 a^n = a^(m+n)`,
+      explanation: 'When multiplying same bases, add the exponents.',
+      color: '#3dd68c'
+    },
+    {
+      name: 'Quotient Rule',
+      formula: `a^m \u00f7 a^n = a^(m\u2212n)`,
+      explanation: 'When dividing same bases, subtract the exponents.',
+      color: '#5ba8f7'
+    },
+    {
+      name: 'Power Rule',
+      formula: `(a^m)^n = a^(m\u00d7n)`,
+      explanation: 'When raising a power to a power, multiply the exponents.',
+      color: '#c084fc'
+    }
+  ];
+
+  const r = rules[activeRule];
+
+  // Compute example values
+  const am = Math.pow(ruleA, ruleM);
+  const an = Math.pow(ruleA, ruleN);
+  let resultExp, resultVal, exampleStr;
+
+  if (activeRule === 0) {
+    resultExp = ruleM + ruleN;
+    resultVal = Math.pow(ruleA, resultExp);
+    exampleStr = `${ruleA}^${ruleM} \u00d7 ${ruleA}^${ruleN} = ${ruleA}^${ruleM + ruleN} = ${resultVal}`;
+  } else if (activeRule === 1) {
+    resultExp = ruleM - ruleN;
+    resultVal = ruleM >= ruleN ? Math.pow(ruleA, resultExp) : `1/${Math.pow(ruleA, Math.abs(resultExp))}`;
+    exampleStr = `${ruleA}^${ruleM} \u00f7 ${ruleA}^${ruleN} = ${ruleA}^${ruleM - ruleN} = ${resultVal}`;
+  } else {
+    resultExp = ruleM * ruleN;
+    resultVal = Math.pow(ruleA, resultExp);
+    exampleStr = `(${ruleA}^${ruleM})^${ruleN} = ${ruleA}^${ruleM * ruleN} = ${resultVal}`;
+  }
+
+  // SVG visualization for product rule: groups combining
+  function RuleViz() {
+    const w = 500, h = 140;
+    if (activeRule === 0) {
+      // Product: two groups combining
+      const group1 = Array.from({ length: ruleM }, (_, i) => i);
+      const group2 = Array.from({ length: ruleN }, (_, i) => i);
+      const totalDots = ruleM + ruleN;
+      const spacing = Math.min(36, (w - 100) / totalDots);
+      return (
+        <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 500 }}>
+          {/* Group 1 */}
+          {group1.map((_, i) => (
+            <g key={`g1-${i}`}>
+              <circle cx={60 + i * spacing} cy={40} r={12}
+                fill="none" stroke={r.color} strokeWidth={2} opacity={0.4} />
+              <circle cx={60 + i * spacing} cy={40} r={6}
+                fill={r.color} opacity={0.9}>
+                <animate attributeName="cy" from="40" to="80" dur="1s"
+                  begin="1.5s" fill="freeze" />
+              </circle>
+            </g>
+          ))}
+          <text x={60 + (ruleM - 1) * spacing / 2} y={20}
+            fill={r.color} fontSize="11" fontFamily="JetBrains Mono" textAnchor="middle"
+            opacity="0.7">
+            {ruleA}<tspan dy="-5" fontSize="9">{ruleM}</tspan>
+          </text>
+
+          {/* Group 2 */}
+          {group2.map((_, i) => (
+            <g key={`g2-${i}`}>
+              <circle cx={60 + (ruleM + i) * spacing + 40} cy={40} r={12}
+                fill="none" stroke="var(--accent)" strokeWidth={2} opacity={0.4} />
+              <circle cx={60 + (ruleM + i) * spacing + 40} cy={40} r={6}
+                fill="var(--accent)" opacity={0.9}>
+                <animate attributeName="cy" from="40" to="80" dur="1s"
+                  begin="1.5s" fill="freeze" />
+                <animate attributeName="cx"
+                  from={60 + (ruleM + i) * spacing + 40}
+                  to={60 + (ruleM + i) * spacing}
+                  dur="1s" begin="1.5s" fill="freeze" />
+              </circle>
+            </g>
+          ))}
+          <text x={60 + (ruleM) * spacing + 40 + (ruleN - 1) * spacing / 2} y={20}
+            fill="var(--accent)" fontSize="11" fontFamily="JetBrains Mono" textAnchor="middle"
+            opacity="0.7">
+            {ruleA}<tspan dy="-5" fontSize="9">{ruleN}</tspan>
+          </text>
+
+          {/* Merge label */}
+          <text x={w / 2} y={120}
+            fill="var(--text-secondary)" fontSize="12" fontFamily="JetBrains Mono" textAnchor="middle"
+            opacity="0">
+            = {ruleA}<tspan dy="-5" fontSize="9">{resultExp}</tspan>
+            <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="2.5s" fill="freeze" />
+          </text>
+        </svg>
+      );
+    } else if (activeRule === 1) {
+      // Quotient: canceling
+      const topDots = Array.from({ length: ruleM }, (_, i) => i);
+      const cancelCount = Math.min(ruleN, ruleM);
+      const spacing = Math.min(36, (w - 100) / Math.max(ruleM, ruleN));
+      return (
+        <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 500 }}>
+          {topDots.map((_, i) => {
+            const canceled = i >= ruleM - cancelCount;
+            return (
+              <g key={i}>
+                <circle cx={80 + i * spacing} cy={50} r={10}
+                  fill={canceled ? 'transparent' : r.color} stroke={r.color}
+                  strokeWidth={2} opacity={canceled ? 0.3 : 0.8}>
+                  {canceled && (
+                    <animate attributeName="opacity" from="0.8" to="0.15" dur="0.6s"
+                      begin={`${1 + (i - (ruleM - cancelCount)) * 0.3}s`} fill="freeze" />
+                  )}
+                </circle>
+                {canceled && (
+                  <line x1={80 + i * spacing - 10} y1={40}
+                    x2={80 + i * spacing + 10} y2={60}
+                    stroke="var(--accent)" strokeWidth={2} opacity={0}>
+                    <animate attributeName="opacity" from="0" to="1" dur="0.3s"
+                      begin={`${1 + (i - (ruleM - cancelCount)) * 0.3}s`} fill="freeze" />
+                  </line>
+                )}
+              </g>
+            );
+          })}
+          <text x={80 + (ruleM - 1) * spacing / 2} y={25}
+            fill={r.color} fontSize="11" fontFamily="JetBrains Mono" textAnchor="middle"
+            opacity="0.7">
+            {ruleA}<tspan dy="-5" fontSize="9">{ruleM}</tspan><tspan dy="5"> / </tspan>
+            {ruleA}<tspan dy="-5" fontSize="9">{ruleN}</tspan>
+          </text>
+          <text x={w / 2} y={110}
+            fill="var(--text-secondary)" fontSize="13" fontFamily="JetBrains Mono" textAnchor="middle"
+            opacity="0">
+            = {ruleA}<tspan dy="-5" fontSize="9">{resultExp}</tspan><tspan dy="5"> = {resultVal}</tspan>
+            <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="2.5s" fill="freeze" />
+          </text>
+        </svg>
+      );
+    } else {
+      // Power rule: nested groups
+      const innerGroups = Array.from({ length: ruleN }, (_, gi) => gi);
+      const dotsPerGroup = ruleM;
+      const groupW = dotsPerGroup * 28 + 20;
+      const totalW = ruleN * groupW + (ruleN - 1) * 16;
+      const startX = (w - totalW) / 2;
+
+      return (
+        <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 500 }}>
+          {innerGroups.map((gi) => {
+            const gx = startX + gi * (groupW + 16);
+            return (
+              <g key={gi}>
+                <rect x={gx} y={20} width={groupW} height={60} rx={8}
+                  fill="none" stroke={r.color} strokeWidth={1.5} strokeDasharray="4,4"
+                  opacity={0.4} />
+                {Array.from({ length: dotsPerGroup }, (_, di) => (
+                  <circle key={di}
+                    cx={gx + 20 + di * 28} cy={50} r={8}
+                    fill={r.color} opacity={0.7}>
+                    <animate attributeName="r" from="0" to="8"
+                      dur="0.4s" begin={`${0.5 + gi * 0.3 + di * 0.1}s`}
+                      fill="freeze" />
+                  </circle>
+                ))}
+                <text x={gx + groupW / 2} y={100}
+                  fill="var(--text-dim)" fontSize="10" fontFamily="JetBrains Mono"
+                  textAnchor="middle">
+                  {ruleA}<tspan dy="-4" fontSize="8">{ruleM}</tspan>
+                </text>
+              </g>
+            );
+          })}
+          <text x={w / 2} y={130}
+            fill="var(--text-secondary)" fontSize="12" fontFamily="JetBrains Mono" textAnchor="middle"
+            opacity="0">
+            = {ruleA}<tspan dy="-5" fontSize="9">{resultExp}</tspan><tspan dy="5"> = {resultVal}</tspan>
+            <animate attributeName="opacity" from="0" to="1" dur="0.5s"
+              begin={`${1.5 + ruleN * 0.3}s`} fill="freeze" />
+          </text>
+        </svg>
+      );
+    }
+  }
+
+  return (
+    <div style={{ animation: 'fadeInUp 0.6s ease-out' }}>
+      <SectionLabel>Step 3 of 7</SectionLabel>
+      <h2 style={{
+        fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 700,
+        marginBottom: 8
+      }}>Exponent Rules</h2>
+      <p style={{
+        color: 'var(--text-secondary)', fontSize: 16, lineHeight: 1.7,
+        marginBottom: 32, maxWidth: 600
+      }}>
+        Three essential rules let you simplify expressions with exponents.
+        Select a rule below and experiment with different values.
+      </p>
+
+      {/* Rule tabs */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
+        {rules.map((rule, i) => (
+          <button key={i} onClick={() => setActiveRule(i)} style={{
+            background: activeRule === i ? 'var(--bg-elevated)' : 'transparent',
+            border: activeRule === i
+              ? `1px solid ${rule.color}40`
+              : '1px solid var(--border)',
+            color: activeRule === i ? rule.color : 'var(--text-secondary)',
+            padding: '10px 20px', borderRadius: 'var(--radius-sm)',
+            cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 13,
+            fontWeight: 600, transition: 'var(--transition)'
+          }}>
+            {rule.name}
+          </button>
+        ))}
+      </div>
+
+      {/* Active rule display */}
+      <div style={{
+        background: 'var(--bg-card)', borderRadius: 'var(--radius)',
+        padding: 28, border: `1px solid ${r.color}20`, marginBottom: 24
+      }}>
+        <div style={{
+          fontFamily: 'var(--font-mono)', fontSize: 26, fontWeight: 700,
+          color: r.color, textAlign: 'center', marginBottom: 8
+        }}>
+          {r.formula}
+        </div>
+        <div style={{
+          fontFamily: 'var(--font-body)', fontSize: 15,
+          color: 'var(--text-secondary)', textAlign: 'center', marginBottom: 20
+        }}>
+          {r.explanation}
+        </div>
+        <div style={{
+          display: 'flex', justifyContent: 'center', marginBottom: 16
+        }}>
+          <RuleViz key={`${activeRule}-${ruleA}-${ruleM}-${ruleN}`} />
+        </div>
+        <div style={{
+          fontFamily: 'var(--font-mono)', fontSize: 18,
+          color: 'var(--text-primary)', textAlign: 'center',
+          background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)',
+          padding: '12px 20px'
+        }}>
+          {exampleStr}
+        </div>
+      </div>
+
+      {/* Controls */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 8 }}>
+        {[
+          { label: 'a (base)', val: ruleA, set: setRuleA, min: 2, max: 5, col: 'var(--text-primary)' },
+          { label: 'm', val: ruleM, set: setRuleM, min: 1, max: 5, col: r.color },
+          { label: 'n', val: ruleN, set: setRuleN, min: 1, max: 5, col: r.color }
+        ].map(({ label, val, set, min, max, col }) => (
+          <div key={label} style={{
+            background: 'var(--bg-card)', borderRadius: 'var(--radius-sm)',
+            padding: 16, border: '1px solid var(--border)'
+          }}>
+            <label style={{
+              fontFamily: 'var(--font-mono)', fontSize: 11,
+              color: col, textTransform: 'uppercase', letterSpacing: '0.1em',
+              display: 'block', marginBottom: 8
+            }}>{label} = {val}</label>
+            <input type="range" min={min} max={max} value={val}
+              onChange={e => set(Number(e.target.value))}
+              style={{ width: '100%', accentColor: col }}
+            />
+          </div>
+        ))}
+      </div>
+
+      <Navigation step={step} setStep={setStep} />
+    </div>
+  );
+}
+
+// ===================== STEP 4: ZERO AND NEGATIVE EXPONENTS =====================
+function StepZeroNeg({ step, setStep }) {
+  const [sliderVal, setSliderVal] = useState(4);
+  const base = 2;
+  const minExp = -4;
+  const maxExp = 4;
+
+  const exponents = [];
+  for (let e = maxExp; e >= minExp; e--) {
+    exponents.push(e);
+  }
+
+  const currentExp = maxExp - sliderVal;
+  const value = Math.pow(base, currentExp);
+  const displayValue = currentExp >= 0
+    ? value.toString()
+    : `1/${Math.pow(base, Math.abs(currentExp))}`;
+  const decimalValue = value;
+
+  return (
+    <div style={{ animation: 'fadeInUp 0.6s ease-out' }}>
+      <SectionLabel>Step 4 of 7</SectionLabel>
+      <h2 style={{
+        fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 700,
+        marginBottom: 8
+      }}>Zero &amp; Negative Exponents</h2>
+      <p style={{
+        color: 'var(--text-secondary)', fontSize: 16, lineHeight: 1.7,
+        marginBottom: 32, maxWidth: 600
+      }}>
+        Watch the pattern: each time the exponent decreases by 1, we divide by the base.
+        This pattern continues through zero and into negative exponents.
+      </p>
+
+      {/* Pattern table */}
+      <div style={{
+        background: 'var(--bg-card)', borderRadius: 'var(--radius)',
+        padding: 24, border: '1px solid var(--border)', marginBottom: 24, overflowX: 'auto'
+      }}>
+        <div style={{
+          display: 'flex', justifyContent: 'center', gap: 0, minWidth: 'max-content'
+        }}>
+          {exponents.map((e) => {
+            const val = Math.pow(base, e);
+            const isActive = e === currentExp;
+            const isZero = e === 0;
+            const isNeg = e < 0;
+            const dispVal = e >= 0
+              ? val.toString()
+              : <span>
+                  <sup>1</sup>&frasl;<sub>{Math.pow(base, Math.abs(e))}</sub>
+                </span>;
+
+            return (
+              <div key={e} style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center',
+                padding: '12px 10px', minWidth: 56,
+                background: isActive ? 'var(--accent-soft)' : 'transparent',
+                borderRadius: 'var(--radius-sm)',
+                borderLeft: isZero ? '2px solid var(--warning)' : 'none',
+                transition: 'var(--transition)'
+              }}>
+                <div style={{
+                  fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 600,
+                  color: isActive ? 'var(--accent)' : isNeg ? '#5ba8f7' : 'var(--text-primary)',
+                  marginBottom: 6
+                }}>
+                  {base}<sup style={{ fontSize: 10 }}>{e}</sup>
+                </div>
+                <div style={{
+                  width: 1, height: 12, background: 'var(--border)', marginBottom: 6
+                }} />
+                <div style={{
+                  fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 500,
+                  color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)'
+                }}>
+                  {dispVal}
+                </div>
+                {e > minExp && (
+                  <div style={{
+                    fontFamily: 'var(--font-mono)', fontSize: 10,
+                    color: 'var(--text-dim)', marginTop: 6
+                  }}>
+                    &divide;{base}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Slider */}
+      <div style={{
+        background: 'var(--bg-card)', borderRadius: 'var(--radius)',
+        padding: 24, border: '1px solid var(--border)', marginBottom: 24
+      }}>
+        <label style={{
+          fontFamily: 'var(--font-mono)', fontSize: 12,
+          color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.1em',
+          display: 'block', marginBottom: 12
+        }}>Slide to explore: {base}<sup>{currentExp}</sup></label>
+        <input type="range" min={0} max={maxExp - minExp} value={sliderVal}
+          onChange={e => setSliderVal(Number(e.target.value))}
+          style={{ width: '100%', accentColor: 'var(--accent)' }}
+        />
+        <div style={{
+          display: 'flex', justifyContent: 'space-between',
+          fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-dim)', marginTop: 4
+        }}>
+          <span>{base}<sup>{maxExp}</sup> = {Math.pow(base, maxExp)}</span>
+          <span>{base}<sup>{minExp}</sup> = 1/{Math.pow(base, Math.abs(minExp))}</span>
+        </div>
+      </div>
+
+      {/* Current value display */}
+      <div style={{
+        display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 8
+      }}>
+        <div style={{
+          background: 'var(--bg-card)', borderRadius: 'var(--radius)',
+          padding: 20, border: '1px solid var(--border)', textAlign: 'center'
+        }}>
+          <div style={{
+            fontFamily: 'var(--font-mono)', fontSize: 11,
+            color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: 8
+          }}>Expression</div>
+          <div style={{
+            fontFamily: 'var(--font-mono)', fontSize: 28, fontWeight: 700,
+            color: 'var(--accent)'
+          }}>
+            {base}<sup style={{ fontSize: 16 }}>{currentExp}</sup>
+          </div>
+        </div>
+        <div style={{
+          background: 'var(--bg-card)', borderRadius: 'var(--radius)',
+          padding: 20, border: '1px solid var(--border)', textAlign: 'center'
+        }}>
+          <div style={{
+            fontFamily: 'var(--font-mono)', fontSize: 11,
+            color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: 8
+          }}>Value</div>
+          <div style={{
+            fontFamily: 'var(--font-mono)', fontSize: 28, fontWeight: 700,
+            color: 'var(--success)'
+          }}>
+            {displayValue}
+          </div>
+          <div style={{
+            fontFamily: 'var(--font-mono)', fontSize: 13,
+            color: 'var(--text-dim)', marginTop: 4
+          }}>
+            = {decimalValue % 1 !== 0 ? decimalValue.toFixed(4) : decimalValue}
+          </div>
+        </div>
+      </div>
+
+      {/* Key rules summary */}
+      <div style={{
+        display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 24, marginBottom: 8
+      }}>
+        <div style={{
+          background: 'var(--bg-card)', borderRadius: 'var(--radius)',
+          padding: 20, border: '1px solid rgba(240,180,41,0.2)'
+        }}>
+          <div style={{
+            fontFamily: 'var(--font-mono)', fontSize: 22, fontWeight: 700,
+            color: 'var(--warning)', marginBottom: 6
+          }}>
+            a<sup>0</sup> = 1
+          </div>
+          <div style={{
+            fontFamily: 'var(--font-body)', fontSize: 14,
+            color: 'var(--text-secondary)', lineHeight: 1.5
+          }}>
+            Any non-zero number raised to the zero power equals 1. It is the identity element of multiplication.
+          </div>
+        </div>
+        <div style={{
+          background: 'var(--bg-card)', borderRadius: 'var(--radius)',
+          padding: 20, border: '1px solid rgba(91,168,247,0.2)'
+        }}>
+          <div style={{
+            fontFamily: 'var(--font-mono)', fontSize: 22, fontWeight: 700,
+            color: '#5ba8f7', marginBottom: 6
+          }}>
+            a<sup>-n</sup> = <sup>1</sup>&frasl;<sub>a<sup>n</sup></sub>
+          </div>
+          <div style={{
+            fontFamily: 'var(--font-body)', fontSize: 14,
+            color: 'var(--text-secondary)', lineHeight: 1.5
+          }}>
+            A negative exponent means "take the reciprocal." The pattern of dividing continues below zero.
+          </div>
+        </div>
+      </div>
+
+      <Navigation step={step} setStep={setStep} />
+    </div>
+  );
+}
+
+// ===================== STEP 5: SQUARE ROOTS =====================
+function StepSquareRoots({ step, setStep }) {
+  const [inputVal, setInputVal] = useState(9);
+  const canvasRef = useRef(null);
+
+  const sqrtVal = Math.sqrt(inputVal);
+  const isPerfect = Number.isInteger(sqrtVal);
+  const perfectSquares = [1, 4, 9, 16, 25, 36, 49, 64, 81, 100];
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const size = 280;
+    canvas.width = size * dpr;
+    canvas.height = size * dpr;
+    canvas.style.width = size + 'px';
+    canvas.style.height = size + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    ctx.clearRect(0, 0, size, size);
+
+    // Draw the square
+    const area = inputVal;
+    const side = Math.sqrt(area);
+    const maxSide = 10;
+    const scale = (size - 60) / maxSide;
+    const drawSide = side * scale;
+    const ox = (size - drawSide) / 2;
+    const oy = (size - drawSide) / 2;
+
+    // Grid of unit squares inside
+    const intSide = Math.floor(side);
+    const unitSize = drawSide / side;
+
+    // Filled area
+    ctx.fillStyle = 'rgba(232,68,58,0.12)';
+    ctx.fillRect(ox, oy, drawSide, drawSide);
+
+    // Unit grid
+    ctx.strokeStyle = 'rgba(232,68,58,0.2)';
+    ctx.lineWidth = 0.5;
+    for (let i = 0; i <= side; i++) {
+      ctx.beginPath();
+      ctx.moveTo(ox + i * unitSize, oy);
+      ctx.lineTo(ox + i * unitSize, oy + drawSide);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(ox, oy + i * unitSize);
+      ctx.lineTo(ox + drawSide, oy + i * unitSize);
+      ctx.stroke();
+    }
+
+    // Square outline
+    ctx.strokeStyle = 'var(--accent)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(ox, oy, drawSide, drawSide);
+
+    // Labels
+    ctx.fillStyle = '#f0edf5';
+    ctx.font = `600 14px 'JetBrains Mono', monospace`;
+    ctx.textAlign = 'center';
+
+    // Side length label (bottom)
+    ctx.fillText(`side = ${isPerfect ? sqrtVal : '\u221a' + inputVal + ' \u2248 ' + sqrtVal.toFixed(2)}`, size / 2, oy + drawSide + 24);
+
+    // Area label (center)
+    ctx.fillStyle = 'rgba(232,68,58,0.8)';
+    ctx.font = `700 16px 'JetBrains Mono', monospace`;
+    ctx.fillText(`area = ${inputVal}`, size / 2, size / 2 + 4);
+
+  }, [inputVal, sqrtVal, isPerfect]);
+
+  return (
+    <div style={{ animation: 'fadeInUp 0.6s ease-out' }}>
+      <SectionLabel>Step 5 of 7</SectionLabel>
+      <h2 style={{
+        fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 700,
+        marginBottom: 8
+      }}>Square Roots</h2>
+      <p style={{
+        color: 'var(--text-secondary)', fontSize: 16, lineHeight: 1.7,
+        marginBottom: 32, maxWidth: 600
+      }}>
+        The square root is the <em>inverse</em> of squaring. If you know the area of a square,
+        the square root gives you the side length.
+      </p>
+
+      {/* Visual + Controls */}
+      <div style={{
+        display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 24,
+        alignItems: 'start'
+      }}>
+        {/* Canvas */}
+        <div style={{
+          background: 'var(--bg-card)', borderRadius: 'var(--radius)',
+          padding: 24, border: '1px solid var(--border)',
+          display: 'flex', justifyContent: 'center', alignItems: 'center'
+        }}>
+          <canvas ref={canvasRef} />
+        </div>
+
+        {/* Right side */}
+        <div>
+          {/* Input */}
+          <div style={{
+            background: 'var(--bg-card)', borderRadius: 'var(--radius)',
+            padding: 20, border: '1px solid var(--border)', marginBottom: 16
+          }}>
+            <label style={{
+              fontFamily: 'var(--font-mono)', fontSize: 11,
+              color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.1em',
+              display: 'block', marginBottom: 12
+            }}>Area (number under the radical): {inputVal}</label>
+            <input type="range" min={1} max={100} value={inputVal}
+              onChange={e => setInputVal(Number(e.target.value))}
+              style={{ width: '100%', accentColor: 'var(--accent)' }}
+            />
+          </div>
+
+          {/* Result */}
+          <MathBlock large glow={isPerfect}>
+            <span style={{ color: 'var(--accent)' }}>&radic;</span>
+            <span style={{ textDecoration: 'overline' }}>{inputVal}</span>
+            <span style={{ color: 'var(--text-dim)', margin: '0 12px' }}>=</span>
+            <span style={{ color: isPerfect ? 'var(--success)' : 'var(--warning)' }}>
+              {isPerfect ? sqrtVal : sqrtVal.toFixed(4) + '...'}
+            </span>
+          </MathBlock>
+
+          {isPerfect && (
+            <div style={{
+              fontFamily: 'var(--font-mono)', fontSize: 13,
+              color: 'var(--success)', marginTop: 12, textAlign: 'center',
+              animation: 'fadeIn 0.3s ease-out'
+            }}>
+              Perfect square! {sqrtVal} &times; {sqrtVal} = {inputVal}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Perfect squares grid */}
+      <div style={{
+        background: 'var(--bg-card)', borderRadius: 'var(--radius)',
+        padding: 20, border: '1px solid var(--border)', marginBottom: 8
+      }}>
+        <div style={{
+          fontFamily: 'var(--font-mono)', fontSize: 11,
+          color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.1em',
+          marginBottom: 12
+        }}>Perfect Squares to memorize</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {perfectSquares.map(ps => {
+            const root = Math.sqrt(ps);
+            const isSelected = ps === inputVal;
+            return (
+              <button key={ps} onClick={() => setInputVal(ps)} style={{
+                background: isSelected ? 'var(--accent-soft)' : 'var(--bg-elevated)',
+                border: isSelected ? '1px solid var(--border-accent)' : '1px solid var(--border)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '8px 14px', cursor: 'pointer',
+                fontFamily: 'var(--font-mono)', fontSize: 13,
+                color: isSelected ? 'var(--accent)' : 'var(--text-secondary)',
+                transition: 'var(--transition)'
+              }}>
+                {root}&sup2; = {ps}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <Navigation step={step} setStep={setStep} />
+    </div>
+  );
+}
+
+// ===================== STEP 6: SIMPLIFYING RADICALS =====================
+function StepSimplifyRadicals({ step, setStep }) {
+  const examples = [
+    { radicand: 50, steps: [
+      { text: '\u221a50', desc: 'Start with the radicand' },
+      { text: '\u221a(25 \u00d7 2)', desc: 'Find the largest perfect square factor' },
+      { text: '\u221a25 \u00d7 \u221a2', desc: 'Split using the product rule for radicals' },
+      { text: '5\u221a2', desc: 'Simplify \u221a25 = 5' }
+    ]},
+    { radicand: 72, steps: [
+      { text: '\u221a72', desc: 'Start with the radicand' },
+      { text: '\u221a(36 \u00d7 2)', desc: '36 is the largest perfect square factor' },
+      { text: '\u221a36 \u00d7 \u221a2', desc: 'Split using the product rule' },
+      { text: '6\u221a2', desc: 'Simplify \u221a36 = 6' }
+    ]},
+    { radicand: 48, steps: [
+      { text: '\u221a48', desc: 'Start with the radicand' },
+      { text: '\u221a(16 \u00d7 3)', desc: '16 is the largest perfect square factor' },
+      { text: '\u221a16 \u00d7 \u221a3', desc: 'Split using the product rule' },
+      { text: '4\u221a3', desc: 'Simplify \u221a16 = 4' }
+    ]},
+    { radicand: 200, steps: [
+      { text: '\u221a200', desc: 'Start with the radicand' },
+      { text: '\u221a(100 \u00d7 2)', desc: '100 is the largest perfect square factor' },
+      { text: '\u221a100 \u00d7 \u221a2', desc: 'Split using the product rule' },
+      { text: '10\u221a2', desc: 'Simplify \u221a100 = 10' }
+    ]}
+  ];
+
+  const [exIdx, setExIdx] = useState(0);
+  const [revealedStep, setRevealedStep] = useState(0);
+  const ex = examples[exIdx];
+
+  function selectExample(i) {
+    setExIdx(i);
+    setRevealedStep(0);
+  }
+
+  // Factor tree for the current example
+  function factorize(n) {
+    const factors = [];
+    let d = 2;
+    let val = n;
+    while (d * d <= val) {
+      while (val % d === 0) {
+        factors.push(d);
+        val = val / d;
+      }
+      d++;
+    }
+    if (val > 1) factors.push(val);
+    return factors;
+  }
+
+  const primeFactors = factorize(ex.radicand);
+
+  // Build factor tree: split into largest perfect square factor + remainder
+  function buildTree(n) {
+    if (n <= 1) return { value: n, children: [] };
+    // Find the largest perfect square factor
+    let bestSq = 1;
+    for (let i = 2; i * i <= n; i++) {
+      if (n % (i * i) === 0) bestSq = i * i;
+    }
+    if (bestSq > 1 && bestSq < n) {
+      return {
+        value: n,
+        children: [buildTree(bestSq), buildTree(n / bestSq)]
+      };
+    }
+    // If no perfect square factor, do prime split
+    for (let d = 2; d * d <= n; d++) {
+      if (n % d === 0) {
+        return {
+          value: n,
+          children: [buildTree(d), buildTree(n / d)]
+        };
+      }
+    }
+    return { value: n, children: [] };
+  }
+  const tree = buildTree(ex.radicand);
+
+  // Render factor tree as SVG
+  function renderTree(node, x, y, spread, depth) {
+    const elements = [];
+    const isPrime = node.children.length === 0;
+    const isPerfectSq = [4, 9, 16, 25, 36, 49, 64, 100].includes(node.value);
+
+    elements.push(
+      <g key={`${x}-${y}`} style={{
+        animation: `fadeIn 0.5s ease-out ${depth * 0.3}s both`
+      }}>
+        <circle cx={x} cy={y} r={18}
+          fill={isPrime ? 'var(--accent-soft)' : 'var(--bg-elevated)'}
+          stroke={isPrime ? 'var(--accent)' : 'var(--border)'}
+          strokeWidth={isPrime ? 2 : 1} />
+        <text x={x} y={y + 5} textAnchor="middle"
+          fill={isPrime ? 'var(--accent)' : 'var(--text-primary)'}
+          fontSize="12" fontFamily="JetBrains Mono" fontWeight="600">
+          {node.value}
+        </text>
+      </g>
+    );
+
+    if (node.children.length === 2) {
+      const lx = x - spread;
+      const rx = x + spread;
+      const ny = y + 50;
+      elements.push(
+        <line key={`l-${x}-${y}`} x1={x} y1={y + 18} x2={lx} y2={ny - 18}
+          stroke="var(--border)" strokeWidth={1}
+          style={{ animation: `fadeIn 0.5s ease-out ${(depth + 0.5) * 0.3}s both` }} />
+      );
+      elements.push(
+        <line key={`r-${x}-${y}`} x1={x} y1={y + 18} x2={rx} y2={ny - 18}
+          stroke="var(--border)" strokeWidth={1}
+          style={{ animation: `fadeIn 0.5s ease-out ${(depth + 0.5) * 0.3}s both` }} />
+      );
+      elements.push(...renderTree(node.children[0], lx, ny, spread * 0.55, depth + 1));
+      elements.push(...renderTree(node.children[1], rx, ny, spread * 0.55, depth + 1));
+    }
+
+    return elements;
+  }
+
+  const treeDepth = (n) => {
+    const t = buildTree(n);
+    function d(node) { return node.children.length === 0 ? 0 : 1 + Math.max(...node.children.map(d)); }
+    return d(t);
+  };
+  const td = treeDepth(ex.radicand);
+  const svgH = 50 + td * 50 + 30;
+
+  return (
+    <div style={{ animation: 'fadeInUp 0.6s ease-out' }}>
+      <SectionLabel>Step 6 of 7</SectionLabel>
+      <h2 style={{
+        fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 700,
+        marginBottom: 8
+      }}>Simplifying Radicals</h2>
+      <p style={{
+        color: 'var(--text-secondary)', fontSize: 16, lineHeight: 1.7,
+        marginBottom: 32, maxWidth: 600
+      }}>
+        To simplify a radical, find the largest perfect square factor of the radicand,
+        then "pull it out" from under the radical sign.
+      </p>
+
+      {/* Example selector */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
+        {examples.map((e, i) => (
+          <button key={i} onClick={() => selectExample(i)} style={{
+            background: exIdx === i ? 'var(--accent-soft)' : 'var(--bg-card)',
+            border: exIdx === i ? '1px solid var(--border-accent)' : '1px solid var(--border)',
+            color: exIdx === i ? 'var(--accent)' : 'var(--text-secondary)',
+            padding: '10px 20px', borderRadius: 'var(--radius-sm)',
+            cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 15,
+            fontWeight: 600, transition: 'var(--transition)'
+          }}>
+            &radic;{e.radicand}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 24 }}>
+        {/* Step-by-step */}
+        <div style={{
+          background: 'var(--bg-card)', borderRadius: 'var(--radius)',
+          padding: 24, border: '1px solid var(--border)'
+        }}>
+          <div style={{
+            fontFamily: 'var(--font-mono)', fontSize: 11,
+            color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.1em',
+            marginBottom: 16
+          }}>Step-by-step simplification</div>
+
+          {ex.steps.map((s, i) => {
+            const visible = i <= revealedStep;
+            return (
+              <div key={i} style={{
+                display: 'flex', alignItems: 'flex-start', gap: 12,
+                marginBottom: 16, opacity: visible ? 1 : 0.2,
+                transform: visible ? 'translateX(0)' : 'translateX(10px)',
+                transition: 'all 0.5s ease-out'
+              }}>
+                <div style={{
+                  width: 28, height: 28, borderRadius: '50%',
+                  background: visible ? (i === ex.steps.length - 1 ? 'var(--accent)' : 'var(--bg-elevated)') : 'var(--bg-elevated)',
+                  border: `1px solid ${visible ? 'var(--border-accent)' : 'var(--border)'}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 600,
+                  color: visible ? (i === ex.steps.length - 1 ? '#fff' : 'var(--accent)') : 'var(--text-dim)',
+                  flexShrink: 0
+                }}>
+                  {i + 1}
+                </div>
+                <div>
+                  <div style={{
+                    fontFamily: 'var(--font-mono)', fontSize: 18, fontWeight: 600,
+                    color: i === ex.steps.length - 1 && visible ? 'var(--success)' : 'var(--text-primary)',
+                    marginBottom: 2
+                  }}>
+                    {s.text}
+                  </div>
+                  <div style={{
+                    fontFamily: 'var(--font-body)', fontSize: 13,
+                    color: 'var(--text-dim)'
+                  }}>
+                    {s.desc}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+
+          <button onClick={() => setRevealedStep(s => Math.min(s + 1, ex.steps.length - 1))} style={{
+            background: revealedStep >= ex.steps.length - 1
+              ? 'var(--bg-elevated)' : 'linear-gradient(135deg, var(--accent), #c0302a)',
+            border: 'none',
+            color: revealedStep >= ex.steps.length - 1 ? 'var(--text-dim)' : '#fff',
+            padding: '10px 24px', borderRadius: 'var(--radius-sm)',
+            cursor: revealedStep >= ex.steps.length - 1 ? 'default' : 'pointer',
+            fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 600,
+            transition: 'var(--transition)', marginTop: 8, width: '100%'
+          }}>
+            {revealedStep >= ex.steps.length - 1 ? 'All steps revealed' : 'Reveal Next Step'}
+          </button>
+        </div>
+
+        {/* Factor tree */}
+        <div style={{
+          background: 'var(--bg-card)', borderRadius: 'var(--radius)',
+          padding: 24, border: '1px solid var(--border)'
+        }}>
+          <div style={{
+            fontFamily: 'var(--font-mono)', fontSize: 11,
+            color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.1em',
+            marginBottom: 16
+          }}>Factor Tree</div>
+          <svg viewBox={`0 0 300 ${svgH}`} style={{ width: '100%', maxWidth: 300, display: 'block', margin: '0 auto' }}
+               key={exIdx}>
+            {renderTree(tree, 150, 30, 60, 0)}
+          </svg>
+          <div style={{
+            fontFamily: 'var(--font-mono)', fontSize: 13,
+            color: 'var(--text-secondary)', textAlign: 'center', marginTop: 12
+          }}>
+            {ex.radicand} = {primeFactors.join(' \u00d7 ')}
+          </div>
+        </div>
+      </div>
+
+      {/* Key insight */}
+      <div style={{
+        background: 'var(--bg-card)', borderRadius: 'var(--radius)',
+        padding: 20, border: '1px solid rgba(232,68,58,0.15)', marginBottom: 8
+      }}>
+        <div style={{
+          fontFamily: 'var(--font-mono)', fontSize: 12,
+          color: 'var(--accent)', fontWeight: 600, marginBottom: 8
+        }}>Key Rule</div>
+        <div style={{
+          fontFamily: 'var(--font-mono)', fontSize: 18,
+          color: 'var(--text-primary)', marginBottom: 6
+        }}>
+          &radic;(a &times; b) = &radic;a &times; &radic;b
+        </div>
+        <div style={{
+          fontFamily: 'var(--font-body)', fontSize: 14,
+          color: 'var(--text-secondary)', lineHeight: 1.6
+        }}>
+          Look for pairs of prime factors. Each pair "comes out" from under the radical
+          as a single factor. Unpaired primes stay inside.
+        </div>
+      </div>
+
+      <Navigation step={step} setStep={setStep} />
+    </div>
+  );
+}
+
+// ===================== STEP 7: PRACTICE =====================
+function StepPractice({ step, setStep }) {
+  const [difficulty, setDifficulty] = useState('easy');
+  const [problem, setProblem] = useState(null);
+  const [userAnswer, setUserAnswer] = useState('');
+  const [feedback, setFeedback] = useState(null);
+  const [stats, setStats] = useState({ correct: 0, total: 0 });
+  const inputRef = useRef(null);
+
+  function generateProblem(diff) {
+    const types = [];
+    if (diff === 'easy') {
+      types.push('evaluate', 'simplify_radical_easy');
+    } else if (diff === 'medium') {
+      types.push('evaluate', 'simplify_radical', 'apply_rule');
+    } else {
+      types.push('simplify_radical_hard', 'apply_rule_hard', 'negative_exp');
+    }
+    const type = types[Math.floor(Math.random() * types.length)];
+
+    switch (type) {
+      case 'evaluate': {
+        const base = 2 + Math.floor(Math.random() * 5);
+        const exp = 2 + Math.floor(Math.random() * (diff === 'easy' ? 2 : 3));
+        return {
+          question: `Evaluate: ${base}^${exp}`,
+          answer: String(Math.pow(base, exp)),
+          hint: `${base} multiplied by itself ${exp} times`
+        };
+      }
+      case 'simplify_radical_easy': {
+        const options = [
+          { r: 12, ans: '2\u221a3' }, { r: 18, ans: '3\u221a2' },
+          { r: 8, ans: '2\u221a2' }, { r: 20, ans: '2\u221a5' },
+          { r: 27, ans: '3\u221a3' }
+        ];
+        const o = options[Math.floor(Math.random() * options.length)];
+        return {
+          question: `Simplify: \u221a${o.r}`,
+          answer: o.ans,
+          hint: `Find the largest perfect square that divides ${o.r}`
+        };
+      }
+      case 'simplify_radical': {
+        const options = [
+          { r: 50, ans: '5\u221a2' }, { r: 72, ans: '6\u221a2' },
+          { r: 48, ans: '4\u221a3' }, { r: 75, ans: '5\u221a3' },
+          { r: 98, ans: '7\u221a2' }, { r: 45, ans: '3\u221a5' }
+        ];
+        const o = options[Math.floor(Math.random() * options.length)];
+        return {
+          question: `Simplify: \u221a${o.r}`,
+          answer: o.ans,
+          hint: `Factor ${o.r} to find perfect square factors`
+        };
+      }
+      case 'simplify_radical_hard': {
+        const options = [
+          { r: 200, ans: '10\u221a2' }, { r: 128, ans: '8\u221a2' },
+          { r: 147, ans: '7\u221a3' }, { r: 242, ans: '11\u221a2' },
+          { r: 300, ans: '10\u221a3' }
+        ];
+        const o = options[Math.floor(Math.random() * options.length)];
+        return {
+          question: `Simplify: \u221a${o.r}`,
+          answer: o.ans,
+          hint: `Look for the largest perfect square dividing ${o.r}`
+        };
+      }
+      case 'apply_rule': {
+        const a = 2 + Math.floor(Math.random() * 3);
+        const m = 2 + Math.floor(Math.random() * 3);
+        const n = 1 + Math.floor(Math.random() * 3);
+        return {
+          question: `Simplify: ${a}^${m} \u00d7 ${a}^${n}`,
+          answer: String(Math.pow(a, m + n)),
+          hint: `Product rule: add exponents (${m} + ${n} = ${m + n})`
+        };
+      }
+      case 'apply_rule_hard': {
+        const a = 2 + Math.floor(Math.random() * 3);
+        const m = 2 + Math.floor(Math.random() * 3);
+        const n = 2 + Math.floor(Math.random() * 3);
+        return {
+          question: `Simplify: (${a}^${m})^${n}`,
+          answer: String(Math.pow(a, m * n)),
+          hint: `Power rule: multiply exponents (${m} \u00d7 ${n} = ${m * n})`
+        };
+      }
+      case 'negative_exp': {
+        const a = 2 + Math.floor(Math.random() * 4);
+        const n = 1 + Math.floor(Math.random() * 3);
+        const denom = Math.pow(a, n);
+        return {
+          question: `Evaluate: ${a}^(-${n})`,
+          answer: `1/${denom}`,
+          hint: `Negative exponent means reciprocal: 1/${a}^${n}`
+        };
+      }
+    }
+  }
+
+  useEffect(() => {
+    setProblem(generateProblem(difficulty));
+    setUserAnswer('');
+    setFeedback(null);
+  }, [difficulty]);
+
+  function checkAnswer() {
+    if (!problem || !userAnswer.trim()) return;
+    const clean = (s) => s.replace(/\s+/g, '').toLowerCase()
+      .replace(/sqrt/g, '\u221a').replace(/\*/g, '\u00d7');
+    const isCorrect = clean(userAnswer) === clean(problem.answer);
+    setFeedback(isCorrect ? 'correct' : 'wrong');
+    setStats(s => ({
+      correct: s.correct + (isCorrect ? 1 : 0),
+      total: s.total + 1
+    }));
+  }
+
+  function nextProblem() {
+    setProblem(generateProblem(difficulty));
+    setUserAnswer('');
+    setFeedback(null);
+    setTimeout(() => inputRef.current && inputRef.current.focus(), 100);
+  }
+
+  // Save progress on completion
+  useEffect(() => {
+    if (stats.total >= 5 && stats.correct >= 3) {
+      try {
+        const progress = JSON.parse(localStorage.getItem('math-progress') || '[]');
+        if (!progress.includes(5)) { progress.push(5); localStorage.setItem('math-progress', JSON.stringify(progress)); }
+      } catch (e) {}
+    }
+  }, [stats]);
+
+  return (
+    <div style={{ animation: 'fadeInUp 0.6s ease-out' }}>
+      <SectionLabel>Step 7 of 7</SectionLabel>
+      <h2 style={{
+        fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 700,
+        marginBottom: 8
+      }}>Practice</h2>
+      <p style={{
+        color: 'var(--text-secondary)', fontSize: 16, lineHeight: 1.7,
+        marginBottom: 24, maxWidth: 600
+      }}>
+        Test your understanding with random problems. Get at least 3 out of 5 correct
+        to complete this lesson.
+      </p>
+
+      {/* Difficulty */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+        {['easy', 'medium', 'hard'].map(d => (
+          <button key={d} onClick={() => { setDifficulty(d); setStats({ correct: 0, total: 0 }); }} style={{
+            background: difficulty === d ? 'var(--accent-soft)' : 'var(--bg-card)',
+            border: difficulty === d ? '1px solid var(--border-accent)' : '1px solid var(--border)',
+            color: difficulty === d ? 'var(--accent)' : 'var(--text-secondary)',
+            padding: '10px 24px', borderRadius: 'var(--radius-sm)',
+            cursor: 'pointer', fontFamily: 'var(--font-body)', fontSize: 14,
+            fontWeight: 600, textTransform: 'capitalize', transition: 'var(--transition)'
+          }}>
+            {d}
+          </button>
+        ))}
+      </div>
+
+      {/* Stats */}
+      <div style={{
+        display: 'flex', gap: 16, marginBottom: 24
+      }}>
+        <div style={{
+          background: 'var(--bg-card)', borderRadius: 'var(--radius-sm)',
+          padding: '10px 20px', border: '1px solid var(--border)',
+          fontFamily: 'var(--font-mono)', fontSize: 14
+        }}>
+          <span style={{ color: 'var(--text-dim)' }}>Score: </span>
+          <span style={{ color: 'var(--success)', fontWeight: 700 }}>{stats.correct}</span>
+          <span style={{ color: 'var(--text-dim)' }}> / {stats.total}</span>
+        </div>
+        {stats.total >= 5 && stats.correct >= 3 && (
+          <div style={{
+            background: 'rgba(61,214,140,0.1)', borderRadius: 'var(--radius-sm)',
+            padding: '10px 20px', border: '1px solid rgba(61,214,140,0.3)',
+            fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--success)',
+            fontWeight: 600, animation: 'fadeIn 0.5s ease-out'
+          }}>
+            Lesson Complete! Progress saved.
+          </div>
+        )}
+      </div>
+
+      {/* Problem */}
+      {problem && (
+        <div style={{
+          background: 'var(--bg-card)', borderRadius: 'var(--radius)',
+          padding: 32, border: '1px solid var(--border)', marginBottom: 8
+        }}>
+          <div style={{
+            fontFamily: 'var(--font-mono)', fontSize: 28, fontWeight: 700,
+            color: 'var(--text-primary)', textAlign: 'center', marginBottom: 24
+          }}>
+            {problem.question}
+          </div>
+
+          <div style={{ display: 'flex', gap: 12, maxWidth: 500, margin: '0 auto' }}>
+            <input
+              ref={inputRef}
+              type="text"
+              value={userAnswer}
+              onChange={e => setUserAnswer(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  if (feedback) nextProblem();
+                  else checkAnswer();
+                }
+              }}
+              placeholder="Your answer..."
+              disabled={!!feedback}
+              style={{
+                flex: 1, background: 'var(--bg-elevated)',
+                border: feedback === 'correct'
+                  ? '2px solid var(--success)'
+                  : feedback === 'wrong'
+                    ? '2px solid var(--accent)'
+                    : '1px solid var(--border)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '14px 18px',
+                fontFamily: 'var(--font-mono)', fontSize: 18,
+                color: 'var(--text-primary)',
+                outline: 'none', transition: 'var(--transition)'
+              }}
+            />
+            {!feedback ? (
+              <button onClick={checkAnswer} style={{
+                background: 'linear-gradient(135deg, var(--accent), #c0302a)',
+                border: 'none', color: '#fff', padding: '14px 28px',
+                borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+                fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 600,
+                transition: 'var(--transition)'
+              }}>
+                Check
+              </button>
+            ) : (
+              <button onClick={nextProblem} style={{
+                background: 'var(--bg-elevated)',
+                border: '1px solid var(--border)', color: 'var(--text-primary)',
+                padding: '14px 28px',
+                borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+                fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 600,
+                transition: 'var(--transition)'
+              }}>
+                Next
+              </button>
+            )}
+          </div>
+          {!feedback && (
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 10 }}>
+              {['\u221a', '\u00b2', '\u00b3'].map(s => (
+                <button key={s} onClick={() => { setUserAnswer(prev => prev + s); inputRef.current?.focus(); }} style={{
+                  background: 'var(--bg-elevated)', border: '1px solid var(--border)',
+                  borderRadius: 6, padding: '3px 12px', color: 'var(--text-secondary)',
+                  fontFamily: 'var(--font-mono)', fontSize: 16, cursor: 'pointer',
+                  lineHeight: '1.4', transition: 'var(--transition)'
+                }}>{s}</button>
+              ))}
+            </div>
+          )}
+
+          {/* Feedback */}
+          {feedback && (
+            <div style={{
+              marginTop: 20, textAlign: 'center',
+              animation: 'fadeIn 0.3s ease-out'
+            }}>
+              {feedback === 'correct' ? (
+                <div style={{
+                  fontFamily: 'var(--font-mono)', fontSize: 16,
+                  color: 'var(--success)', fontWeight: 600
+                }}>
+                  Correct!
+                </div>
+              ) : (
+                <div>
+                  <div style={{
+                    fontFamily: 'var(--font-mono)', fontSize: 16,
+                    color: 'var(--accent)', fontWeight: 600, marginBottom: 4
+                  }}>
+                    Not quite.
+                  </div>
+                  <div style={{
+                    fontFamily: 'var(--font-mono)', fontSize: 14,
+                    color: 'var(--text-secondary)'
+                  }}>
+                    Answer: <strong style={{ color: 'var(--success)' }}>{problem.answer}</strong>
+                  </div>
+                  <div style={{
+                    fontFamily: 'var(--font-body)', fontSize: 13,
+                    color: 'var(--text-dim)', marginTop: 4
+                  }}>
+                    Hint: {problem.hint}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Hint button */}
+          {!feedback && (
+            <details style={{ marginTop: 16, textAlign: 'center' }}>
+              <summary style={{
+                fontFamily: 'var(--font-mono)', fontSize: 12,
+                color: 'var(--text-dim)', cursor: 'pointer',
+                userSelect: 'none'
+              }}>
+                Show Hint
+              </summary>
+              <div style={{
+                fontFamily: 'var(--font-body)', fontSize: 14,
+                color: 'var(--text-secondary)', marginTop: 8
+              }}>
+                {problem.hint}
+              </div>
+            </details>
+          )}
+        </div>
+      )}
+
+      <Navigation step={step} setStep={setStep} />
+    </div>
+  );
+}
+
+// ===================== APP =====================
+function App() {
+  const [step, setStep] = useState(0);
+
+  // Scroll to top on step change
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [step]);
+
+  return (
+    <div>
+      {step > 0 && <ProgressBar step={step} />}
+      <div style={{
+        maxWidth: 760, margin: '0 auto',
+        padding: step === 0 ? '0' : '72px 24px 60px'
+      }}>
+        {step === 0 && <StepLanding setStep={setStep} />}
+        {step === 1 && <StepRepeatedMult step={step} setStep={setStep} />}
+        {step === 2 && <StepExponentRules step={step} setStep={setStep} />}
+        {step === 3 && <StepZeroNeg step={step} setStep={setStep} />}
+        {step === 4 && <StepSquareRoots step={step} setStep={setStep} />}
+        {step === 5 && <StepSimplifyRadicals step={step} setStep={setStep} />}
+        {step === 6 && <StepPractice step={step} setStep={setStep} />}
+        {step === TOTAL_STEPS - 1 && (
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:32,padding:'16px 0',borderTop:'1px solid var(--border)'}}>
+            <a href="04-systems.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>&larr; Previous Lesson: Systems of Equations</a>
+            <a href="06-polynomials.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>Next Lesson: Polynomials &amp; Factoring &rarr;</a>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

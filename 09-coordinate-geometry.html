@@ -1,0 +1,1890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Coordinate Geometry | Math Foundations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-deep: #06060b;
+    --bg-primary: #0a0a12;
+    --bg-card: rgba(255, 255, 255, 0.03);
+    --bg-card-hover: rgba(255, 255, 255, 0.06);
+    --border-subtle: rgba(255, 255, 255, 0.06);
+    --border-hover: rgba(255, 255, 255, 0.12);
+    --text-primary: #e8e6f0;
+    --text-secondary: rgba(232, 230, 240, 0.55);
+    --text-tertiary: rgba(232, 230, 240, 0.3);
+    --font-display: 'Instrument Serif', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --accent: #e8257c;
+    --accent-soft: rgba(232, 37, 124, 0.15);
+    --accent-glow: rgba(232, 37, 124, 0.3);
+    --accent-secondary: #ff5a9e;
+    --accent-tertiary: #b81d65;
+    --grid-color: rgba(255, 255, 255, 0.05);
+    --grid-axis: rgba(255, 255, 255, 0.15);
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  }
+
+  html {
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    min-height: 100vh;
+    overflow-x: hidden;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% -10%, rgba(232, 37, 124, 0.05) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 50%, rgba(232, 37, 124, 0.03) 0%, transparent 50%),
+      radial-gradient(ellipse 50% 50% at 20% 80%, rgba(255, 90, 158, 0.02) 0%, transparent 50%),
+      var(--bg-deep);
+  }
+
+  #root { min-height: 100vh; }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.3;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 256px;
+  }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.14); }
+
+  ::selection {
+    background: rgba(232, 37, 124, 0.3);
+    color: #fff;
+  }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulseGlow {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  @keyframes heroGradient {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+  @keyframes drawCircle {
+    from { stroke-dashoffset: 628; }
+    to { stroke-dashoffset: 0; }
+  }
+  @keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.85); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-30px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes slideInRight {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  canvas { display: block; }
+  button { cursor: pointer; }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+/* ================================================================
+   CONSTANTS & HELPERS
+   ================================================================ */
+const TOTAL_STEPS = 7;
+const LESSON_ID = 9;
+
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+function lerp(a, b, t) { return a + (b - a) * t; }
+function dist(x1, y1, x2, y2) { return Math.sqrt((x2-x1)**2 + (y2-y1)**2); }
+function roundTo(v, d=2) { return Math.round(v * 10**d) / 10**d; }
+
+/* Convert between grid coords and canvas pixels */
+function gridToCanvas(gx, gy, origin, scale) {
+  return [origin.x + gx * scale, origin.y - gy * scale];
+}
+function canvasToGrid(cx, cy, origin, scale) {
+  return [(cx - origin.x) / scale, (origin.y - cy) / scale];
+}
+
+/* ================================================================
+   COORDINATE PLANE CANVAS (reusable)
+   ================================================================ */
+function useCanvasSetup(canvasRef, width, height) {
+  useEffect(() => {
+    const c = canvasRef.current;
+    if (!c) return;
+    const dpr = window.devicePixelRatio || 1;
+    c.width = width * dpr;
+    c.height = height * dpr;
+    c.style.width = width + 'px';
+    c.style.height = height + 'px';
+    const ctx = c.getContext('2d');
+    ctx.scale(dpr, dpr);
+  }, [width, height]);
+}
+
+function drawGrid(ctx, w, h, origin, scale, opts = {}) {
+  const { rangeX = 10, rangeY = 8, showLabels = true } = opts;
+  ctx.clearRect(0, 0, w, h);
+
+  /* grid lines */
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  for (let i = -rangeX; i <= rangeX; i++) {
+    const x = origin.x + i * scale;
+    if (x < 0 || x > w) continue;
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, h);
+    ctx.stroke();
+  }
+  for (let i = -rangeY; i <= rangeY; i++) {
+    const y = origin.y - i * scale;
+    if (y < 0 || y > h) continue;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(w, y);
+    ctx.stroke();
+  }
+
+  /* axes */
+  ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(0, origin.y);
+  ctx.lineTo(w, origin.y);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(origin.x, 0);
+  ctx.lineTo(origin.x, h);
+  ctx.stroke();
+
+  if (showLabels) {
+    ctx.font = '11px "JetBrains Mono", monospace';
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    for (let i = -rangeX; i <= rangeX; i++) {
+      if (i === 0) continue;
+      const x = origin.x + i * scale;
+      if (x < 10 || x > w - 10) continue;
+      ctx.fillText(i, x, origin.y + 6);
+    }
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for (let i = -rangeY; i <= rangeY; i++) {
+      if (i === 0) continue;
+      const y = origin.y - i * scale;
+      if (y < 10 || y > h - 10) continue;
+      ctx.fillText(i, origin.x - 8, y);
+    }
+    ctx.fillText('0', origin.x - 8, origin.y + 6);
+  }
+
+  /* axis arrows */
+  ctx.fillStyle = 'rgba(255,255,255,0.18)';
+  /* x arrow */
+  ctx.beginPath();
+  ctx.moveTo(w - 2, origin.y);
+  ctx.lineTo(w - 10, origin.y - 4);
+  ctx.lineTo(w - 10, origin.y + 4);
+  ctx.fill();
+  /* y arrow */
+  ctx.beginPath();
+  ctx.moveTo(origin.x, 2);
+  ctx.lineTo(origin.x - 4, 10);
+  ctx.lineTo(origin.x + 4, 10);
+  ctx.fill();
+
+  /* labels */
+  ctx.font = '13px "DM Sans", sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'bottom';
+  ctx.fillText('x', w - 16, origin.y - 8);
+  ctx.fillText('y', origin.x + 10, 18);
+}
+
+function drawPoint(ctx, cx, cy, r, color, label, labelOffset) {
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r + 4, 0, Math.PI * 2);
+  ctx.strokeStyle = color.replace(/[\d.]+\)$/, '0.25)');
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  if (label) {
+    const ox = labelOffset ? labelOffset[0] : 12;
+    const oy = labelOffset ? labelOffset[1] : -12;
+    ctx.font = '13px "JetBrains Mono", monospace';
+    ctx.fillStyle = color;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(label, cx + ox, cy + oy);
+  }
+}
+
+/* Drag hook for canvas points */
+function useDrag(canvasRef, points, setPoints, origin, scale, canvasW, canvasH, gridClamp = 9) {
+  const dragging = useRef(null);
+
+  const getMousePos = useCallback((e) => {
+    const c = canvasRef.current;
+    if (!c) return [0, 0];
+    const rect = c.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return [clientX - rect.left, clientY - rect.top];
+  }, []);
+
+  const onDown = useCallback((e) => {
+    e.preventDefault();
+    const [mx, my] = getMousePos(e);
+    for (let i = 0; i < points.length; i++) {
+      const [px, py] = gridToCanvas(points[i][0], points[i][1], origin, scale);
+      if (dist(mx, my, px, py) < 20) {
+        dragging.current = i;
+        return;
+      }
+    }
+  }, [points, origin, scale]);
+
+  const onMove = useCallback((e) => {
+    if (dragging.current === null) return;
+    e.preventDefault();
+    const [mx, my] = getMousePos(e);
+    const [gx, gy] = canvasToGrid(mx, my, origin, scale);
+    const clamped = [
+      clamp(Math.round(gx * 2) / 2, -gridClamp, gridClamp),
+      clamp(Math.round(gy * 2) / 2, -gridClamp, gridClamp),
+    ];
+    setPoints(prev => {
+      const next = [...prev];
+      next[dragging.current] = clamped;
+      return next;
+    });
+  }, [origin, scale, gridClamp]);
+
+  const onUp = useCallback(() => { dragging.current = null; }, []);
+
+  useEffect(() => {
+    const c = canvasRef.current;
+    if (!c) return;
+    c.addEventListener('mousedown', onDown);
+    c.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    c.addEventListener('touchstart', onDown, { passive: false });
+    c.addEventListener('touchmove', onMove, { passive: false });
+    window.addEventListener('touchend', onUp);
+    return () => {
+      c.removeEventListener('mousedown', onDown);
+      c.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      c.removeEventListener('touchstart', onDown);
+      c.removeEventListener('touchmove', onMove);
+      window.removeEventListener('touchend', onUp);
+    };
+  }, [onDown, onMove, onUp]);
+
+  return dragging;
+}
+
+/* ================================================================
+   RESPONSIVE CANVAS SIZE HOOK
+   ================================================================ */
+function useCanvasSize(maxW = 600, maxH = 450) {
+  const containerRef = useRef(null);
+  const [size, setSize] = useState({ w: maxW, h: maxH });
+  useEffect(() => {
+    function measure() {
+      if (!containerRef.current) return;
+      const cw = containerRef.current.offsetWidth;
+      const w = Math.min(cw, maxW);
+      const h = Math.min(Math.round(w * (maxH / maxW)), maxH);
+      setSize({ w, h });
+    }
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [maxW, maxH]);
+  return [containerRef, size];
+}
+
+/* ================================================================
+   STEP 1: LANDING
+   ================================================================ */
+function LandingStep({ onNext }) {
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      justifyContent: 'center', minHeight: '70vh', textAlign: 'center',
+      padding: '40px 20px',
+      animation: 'fadeIn 0.8s var(--ease-out-expo) both',
+    }}>
+      {/* Decorative coordinate plane SVG */}
+      <div style={{
+        position: 'relative', width: 280, height: 280, marginBottom: 48,
+        animation: 'scaleIn 1s var(--ease-out-expo) 0.2s both',
+      }}>
+        <svg width="280" height="280" viewBox="0 0 280 280" fill="none" style={{ position: 'absolute', inset: 0 }}>
+          {/* Grid */}
+          {Array.from({ length: 11 }, (_, i) => (
+            <React.Fragment key={i}>
+              <line x1={i * 28} y1="0" x2={i * 28} y2="280" stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
+              <line x1="0" y1={i * 28} x2="280" y2={i * 28} stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
+            </React.Fragment>
+          ))}
+          {/* Axes */}
+          <line x1="140" y1="0" x2="140" y2="280" stroke="rgba(255,255,255,0.12)" strokeWidth="1.5" />
+          <line x1="0" y1="140" x2="280" y2="140" stroke="rgba(255,255,255,0.12)" strokeWidth="1.5" />
+
+          {/* Triangle */}
+          <line x1="56" y1="196" x2="224" y2="56" stroke="var(--accent)" strokeWidth="2" strokeDasharray="6 3" opacity="0.5" />
+          <line x1="56" y1="196" x2="224" y2="196" stroke="rgba(100,200,255,0.4)" strokeWidth="1.5" />
+          <line x1="224" y1="196" x2="224" y2="56" stroke="rgba(100,200,255,0.4)" strokeWidth="1.5" />
+
+          {/* Circle */}
+          <circle cx="140" cy="120" r="55" stroke="rgba(255,90,158,0.35)" strokeWidth="1.5" fill="none" strokeDasharray="4 3" />
+
+          {/* Points */}
+          <circle cx="56" cy="196" r="5" fill="var(--accent)" />
+          <circle cx="224" cy="56" r="5" fill="var(--accent)" />
+          <circle cx="140" cy="120" r="4" fill="rgba(255,90,158,0.7)" />
+
+          {/* Midpoint */}
+          <circle cx="140" cy="126" r="3" fill="rgba(100,200,255,0.6)" />
+
+          {/* Distance label */}
+          <text x="125" y="108" fill="rgba(232,37,124,0.5)" fontFamily="'JetBrains Mono', monospace" fontSize="10">d</text>
+        </svg>
+        {/* Glow behind */}
+        <div style={{
+          position: 'absolute', inset: -40,
+          background: 'radial-gradient(circle, rgba(232,37,124,0.08) 0%, transparent 70%)',
+          borderRadius: '50%', pointerEvents: 'none',
+        }} />
+      </div>
+
+      {/* Tag */}
+      <div style={{
+        display: 'inline-flex', alignItems: 'center', gap: 8,
+        padding: '6px 16px', borderRadius: 100,
+        border: '1px solid var(--border-subtle)',
+        background: 'rgba(255,255,255,0.02)',
+        fontFamily: 'var(--font-mono)', fontSize: 12,
+        letterSpacing: '0.08em', textTransform: 'uppercase',
+        color: 'var(--text-secondary)', marginBottom: 28,
+        animation: 'slideDown 0.8s var(--ease-out-expo) 0.3s both',
+      }}>
+        <span style={{
+          width: 6, height: 6, borderRadius: '50%',
+          background: 'var(--accent)',
+          boxShadow: '0 0 8px var(--accent)',
+          animation: 'pulseGlow 2s ease-in-out infinite',
+        }} />
+        Lesson 09
+      </div>
+
+      <h1 style={{
+        fontFamily: 'var(--font-display)', fontSize: 'clamp(44px, 8vw, 72px)',
+        fontWeight: 400, lineHeight: 1.05, letterSpacing: '-0.02em',
+        marginBottom: 20,
+        animation: 'fadeInUp 1s var(--ease-out-expo) 0.4s both',
+      }}>
+        <span style={{
+          background: 'linear-gradient(135deg, #e8e6f0 0%, rgba(232,230,240,0.6) 100%)',
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+        }}>Coordinate</span>
+        {' '}
+        <span style={{
+          fontStyle: 'italic',
+          background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 50%, #ff8ec4 100%)',
+          backgroundSize: '200% 100%',
+          animation: 'heroGradient 8s ease infinite',
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+        }}>Geometry</span>
+      </h1>
+
+      <p style={{
+        fontFamily: 'var(--font-body)', fontSize: 'clamp(15px, 2vw, 18px)',
+        fontWeight: 300, color: 'var(--text-secondary)',
+        maxWidth: 460, margin: '0 auto 40px', lineHeight: 1.7,
+        animation: 'fadeInUp 1s var(--ease-out-expo) 0.55s both',
+      }}>
+        Navigate the plane with precision. Discover the distance formula,
+        midpoints, line equations, and circles through interactive exploration.
+      </p>
+
+      <button onClick={onNext} style={{
+        fontFamily: 'var(--font-body)', fontSize: 16, fontWeight: 500,
+        color: '#fff', background: 'linear-gradient(135deg, var(--accent), var(--accent-secondary))',
+        border: 'none', borderRadius: 12, padding: '14px 44px',
+        boxShadow: '0 4px 24px rgba(232,37,124,0.25)',
+        transition: 'all 0.3s var(--ease-out-expo)',
+        animation: 'fadeInUp 1s var(--ease-out-expo) 0.7s both',
+      }}
+        onMouseEnter={e => { e.target.style.transform = 'translateY(-2px)'; e.target.style.boxShadow = '0 8px 32px rgba(232,37,124,0.35)'; }}
+        onMouseLeave={e => { e.target.style.transform = 'translateY(0)'; e.target.style.boxShadow = '0 4px 24px rgba(232,37,124,0.25)'; }}
+      >
+        Begin Lesson
+      </button>
+    </div>
+  );
+}
+
+/* ================================================================
+   STEP 2: DISTANCE FORMULA
+   ================================================================ */
+function DistanceStep() {
+  const [containerRef, { w: CW, h: CH }] = useCanvasSize(600, 440);
+  const canvasRef = useRef(null);
+  const [points, setPoints] = useState([[2, 1], [7, 5]]);
+  const origin = useMemo(() => ({ x: CW * 0.15, y: CH * 0.82 }), [CW, CH]);
+  const scale = useMemo(() => Math.min(CW, CH) / 12, [CW, CH]);
+
+  useCanvasSetup(canvasRef, CW, CH);
+  useDrag(canvasRef, points, setPoints, origin, scale, CW, CH, 9);
+
+  const [p1, p2] = points;
+  const dx = p2[0] - p1[0];
+  const dy = p2[1] - p1[1];
+  const distance = Math.sqrt(dx * dx + dy * dy);
+
+  useEffect(() => {
+    const c = canvasRef.current;
+    if (!c) return;
+    const ctx = c.getContext('2d');
+    drawGrid(ctx, CW, CH, origin, scale);
+
+    const [x1c, y1c] = gridToCanvas(p1[0], p1[1], origin, scale);
+    const [x2c, y2c] = gridToCanvas(p2[0], p2[1], origin, scale);
+    const [cornerX, cornerY] = gridToCanvas(p2[0], p1[1], origin, scale);
+
+    /* Right triangle fill */
+    ctx.beginPath();
+    ctx.moveTo(x1c, y1c);
+    ctx.lineTo(cornerX, cornerY);
+    ctx.lineTo(x2c, y2c);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(232, 37, 124, 0.05)';
+    ctx.fill();
+
+    /* Horizontal leg (dx) */
+    ctx.beginPath();
+    ctx.moveTo(x1c, y1c);
+    ctx.lineTo(cornerX, cornerY);
+    ctx.strokeStyle = 'rgba(100, 200, 255, 0.6)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 4]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    /* Label dx */
+    ctx.font = '12px "JetBrains Mono", monospace';
+    ctx.fillStyle = 'rgba(100, 200, 255, 0.8)';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(`dx = ${roundTo(Math.abs(dx), 1)}`, (x1c + cornerX) / 2, y1c + 10);
+
+    /* Vertical leg (dy) */
+    ctx.beginPath();
+    ctx.moveTo(cornerX, cornerY);
+    ctx.lineTo(x2c, y2c);
+    ctx.strokeStyle = 'rgba(160, 120, 255, 0.6)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 4]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    /* Label dy */
+    ctx.fillStyle = 'rgba(160, 120, 255, 0.8)';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`dy = ${roundTo(Math.abs(dy), 1)}`, cornerX + 10, (cornerY + y2c) / 2);
+
+    /* Hypotenuse */
+    ctx.beginPath();
+    ctx.moveTo(x1c, y1c);
+    ctx.lineTo(x2c, y2c);
+    ctx.strokeStyle = 'var(--accent)';
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([]);
+    ctx.stroke();
+
+    /* Distance label on hypotenuse */
+    const mx = (x1c + x2c) / 2;
+    const my = (y1c + y2c) / 2;
+    ctx.font = 'bold 13px "JetBrains Mono", monospace';
+    ctx.fillStyle = 'var(--accent)';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(`d = ${roundTo(distance, 2)}`, mx, my - 10);
+
+    /* Right angle marker */
+    const markSize = 10;
+    ctx.beginPath();
+    ctx.moveTo(cornerX - markSize, cornerY);
+    ctx.lineTo(cornerX - markSize, cornerY - (dy >= 0 ? markSize : -markSize));
+    ctx.lineTo(cornerX, cornerY - (dy >= 0 ? markSize : -markSize));
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    /* Points */
+    drawPoint(ctx, x1c, y1c, 6, 'rgba(100, 200, 255, 1)', `(${p1[0]}, ${p1[1]})`, [-8, -16]);
+    drawPoint(ctx, x2c, y2c, 6, 'rgba(255, 90, 158, 1)', `(${p2[0]}, ${p2[1]})`, [12, -6]);
+  }, [points, CW, CH, origin, scale]);
+
+  return (
+    <div style={{ animation: 'fadeIn 0.6s var(--ease-out-expo) both' }}>
+      <StepHeader
+        number="01"
+        title="The Distance Formula"
+        subtitle="Derived directly from the Pythagorean theorem"
+      />
+      <div ref={containerRef} style={{ maxWidth: 600, margin: '0 auto 24px' }}>
+        <canvas ref={canvasRef} style={{
+          borderRadius: 12, border: '1px solid var(--border-subtle)',
+          background: 'rgba(0,0,0,0.3)', cursor: 'grab', width: '100%',
+        }} />
+      </div>
+      <p style={{
+        fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-secondary)',
+        textAlign: 'center', marginBottom: 20, fontWeight: 300,
+      }}>
+        Drag the points to explore. The right triangle shows how distance connects to the Pythagorean theorem.
+      </p>
+      <FormulaCard>
+        <span style={{ color: 'var(--accent)' }}>d</span>
+        {' = '}
+        <span style={{ fontSize: '1.1em' }}>&radic;</span>
+        <span style={{ borderTop: '1.5px solid var(--text-primary)', paddingTop: 2 }}>
+          (x<sub>2</sub> - x<sub>1</sub>)<sup>2</sup> + (y<sub>2</sub> - y<sub>1</sub>)<sup>2</sup>
+        </span>
+      </FormulaCard>
+      <div style={{
+        maxWidth: 520, margin: '0 auto', padding: '0 16px',
+      }}>
+        <InfoBlock title="Connection to Pythagoras">
+          The distance between two points is the <em>hypotenuse</em> of a right triangle.
+          The horizontal distance |x<sub>2</sub> - x<sub>1</sub>| and vertical distance |y<sub>2</sub> - y<sub>1</sub>| are the two legs.
+          By the Pythagorean theorem: a<sup>2</sup> + b<sup>2</sup> = c<sup>2</sup>, so d<sup>2</sup> = dx<sup>2</sup> + dy<sup>2</sup>.
+        </InfoBlock>
+        <div style={{
+          background: 'rgba(255,255,255,0.02)', borderRadius: 10,
+          border: '1px solid var(--border-subtle)', padding: '16px 20px',
+          fontFamily: 'var(--font-mono)', fontSize: 13, lineHeight: 1.8,
+          color: 'var(--text-secondary)', marginTop: 16,
+        }}>
+          <div>dx = {p2[0]} - {p1[0]} = <span style={{ color: 'rgba(100,200,255,0.9)' }}>{roundTo(dx, 1)}</span></div>
+          <div>dy = {p2[1]} - {p1[1]} = <span style={{ color: 'rgba(160,120,255,0.9)' }}>{roundTo(dy, 1)}</span></div>
+          <div>d = sqrt({roundTo(dx, 1)}<sup>2</sup> + {roundTo(dy, 1)}<sup>2</sup>) = sqrt({roundTo(dx*dx, 1)} + {roundTo(dy*dy, 1)}) = <span style={{ color: 'var(--accent)', fontWeight: 500 }}>{roundTo(distance, 3)}</span></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   STEP 3: MIDPOINT
+   ================================================================ */
+function MidpointStep() {
+  const [containerRef, { w: CW, h: CH }] = useCanvasSize(600, 440);
+  const canvasRef = useRef(null);
+  const [points, setPoints] = useState([[-3, -2], [5, 4]]);
+  const origin = useMemo(() => ({ x: CW * 0.45, y: CH * 0.55 }), [CW, CH]);
+  const scale = useMemo(() => Math.min(CW, CH) / 13, [CW, CH]);
+
+  useCanvasSetup(canvasRef, CW, CH);
+  useDrag(canvasRef, points, setPoints, origin, scale, CW, CH, 8);
+
+  const [p1, p2] = points;
+  const mid = [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2];
+
+  useEffect(() => {
+    const c = canvasRef.current;
+    if (!c) return;
+    const ctx = c.getContext('2d');
+    drawGrid(ctx, CW, CH, origin, scale, { rangeX: 9, rangeY: 7 });
+
+    const [x1c, y1c] = gridToCanvas(p1[0], p1[1], origin, scale);
+    const [x2c, y2c] = gridToCanvas(p2[0], p2[1], origin, scale);
+    const [mxc, myc] = gridToCanvas(mid[0], mid[1], origin, scale);
+
+    /* Segment */
+    ctx.beginPath();
+    ctx.moveTo(x1c, y1c);
+    ctx.lineTo(x2c, y2c);
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    /* Half segments colored */
+    ctx.beginPath();
+    ctx.moveTo(x1c, y1c);
+    ctx.lineTo(mxc, myc);
+    ctx.strokeStyle = 'rgba(100, 200, 255, 0.5)';
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([6, 4]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.beginPath();
+    ctx.moveTo(mxc, myc);
+    ctx.lineTo(x2c, y2c);
+    ctx.strokeStyle = 'rgba(255, 90, 158, 0.5)';
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([6, 4]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    /* Equal distance labels */
+    const d1 = dist(p1[0], p1[1], mid[0], mid[1]);
+    const d2 = dist(mid[0], mid[1], p2[0], p2[1]);
+    ctx.font = '11px "JetBrains Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillStyle = 'rgba(100,200,255,0.6)';
+    ctx.fillText(`d = ${roundTo(d1, 2)}`, (x1c + mxc) / 2, (y1c + myc) / 2 - 8);
+    ctx.fillStyle = 'rgba(255,90,158,0.6)';
+    ctx.fillText(`d = ${roundTo(d2, 2)}`, (mxc + x2c) / 2, (myc + y2c) / 2 - 8);
+
+    /* Midpoint */
+    ctx.beginPath();
+    ctx.arc(mxc, myc, 8, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(160, 230, 80, 0.15)';
+    ctx.fill();
+    drawPoint(ctx, mxc, myc, 5, 'rgba(160, 230, 80, 1)', `M(${roundTo(mid[0],1)}, ${roundTo(mid[1],1)})`, [12, -10]);
+
+    /* Endpoints */
+    drawPoint(ctx, x1c, y1c, 6, 'rgba(100, 200, 255, 1)', `A(${p1[0]}, ${p1[1]})`, [-80, -12]);
+    drawPoint(ctx, x2c, y2c, 6, 'rgba(255, 90, 158, 1)', `B(${p2[0]}, ${p2[1]})`, [12, -6]);
+  }, [points, CW, CH, origin, scale]);
+
+  return (
+    <div style={{ animation: 'fadeIn 0.6s var(--ease-out-expo) both' }}>
+      <StepHeader number="02" title="The Midpoint Formula" subtitle="The balance point of a segment" />
+      <div ref={containerRef} style={{ maxWidth: 600, margin: '0 auto 24px' }}>
+        <canvas ref={canvasRef} style={{
+          borderRadius: 12, border: '1px solid var(--border-subtle)',
+          background: 'rgba(0,0,0,0.3)', cursor: 'grab', width: '100%',
+        }} />
+      </div>
+      <p style={{
+        fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-secondary)',
+        textAlign: 'center', marginBottom: 20, fontWeight: 300,
+      }}>
+        Drag the endpoints. The midpoint always stays exactly halfway.
+      </p>
+      <FormulaCard>
+        <span style={{ color: 'rgba(160,230,80,1)' }}>M</span>
+        {' = '}
+        <span>(</span>
+        <span style={{ borderBottom: '1.5px solid var(--text-secondary)' }}>
+          x<sub>1</sub> + x<sub>2</sub>
+        </span>
+        <span>/2, </span>
+        <span style={{ borderBottom: '1.5px solid var(--text-secondary)' }}>
+          y<sub>1</sub> + y<sub>2</sub>
+        </span>
+        <span>/2)</span>
+      </FormulaCard>
+      <div style={{ maxWidth: 520, margin: '0 auto', padding: '0 16px' }}>
+        <InfoBlock title="The average of coordinates">
+          The midpoint is simply the <em>average</em> of the x-coordinates and the <em>average</em> of the y-coordinates.
+          Think of it as the "balance point" where the segment would perfectly balance on a pin.
+        </InfoBlock>
+        <div style={{
+          background: 'rgba(255,255,255,0.02)', borderRadius: 10,
+          border: '1px solid var(--border-subtle)', padding: '16px 20px',
+          fontFamily: 'var(--font-mono)', fontSize: 13, lineHeight: 1.8,
+          color: 'var(--text-secondary)', marginTop: 16,
+        }}>
+          <div>M<sub>x</sub> = ({p1[0]} + {p2[0]}) / 2 = <span style={{ color: 'rgba(160,230,80,0.9)' }}>{roundTo(mid[0], 1)}</span></div>
+          <div>M<sub>y</sub> = ({p1[1]} + {p2[1]}) / 2 = <span style={{ color: 'rgba(160,230,80,0.9)' }}>{roundTo(mid[1], 1)}</span></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   STEP 4: EQUATION OF A LINE
+   ================================================================ */
+function LineEquationStep() {
+  const [containerRef, { w: CW, h: CH }] = useCanvasSize(600, 440);
+  const canvasRef = useRef(null);
+  const [points, setPoints] = useState([[1, 1], [5, 4]]);
+  const origin = useMemo(() => ({ x: CW * 0.3, y: CH * 0.7 }), [CW, CH]);
+  const scale = useMemo(() => Math.min(CW, CH) / 12, [CW, CH]);
+
+  useCanvasSetup(canvasRef, CW, CH);
+  useDrag(canvasRef, points, setPoints, origin, scale, CW, CH, 9);
+
+  const [p1, p2] = points;
+  const dx = p2[0] - p1[0];
+  const dy = p2[1] - p1[1];
+  const slopeNum = dx !== 0 ? dy / dx : Infinity;
+  const b = dx !== 0 ? p1[1] - slopeNum * p1[0] : NaN;
+  const isVertical = Math.abs(dx) < 0.01;
+
+  useEffect(() => {
+    const c = canvasRef.current;
+    if (!c) return;
+    const ctx = c.getContext('2d');
+    drawGrid(ctx, CW, CH, origin, scale);
+
+    /* Extended line */
+    if (!isVertical) {
+      const xMin = -12, xMax = 12;
+      const [lx1, ly1] = gridToCanvas(xMin, slopeNum * xMin + b, origin, scale);
+      const [lx2, ly2] = gridToCanvas(xMax, slopeNum * xMax + b, origin, scale);
+      ctx.beginPath();
+      ctx.moveTo(lx1, ly1);
+      ctx.lineTo(lx2, ly2);
+      ctx.strokeStyle = 'rgba(232, 37, 124, 0.35)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    } else {
+      const [lx, _] = gridToCanvas(p1[0], 0, origin, scale);
+      ctx.beginPath();
+      ctx.moveTo(lx, 0);
+      ctx.lineTo(lx, CH);
+      ctx.strokeStyle = 'rgba(232, 37, 124, 0.35)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    /* Rise/Run triangle */
+    if (!isVertical) {
+      const [x1c, y1c] = gridToCanvas(p1[0], p1[1], origin, scale);
+      const [x2c, y2c] = gridToCanvas(p2[0], p2[1], origin, scale);
+      const [cx, cy] = gridToCanvas(p2[0], p1[1], origin, scale);
+
+      ctx.beginPath();
+      ctx.moveTo(x1c, y1c);
+      ctx.lineTo(cx, cy);
+      ctx.lineTo(x2c, y2c);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(232,37,124,0.04)';
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(x1c, y1c);
+      ctx.lineTo(cx, cy);
+      ctx.strokeStyle = 'rgba(100,200,255,0.5)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 3]);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(x2c, y2c);
+      ctx.strokeStyle = 'rgba(160,120,255,0.5)';
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.font = '11px "JetBrains Mono", monospace';
+      ctx.fillStyle = 'rgba(100,200,255,0.7)';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText(`run = ${roundTo(dx, 1)}`, (x1c + cx) / 2, cy + 8);
+
+      ctx.fillStyle = 'rgba(160,120,255,0.7)';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`rise = ${roundTo(dy, 1)}`, cx + 8, (cy + y2c) / 2);
+    }
+
+    /* y-intercept */
+    if (!isVertical) {
+      const [bx, by] = gridToCanvas(0, b, origin, scale);
+      if (by > 0 && by < CH) {
+        drawPoint(ctx, bx, by, 4, 'rgba(255,200,60,0.8)', `b = ${roundTo(b, 2)}`, [10, 6]);
+      }
+    }
+
+    /* Points */
+    const [x1c, y1c] = gridToCanvas(p1[0], p1[1], origin, scale);
+    const [x2c, y2c] = gridToCanvas(p2[0], p2[1], origin, scale);
+    drawPoint(ctx, x1c, y1c, 6, 'rgba(100,200,255,1)', `(${p1[0]}, ${p1[1]})`, [-80, -12]);
+    drawPoint(ctx, x2c, y2c, 6, 'rgba(255,90,158,1)', `(${p2[0]}, ${p2[1]})`, [12, -6]);
+  }, [points, CW, CH, origin, scale]);
+
+  function formatSlope() {
+    if (isVertical) return 'undefined';
+    if (Number.isInteger(slopeNum)) return slopeNum;
+    /* try fraction */
+    const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+    const num = dy, den = dx;
+    if (num === 0) return '0';
+    const g = gcd(Math.abs(num), Math.abs(den));
+    const sn = (num / g), sd = (den / g);
+    if (sd < 0) return `${-sn}/${-sd}`;
+    return `${sn}/${sd}`;
+  }
+
+  return (
+    <div style={{ animation: 'fadeIn 0.6s var(--ease-out-expo) both' }}>
+      <StepHeader number="03" title="Equation of a Line" subtitle="From two points to slope-intercept form" />
+      <div ref={containerRef} style={{ maxWidth: 600, margin: '0 auto 24px' }}>
+        <canvas ref={canvasRef} style={{
+          borderRadius: 12, border: '1px solid var(--border-subtle)',
+          background: 'rgba(0,0,0,0.3)', cursor: 'grab', width: '100%',
+        }} />
+      </div>
+      <p style={{
+        fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-secondary)',
+        textAlign: 'center', marginBottom: 20, fontWeight: 300,
+      }}>
+        Drag the two points. The line equation and slope update in real-time.
+      </p>
+      <FormulaCard>
+        <span style={{ color: 'rgba(160,120,255,0.9)' }}>y</span>
+        {' = '}
+        <span style={{ color: 'var(--accent)' }}>m</span>x + <span style={{ color: 'rgba(255,200,60,0.9)' }}>b</span>
+      </FormulaCard>
+      <div style={{ maxWidth: 520, margin: '0 auto', padding: '0 16px' }}>
+        <div style={{
+          background: 'rgba(255,255,255,0.02)', borderRadius: 10,
+          border: '1px solid var(--border-subtle)', padding: '16px 20px',
+          fontFamily: 'var(--font-mono)', fontSize: 13, lineHeight: 2,
+          color: 'var(--text-secondary)', marginTop: 0,
+        }}>
+          <div>m = rise / run = {roundTo(dy, 1)} / {roundTo(dx, 1)} = <span style={{ color: 'var(--accent)' }}>{formatSlope()}</span></div>
+          {!isVertical && <div>b = y<sub>1</sub> - m * x<sub>1</sub> = {p1[1]} - {roundTo(slopeNum, 2)} * {p1[0]} = <span style={{ color: 'rgba(255,200,60,0.9)' }}>{roundTo(b, 2)}</span></div>}
+          <div style={{ marginTop: 8, fontSize: 15, color: 'var(--text-primary)' }}>
+            {isVertical
+              ? <>x = {p1[0]}</>
+              : <>y = {roundTo(slopeNum, 2)}x {b >= 0 ? '+' : '-'} {roundTo(Math.abs(b), 2)}</>
+            }
+          </div>
+        </div>
+        <InfoBlock title="Point-slope form">
+          Given a point (x<sub>1</sub>, y<sub>1</sub>) and slope m, the line equation is:
+          y - y<sub>1</sub> = m(x - x<sub>1</sub>). This is especially useful when you know a point and a slope
+          but not the y-intercept.
+        </InfoBlock>
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   STEP 5: PARALLEL & PERPENDICULAR LINES
+   ================================================================ */
+function ParallelPerpStep() {
+  const [containerRef, { w: CW, h: CH }] = useCanvasSize(600, 440);
+  const canvasRef = useRef(null);
+  const [mode, setMode] = useState('parallel'); // 'parallel' or 'perpendicular'
+  const [slope, setSlope] = useState(0.75);
+  const [offset, setOffset] = useState(2);
+  const origin = useMemo(() => ({ x: CW * 0.45, y: CH * 0.5 }), [CW, CH]);
+  const scale = useMemo(() => Math.min(CW, CH) / 14, [CW, CH]);
+
+  useCanvasSetup(canvasRef, CW, CH);
+
+  useEffect(() => {
+    const c = canvasRef.current;
+    if (!c) return;
+    const ctx = c.getContext('2d');
+    drawGrid(ctx, CW, CH, origin, scale, { rangeX: 9, rangeY: 7 });
+
+    const xMin = -12, xMax = 12;
+
+    /* Line 1: y = mx + 0 */
+    const [l1x1, l1y1] = gridToCanvas(xMin, slope * xMin, origin, scale);
+    const [l1x2, l1y2] = gridToCanvas(xMax, slope * xMax, origin, scale);
+    ctx.beginPath();
+    ctx.moveTo(l1x1, l1y1);
+    ctx.lineTo(l1x2, l1y2);
+    ctx.strokeStyle = 'rgba(100,200,255,0.7)';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    /* Label line 1 */
+    ctx.font = '12px "JetBrains Mono", monospace';
+    ctx.fillStyle = 'rgba(100,200,255,0.8)';
+    ctx.textAlign = 'left';
+    const [lbl1x, lbl1y] = gridToCanvas(3, slope * 3 + 0.5, origin, scale);
+    ctx.fillText(`L1: y = ${roundTo(slope, 2)}x`, lbl1x, lbl1y);
+
+    if (mode === 'parallel') {
+      /* Line 2: y = mx + offset (same slope) */
+      const [l2x1, l2y1] = gridToCanvas(xMin, slope * xMin + offset, origin, scale);
+      const [l2x2, l2y2] = gridToCanvas(xMax, slope * xMax + offset, origin, scale);
+      ctx.beginPath();
+      ctx.moveTo(l2x1, l2y1);
+      ctx.lineTo(l2x2, l2y2);
+      ctx.strokeStyle = 'rgba(255,90,158,0.7)';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      /* Distance markers */
+      ctx.setLineDash([3, 3]);
+      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+      ctx.lineWidth = 1;
+      for (let gx = -4; gx <= 4; gx += 4) {
+        const [ax, ay] = gridToCanvas(gx, slope * gx, origin, scale);
+        const [bx, by] = gridToCanvas(gx, slope * gx + offset, origin, scale);
+        ctx.beginPath();
+        ctx.moveTo(ax, ay);
+        ctx.lineTo(bx, by);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
+
+      const [lbl2x, lbl2y] = gridToCanvas(3, slope * 3 + offset + 0.5, origin, scale);
+      ctx.fillStyle = 'rgba(255,90,158,0.8)';
+      ctx.fillText(`L2: y = ${roundTo(slope, 2)}x + ${roundTo(offset, 1)}`, lbl2x, lbl2y);
+
+      /* m1 = m2 label */
+      ctx.font = '14px "DM Sans", sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.textAlign = 'center';
+      ctx.fillText('m1 = m2  (same slope)', CW / 2, CH - 20);
+    } else {
+      /* Perpendicular: slope2 = -1/slope */
+      const perpSlope = -1 / slope;
+      const [l2x1, l2y1] = gridToCanvas(xMin, perpSlope * xMin + offset, origin, scale);
+      const [l2x2, l2y2] = gridToCanvas(xMax, perpSlope * xMax + offset, origin, scale);
+      ctx.beginPath();
+      ctx.moveTo(l2x1, l2y1);
+      ctx.lineTo(l2x2, l2y2);
+      ctx.strokeStyle = 'rgba(255,90,158,0.7)';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      /* 90 degree marker at intersection */
+      /* Find intersection: mx = perpSlope*x + offset => x(m - perpSlope) = offset => x = offset / (slope - perpSlope) */
+      const ix = offset / (slope - perpSlope);
+      const iy = slope * ix;
+      const [ixc, iyc] = gridToCanvas(ix, iy, origin, scale);
+
+      /* Draw angle arc */
+      const angle1 = Math.atan2(-slope, 1); /* negative because canvas y is flipped */
+      const arcR = 18;
+      ctx.beginPath();
+      ctx.arc(ixc, iyc, arcR, -Math.atan(slope), -Math.atan(perpSlope), slope > 0);
+      ctx.strokeStyle = 'rgba(160,230,80,0.6)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.font = '11px "JetBrains Mono", monospace';
+      ctx.fillStyle = 'rgba(160,230,80,0.7)';
+      ctx.textAlign = 'center';
+      ctx.fillText('90\u00b0', ixc + 22, iyc - 12);
+
+      drawPoint(ctx, ixc, iyc, 4, 'rgba(160,230,80,0.8)', '', null);
+
+      const [lbl2x, lbl2y] = gridToCanvas(-3, perpSlope * -3 + offset + 0.5, origin, scale);
+      ctx.fillStyle = 'rgba(255,90,158,0.8)';
+      ctx.font = '12px "JetBrains Mono", monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText(`L2: y = ${roundTo(perpSlope, 2)}x + ${roundTo(offset, 1)}`, lbl2x, lbl2y);
+
+      ctx.font = '14px "DM Sans", sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.textAlign = 'center';
+      ctx.fillText(`m1 \u00b7 m2 = ${roundTo(slope, 2)} \u00b7 ${roundTo(perpSlope, 2)} = ${roundTo(slope * perpSlope, 1)}`, CW / 2, CH - 20);
+    }
+  }, [slope, offset, mode, CW, CH, origin, scale]);
+
+  return (
+    <div style={{ animation: 'fadeIn 0.6s var(--ease-out-expo) both' }}>
+      <StepHeader number="04" title="Parallel & Perpendicular" subtitle="Slope relationships between lines" />
+
+      {/* Mode toggle */}
+      <div style={{
+        display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 20,
+      }}>
+        {['parallel', 'perpendicular'].map(m => (
+          <button key={m} onClick={() => setMode(m)} style={{
+            fontFamily: 'var(--font-mono)', fontSize: 12, textTransform: 'uppercase',
+            letterSpacing: '0.06em', padding: '8px 20px', borderRadius: 8,
+            border: `1px solid ${mode === m ? 'var(--accent)' : 'var(--border-subtle)'}`,
+            background: mode === m ? 'var(--accent-soft)' : 'transparent',
+            color: mode === m ? 'var(--accent)' : 'var(--text-secondary)',
+            transition: 'all 0.3s ease',
+          }}>
+            {m}
+          </button>
+        ))}
+      </div>
+
+      <div ref={containerRef} style={{ maxWidth: 600, margin: '0 auto 20px' }}>
+        <canvas ref={canvasRef} style={{
+          borderRadius: 12, border: '1px solid var(--border-subtle)',
+          background: 'rgba(0,0,0,0.3)', width: '100%',
+        }} />
+      </div>
+
+      {/* Sliders */}
+      <div style={{
+        maxWidth: 460, margin: '0 auto 20px', padding: '0 16px',
+        display: 'flex', flexDirection: 'column', gap: 14,
+      }}>
+        <SliderControl label="Slope (m1)" value={slope} min={-3} max={3} step={0.25}
+          onChange={v => setSlope(v)} color="rgba(100,200,255,0.8)" />
+        <SliderControl label={mode === 'parallel' ? 'Offset (b2)' : 'Offset (b2)'} value={offset} min={-5} max={5} step={0.5}
+          onChange={v => setOffset(v)} color="rgba(255,90,158,0.8)" />
+      </div>
+
+      <div style={{ maxWidth: 520, margin: '0 auto', padding: '0 16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <InfoBlock title="Parallel Lines" small>
+            Same slope: m<sub>1</sub> = m<sub>2</sub>. They never intersect and remain equidistant.
+          </InfoBlock>
+          <InfoBlock title="Perpendicular Lines" small>
+            Negative reciprocal: m<sub>1</sub> * m<sub>2</sub> = -1. They form a 90 degree angle.
+          </InfoBlock>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   STEP 6: CIRCLES
+   ================================================================ */
+function CircleStep() {
+  const [containerRef, { w: CW, h: CH }] = useCanvasSize(600, 480);
+  const canvasRef = useRef(null);
+  const [center, setCenter] = useState([1, 1]);
+  const [radius, setRadius] = useState(3);
+  const origin = useMemo(() => ({ x: CW * 0.4, y: CH * 0.55 }), [CW, CH]);
+  const scale = useMemo(() => Math.min(CW, CH) / 14, [CW, CH]);
+  const [showGeneral, setShowGeneral] = useState(false);
+
+  useCanvasSetup(canvasRef, CW, CH);
+
+  /* Allow dragging center */
+  const dragging = useRef(false);
+  const getMousePos = useCallback((e) => {
+    const c = canvasRef.current;
+    if (!c) return [0, 0];
+    const rect = c.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return [clientX - rect.left, clientY - rect.top];
+  }, []);
+
+  useEffect(() => {
+    const c = canvasRef.current;
+    if (!c) return;
+    const onDown = (e) => {
+      e.preventDefault();
+      const [mx, my] = getMousePos(e);
+      const [cx, cy] = gridToCanvas(center[0], center[1], origin, scale);
+      if (dist(mx, my, cx, cy) < 20) { dragging.current = true; }
+    };
+    const onMove = (e) => {
+      if (!dragging.current) return;
+      e.preventDefault();
+      const [mx, my] = getMousePos(e);
+      const [gx, gy] = canvasToGrid(mx, my, origin, scale);
+      setCenter([
+        clamp(Math.round(gx * 2) / 2, -8, 8),
+        clamp(Math.round(gy * 2) / 2, -6, 6),
+      ]);
+    };
+    const onUp = () => { dragging.current = false; };
+    c.addEventListener('mousedown', onDown);
+    c.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    c.addEventListener('touchstart', onDown, { passive: false });
+    c.addEventListener('touchmove', onMove, { passive: false });
+    window.addEventListener('touchend', onUp);
+    return () => {
+      c.removeEventListener('mousedown', onDown);
+      c.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      c.removeEventListener('touchstart', onDown);
+      c.removeEventListener('touchmove', onMove);
+      window.removeEventListener('touchend', onUp);
+    };
+  }, [center, origin, scale, getMousePos]);
+
+  const [h, k] = center;
+  const r = radius;
+  const D = -2 * h;
+  const E = -2 * k;
+  const F = h * h + k * k - r * r;
+
+  useEffect(() => {
+    const c = canvasRef.current;
+    if (!c) return;
+    const ctx = c.getContext('2d');
+    drawGrid(ctx, CW, CH, origin, scale, { rangeX: 9, rangeY: 8 });
+
+    const [cx, cy] = gridToCanvas(h, k, origin, scale);
+    const rPx = r * scale;
+
+    /* Circle glow */
+    const grad = ctx.createRadialGradient(cx, cy, rPx * 0.8, cx, cy, rPx * 1.3);
+    grad.addColorStop(0, 'rgba(232,37,124,0)');
+    grad.addColorStop(0.7, 'rgba(232,37,124,0.03)');
+    grad.addColorStop(1, 'rgba(232,37,124,0)');
+    ctx.beginPath();
+    ctx.arc(cx, cy, rPx * 1.3, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    /* Circle */
+    ctx.beginPath();
+    ctx.arc(cx, cy, rPx, 0, Math.PI * 2);
+    ctx.strokeStyle = 'var(--accent)';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    /* Radius line */
+    const angle = Math.PI / 4;
+    const rx = cx + rPx * Math.cos(angle);
+    const ry = cy - rPx * Math.sin(angle);
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(rx, ry);
+    ctx.strokeStyle = 'rgba(255,200,60,0.6)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 3]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    /* Radius label */
+    ctx.font = '12px "JetBrains Mono", monospace';
+    ctx.fillStyle = 'rgba(255,200,60,0.8)';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(`r = ${r}`, (cx + rx) / 2 + 5, (cy + ry) / 2 - 5);
+
+    /* Point on circle */
+    drawPoint(ctx, rx, ry, 4, 'rgba(255,200,60,0.8)', '', null);
+
+    /* Center */
+    drawPoint(ctx, cx, cy, 5, 'var(--accent)', `(${h}, ${k})`, [12, 14]);
+
+    /* Crosshair at center */
+    ctx.strokeStyle = 'rgba(232,37,124,0.2)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(cx, cy - 12); ctx.lineTo(cx, cy + 12); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx - 12, cy); ctx.lineTo(cx + 12, cy); ctx.stroke();
+    ctx.setLineDash([]);
+  }, [center, radius, CW, CH, origin, scale]);
+
+  function formatTerm(val, varName) {
+    if (val === 0) return varName + '\u00b2';
+    return `(${varName} ${val < 0 ? '+' : '-'} ${Math.abs(val)})\u00b2`;
+  }
+
+  return (
+    <div style={{ animation: 'fadeIn 0.6s var(--ease-out-expo) both' }}>
+      <StepHeader number="05" title="Circles" subtitle="The circle equation builder" />
+      <div ref={containerRef} style={{ maxWidth: 600, margin: '0 auto 20px' }}>
+        <canvas ref={canvasRef} style={{
+          borderRadius: 12, border: '1px solid var(--border-subtle)',
+          background: 'rgba(0,0,0,0.3)', cursor: 'grab', width: '100%',
+        }} />
+      </div>
+      <p style={{
+        fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-secondary)',
+        textAlign: 'center', marginBottom: 16, fontWeight: 300,
+      }}>
+        Drag the center point and adjust the radius slider.
+      </p>
+
+      <div style={{ maxWidth: 460, margin: '0 auto 20px', padding: '0 16px' }}>
+        <SliderControl label="Radius" value={radius} min={0.5} max={6} step={0.5}
+          onChange={v => setRadius(v)} color="rgba(255,200,60,0.8)" />
+      </div>
+
+      {/* Standard form */}
+      <FormulaCard>
+        <span style={{ color: 'rgba(100,200,255,0.9)' }}>{formatTerm(h, 'x')}</span>
+        {' + '}
+        <span style={{ color: 'rgba(160,120,255,0.9)' }}>{formatTerm(k, 'y')}</span>
+        {' = '}
+        <span style={{ color: 'rgba(255,200,60,0.9)' }}>{r * r}</span>
+      </FormulaCard>
+
+      <div style={{ maxWidth: 520, margin: '0 auto', padding: '0 16px' }}>
+        {/* Toggle general form */}
+        <button onClick={() => setShowGeneral(!showGeneral)} style={{
+          fontFamily: 'var(--font-mono)', fontSize: 12, textTransform: 'uppercase',
+          letterSpacing: '0.06em', padding: '8px 20px', borderRadius: 8,
+          border: `1px solid ${showGeneral ? 'var(--accent)' : 'var(--border-subtle)'}`,
+          background: showGeneral ? 'var(--accent-soft)' : 'transparent',
+          color: showGeneral ? 'var(--accent)' : 'var(--text-secondary)',
+          transition: 'all 0.3s ease', display: 'block', margin: '0 auto 16px',
+        }}>
+          {showGeneral ? 'Hide' : 'Show'} General Form
+        </button>
+
+        {showGeneral && (
+          <div style={{
+            background: 'rgba(255,255,255,0.02)', borderRadius: 10,
+            border: '1px solid var(--border-subtle)', padding: '16px 20px',
+            fontFamily: 'var(--font-mono)', fontSize: 13, lineHeight: 2,
+            color: 'var(--text-secondary)', marginBottom: 16,
+            animation: 'fadeIn 0.4s var(--ease-out-expo) both',
+          }}>
+            <div style={{ marginBottom: 8, color: 'var(--text-tertiary)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              General Form: x<sup>2</sup> + y<sup>2</sup> + Dx + Ey + F = 0
+            </div>
+            <div>D = {D}, E = {E}, F = {F}</div>
+            <div style={{ color: 'var(--text-primary)', marginTop: 4 }}>
+              x<sup>2</sup> + y<sup>2</sup>
+              {D !== 0 && <> {D > 0 ? '+' : '-'} {Math.abs(D)}x</>}
+              {E !== 0 && <> {E > 0 ? '+' : '-'} {Math.abs(E)}y</>}
+              {F !== 0 && <> {F > 0 ? '+' : '-'} {Math.abs(F)}</>}
+              {' = 0'}
+            </div>
+            <div style={{ marginTop: 12, fontSize: 12, color: 'var(--text-tertiary)' }}>
+              Center: (-D/2, -E/2) = ({h}, {k})
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
+              Radius: sqrt((D/2)<sup>2</sup> + (E/2)<sup>2</sup> - F) = {r}
+            </div>
+          </div>
+        )}
+
+        <InfoBlock title="Standard Form">
+          (x - h)<sup>2</sup> + (y - k)<sup>2</sup> = r<sup>2</sup> where (h, k) is the center and r is the radius.
+          Expanding gives the general form. To convert back, complete the square for both x and y terms.
+        </InfoBlock>
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   STEP 7: PRACTICE PROBLEMS
+   ================================================================ */
+function PracticeStep({ onComplete }) {
+  const [currentProblem, setCurrentProblem] = useState(0);
+  const [userAnswer, setUserAnswer] = useState('');
+  const [feedback, setFeedback] = useState(null);
+  const [score, setScore] = useState(0);
+  const [attempted, setAttempted] = useState(0);
+
+  const problems = useMemo(() => {
+    function randInt(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+    const pool = [];
+
+    /* Distance problems */
+    for (let i = 0; i < 2; i++) {
+      const x1 = randInt(-5, 3), y1 = randInt(-4, 3), x2 = randInt(x1 + 1, 7), y2 = randInt(y1 + 1, 7);
+      const d = Math.sqrt((x2-x1)**2 + (y2-y1)**2);
+      pool.push({
+        type: 'Distance',
+        question: `Find the distance between (${x1}, ${y1}) and (${x2}, ${y2}).`,
+        answer: roundTo(d, 2),
+        hint: `d = sqrt((${x2}-${x1})^2 + (${y2}-${y1})^2) = sqrt(${(x2-x1)**2} + ${(y2-y1)**2})`,
+      });
+    }
+
+    /* Midpoint problems */
+    for (let i = 0; i < 2; i++) {
+      const x1 = randInt(-6, 2) * 2, y1 = randInt(-4, 2) * 2, x2 = randInt(1, 6) * 2, y2 = randInt(1, 6) * 2;
+      const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+      pool.push({
+        type: 'Midpoint',
+        question: `Find the midpoint of (${x1}, ${y1}) and (${x2}, ${y2}). Enter as: x, y`,
+        answer: `${mx}, ${my}`,
+        answerCheck: (ans) => {
+          const parts = ans.split(',').map(s => parseFloat(s.trim()));
+          return parts.length === 2 && parts[0] === mx && parts[1] === my;
+        },
+        hint: `M = ((${x1}+${x2})/2, (${y1}+${y2})/2) = (${mx}, ${my})`,
+      });
+    }
+
+    /* Slope problems */
+    const x1 = randInt(-3, 2), y1 = randInt(-3, 2), x2 = randInt(x1 + 2, 6), y2 = randInt(-3, 6);
+    const m = (y2 - y1) / (x2 - x1);
+    pool.push({
+      type: 'Slope',
+      question: `What is the slope of the line through (${x1}, ${y1}) and (${x2}, ${y2})?`,
+      answer: roundTo(m, 2),
+      hint: `m = (${y2}-${y1}) / (${x2}-${x1}) = ${y2-y1} / ${x2-x1}`,
+    });
+
+    /* Parallel/perpendicular */
+    const ms = randInt(1, 4);
+    pool.push({
+      type: 'Perpendicular',
+      question: `A line has slope ${ms}. What slope is perpendicular to it?`,
+      answer: roundTo(-1 / ms, 4),
+      hint: `Perpendicular slope = -1/m = -1/${ms}`,
+    });
+
+    /* Circle */
+    const ch = randInt(-3, 3), ck = randInt(-3, 3), cr = randInt(2, 5);
+    pool.push({
+      type: 'Circle',
+      question: `A circle has center (${ch}, ${ck}) and radius ${cr}. What is r\u00b2?`,
+      answer: cr * cr,
+      hint: `r\u00b2 = ${cr}\u00b2 = ${cr*cr}`,
+    });
+
+    return pool;
+  }, []);
+
+  const problem = problems[currentProblem];
+
+  function checkAnswer() {
+    if (!userAnswer.trim()) return;
+    let correct = false;
+    if (problem.answerCheck) {
+      correct = problem.answerCheck(userAnswer);
+    } else {
+      const parsed = parseFloat(userAnswer.trim());
+      correct = Math.abs(parsed - problem.answer) < 0.05;
+    }
+    setFeedback(correct ? 'correct' : 'incorrect');
+    setAttempted(prev => prev + 1);
+    if (correct) setScore(prev => prev + 1);
+  }
+
+  function nextProblem() {
+    if (currentProblem < problems.length - 1) {
+      setCurrentProblem(prev => prev + 1);
+      setUserAnswer('');
+      setFeedback(null);
+    } else {
+      onComplete();
+    }
+  }
+
+  return (
+    <div style={{ animation: 'fadeIn 0.6s var(--ease-out-expo) both' }}>
+      <StepHeader number="06" title="Practice" subtitle={`Problem ${currentProblem + 1} of ${problems.length}`} />
+
+      {/* Score */}
+      <div style={{
+        display: 'flex', justifyContent: 'center', gap: 24, marginBottom: 28,
+        fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text-secondary)',
+      }}>
+        <span>Score: <span style={{ color: 'rgba(160,230,80,0.9)' }}>{score}</span> / {attempted}</span>
+        <span>Remaining: {problems.length - currentProblem}</span>
+      </div>
+
+      <div style={{
+        maxWidth: 540, margin: '0 auto', padding: '0 16px',
+      }}>
+        {/* Problem card */}
+        <div style={{
+          background: 'rgba(255,255,255,0.03)', borderRadius: 14,
+          border: '1px solid var(--border-subtle)', padding: '28px 24px',
+          marginBottom: 20,
+        }}>
+          <div style={{
+            fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase',
+            letterSpacing: '0.08em', color: 'var(--accent)', marginBottom: 12,
+          }}>
+            {problem.type}
+          </div>
+          <p style={{
+            fontFamily: 'var(--font-body)', fontSize: 17, color: 'var(--text-primary)',
+            lineHeight: 1.6, marginBottom: 24, fontWeight: 400,
+          }}>
+            {problem.question}
+          </p>
+
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <input
+              type="text"
+              value={userAnswer}
+              onChange={e => setUserAnswer(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { feedback ? nextProblem() : checkAnswer(); } }}
+              placeholder="Your answer..."
+              disabled={feedback !== null}
+              style={{
+                flex: 1, fontFamily: 'var(--font-mono)', fontSize: 15,
+                padding: '12px 16px', borderRadius: 10,
+                border: `1px solid ${feedback === 'correct' ? 'rgba(160,230,80,0.4)' : feedback === 'incorrect' ? 'rgba(255,80,80,0.4)' : 'var(--border-subtle)'}`,
+                background: feedback === 'correct' ? 'rgba(160,230,80,0.05)' : feedback === 'incorrect' ? 'rgba(255,80,80,0.05)' : 'rgba(0,0,0,0.3)',
+                color: 'var(--text-primary)', outline: 'none',
+                transition: 'border-color 0.3s ease',
+              }}
+            />
+            {!feedback ? (
+              <button onClick={checkAnswer} style={{
+                fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 500,
+                padding: '12px 24px', borderRadius: 10,
+                background: 'var(--accent)', color: '#fff', border: 'none',
+                transition: 'all 0.3s ease',
+              }}>
+                Check
+              </button>
+            ) : (
+              <button onClick={nextProblem} style={{
+                fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 500,
+                padding: '12px 24px', borderRadius: 10,
+                background: 'rgba(255,255,255,0.1)', color: 'var(--text-primary)', border: '1px solid var(--border-subtle)',
+                transition: 'all 0.3s ease',
+              }}>
+                {currentProblem < problems.length - 1 ? 'Next' : 'Finish'}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Feedback */}
+        {feedback && (
+          <div style={{
+            padding: '16px 20px', borderRadius: 10,
+            background: feedback === 'correct' ? 'rgba(160,230,80,0.06)' : 'rgba(255,80,80,0.06)',
+            border: `1px solid ${feedback === 'correct' ? 'rgba(160,230,80,0.2)' : 'rgba(255,80,80,0.2)'}`,
+            animation: 'fadeIn 0.3s ease both',
+          }}>
+            <div style={{
+              fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 500,
+              color: feedback === 'correct' ? 'rgba(160,230,80,0.9)' : 'rgba(255,100,100,0.9)',
+              marginBottom: 6,
+            }}>
+              {feedback === 'correct' ? 'Correct!' : 'Not quite.'}
+            </div>
+            <div style={{
+              fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text-secondary)',
+              lineHeight: 1.7,
+            }}>
+              {problem.hint}
+              {feedback === 'incorrect' && (
+                <div style={{ marginTop: 4 }}>
+                  Answer: <span style={{ color: 'var(--text-primary)' }}>
+                    {typeof problem.answer === 'number' ? roundTo(problem.answer, 4) : problem.answer}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   SHARED UI COMPONENTS
+   ================================================================ */
+function StepHeader({ number, title, subtitle }) {
+  return (
+    <div style={{
+      textAlign: 'center', marginBottom: 32, padding: '0 16px',
+      animation: 'fadeInUp 0.7s var(--ease-out-expo) both',
+    }}>
+      <div style={{
+        fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--accent)',
+        letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12,
+        opacity: 0.7,
+      }}>
+        Step {number}
+      </div>
+      <h2 style={{
+        fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 5vw, 40px)',
+        fontWeight: 400, lineHeight: 1.15, marginBottom: 8,
+      }}>
+        {title}
+      </h2>
+      <p style={{
+        fontFamily: 'var(--font-body)', fontSize: 15, color: 'var(--text-secondary)',
+        fontWeight: 300,
+      }}>
+        {subtitle}
+      </p>
+    </div>
+  );
+}
+
+function FormulaCard({ children }) {
+  return (
+    <div style={{
+      maxWidth: 480, margin: '0 auto 24px', padding: '20px 28px',
+      background: 'rgba(232,37,124,0.04)', borderRadius: 12,
+      border: '1px solid rgba(232,37,124,0.12)',
+      textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 18,
+      color: 'var(--text-primary)', lineHeight: 1.8,
+    }}>
+      {children}
+    </div>
+  );
+}
+
+function InfoBlock({ title, children, small }) {
+  return (
+    <div style={{
+      background: 'rgba(255,255,255,0.02)', borderRadius: 10,
+      border: '1px solid var(--border-subtle)', padding: small ? '14px 16px' : '16px 20px',
+      marginTop: small ? 0 : 16,
+    }}>
+      <div style={{
+        fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase',
+        letterSpacing: '0.08em', color: 'var(--accent)', marginBottom: 8, opacity: 0.7,
+      }}>
+        {title}
+      </div>
+      <p style={{
+        fontFamily: 'var(--font-body)', fontSize: small ? 13 : 14,
+        color: 'var(--text-secondary)', lineHeight: 1.7, fontWeight: 300,
+      }}>
+        {children}
+      </p>
+    </div>
+  );
+}
+
+function SliderControl({ label, value, min, max, step, onChange, color }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+      <span style={{
+        fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-secondary)',
+        minWidth: 80,
+      }}>
+        {label}
+      </span>
+      <input type="range" min={min} max={max} step={step} value={value}
+        onChange={e => onChange(parseFloat(e.target.value))}
+        style={{
+          flex: 1, height: 4, borderRadius: 2, appearance: 'none',
+          background: `linear-gradient(to right, ${color} 0%, ${color} ${((value - min) / (max - min)) * 100}%, rgba(255,255,255,0.08) ${((value - min) / (max - min)) * 100}%, rgba(255,255,255,0.08) 100%)`,
+          outline: 'none', cursor: 'pointer',
+          accentColor: color,
+        }}
+      />
+      <span style={{
+        fontFamily: 'var(--font-mono)', fontSize: 13, color, minWidth: 36, textAlign: 'right',
+      }}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+/* ================================================================
+   PROGRESS BAR
+   ================================================================ */
+function ProgressBar({ step, total }) {
+  return (
+    <div style={{
+      position: 'sticky', top: 0, zIndex: 100,
+      padding: '16px 24px 12px',
+      background: 'linear-gradient(180deg, rgba(6,6,11,0.95) 0%, rgba(6,6,11,0.8) 80%, transparent 100%)',
+      backdropFilter: 'blur(12px)',
+    }}>
+      <div style={{
+        maxWidth: 600, margin: '0 auto',
+        display: 'flex', alignItems: 'center', gap: 16,
+      }}>
+        <a href="index.html" style={{
+          fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-tertiary)',
+          textDecoration: 'none', transition: 'color 0.3s ease', whiteSpace: 'nowrap',
+          display: 'flex', alignItems: 'center', gap: 6,
+        }}
+          onMouseEnter={e => e.target.style.color = 'var(--text-secondary)'}
+          onMouseLeave={e => e.target.style.color = 'var(--text-tertiary)'}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          Lessons
+        </a>
+
+        <div style={{ flex: 1 }}>
+          {/* Step dots */}
+          <div style={{
+            display: 'flex', justifyContent: 'center', gap: 6, alignItems: 'center',
+          }}>
+            {Array.from({ length: total }, (_, i) => (
+              <div key={i} style={{
+                width: i + 1 === step ? 24 : 8,
+                height: 4,
+                borderRadius: 2,
+                background: i + 1 <= step ? 'var(--accent)' : 'rgba(255,255,255,0.08)',
+                transition: 'all 0.4s var(--ease-out-expo)',
+              }} />
+            ))}
+          </div>
+        </div>
+
+        <span style={{
+          fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-tertiary)',
+          letterSpacing: '0.06em', whiteSpace: 'nowrap',
+        }}>
+          {step} / {total}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   NAVIGATION BUTTONS
+   ================================================================ */
+function NavButtons({ step, total, onPrev, onNext }) {
+  return (
+    <div style={{
+      display: 'flex', justifyContent: 'center', gap: 12,
+      padding: '40px 24px 20px', maxWidth: 500, margin: '0 auto',
+    }}>
+      {step > 1 && (
+        <button onClick={onPrev} style={{
+          fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 400,
+          color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.04)',
+          border: '1px solid var(--border-subtle)', borderRadius: 10,
+          padding: '12px 28px', display: 'flex', alignItems: 'center', gap: 8,
+          transition: 'all 0.3s var(--ease-out-expo)',
+        }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.borderColor = 'var(--border-hover)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'var(--border-subtle)'; }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          Previous
+        </button>
+      )}
+      {step < total && (
+        <button onClick={onNext} style={{
+          fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 500,
+          color: '#fff', background: 'linear-gradient(135deg, var(--accent), var(--accent-secondary))',
+          border: 'none', borderRadius: 10,
+          padding: '12px 28px', display: 'flex', alignItems: 'center', gap: 8,
+          boxShadow: '0 4px 20px rgba(232,37,124,0.2)',
+          transition: 'all 0.3s var(--ease-out-expo)',
+        }}
+          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 28px rgba(232,37,124,0.3)'; }}
+          onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(232,37,124,0.2)'; }}
+        >
+          Next
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </button>
+      )}
+    </div>
+  );
+}
+
+/* ================================================================
+   COMPLETION SCREEN
+   ================================================================ */
+function CompletionScreen() {
+  useEffect(() => {
+    try {
+      const progress = JSON.parse(localStorage.getItem('math-progress') || '[]');
+      if (!progress.includes(LESSON_ID)) {
+        progress.push(LESSON_ID);
+        localStorage.setItem('math-progress', JSON.stringify(progress));
+      }
+    } catch (e) {}
+  }, []);
+
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      justifyContent: 'center', minHeight: '60vh', textAlign: 'center',
+      padding: '40px 20px',
+      animation: 'fadeIn 0.8s var(--ease-out-expo) both',
+    }}>
+      <div style={{
+        width: 80, height: 80, borderRadius: 20,
+        background: 'linear-gradient(135deg, var(--accent), var(--accent-secondary))',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        marginBottom: 32, boxShadow: '0 8px 40px rgba(232,37,124,0.3)',
+        animation: 'scaleIn 0.6s var(--ease-out-expo) 0.2s both',
+      }}>
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      </div>
+
+      <h2 style={{
+        fontFamily: 'var(--font-display)', fontSize: 'clamp(32px, 6vw, 48px)',
+        fontWeight: 400, marginBottom: 16,
+        animation: 'fadeInUp 0.8s var(--ease-out-expo) 0.3s both',
+      }}>
+        Lesson Complete
+      </h2>
+      <p style={{
+        fontFamily: 'var(--font-body)', fontSize: 16, fontWeight: 300,
+        color: 'var(--text-secondary)', maxWidth: 400, lineHeight: 1.7,
+        marginBottom: 36,
+        animation: 'fadeInUp 0.8s var(--ease-out-expo) 0.45s both',
+      }}>
+        You've explored the distance formula, midpoints, line equations,
+        parallel and perpendicular lines, and circles. Well done.
+      </p>
+      <div style={{
+        display: 'flex', gap: 12,
+        animation: 'fadeInUp 0.8s var(--ease-out-expo) 0.6s both',
+      }}>
+        <a href="index.html" style={{
+          fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 500,
+          color: '#fff', background: 'linear-gradient(135deg, var(--accent), var(--accent-secondary))',
+          border: 'none', borderRadius: 10, padding: '12px 28px',
+          textDecoration: 'none',
+          boxShadow: '0 4px 20px rgba(232,37,124,0.2)',
+          transition: 'all 0.3s var(--ease-out-expo)',
+          display: 'inline-flex', alignItems: 'center', gap: 8,
+        }}
+          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; }}
+          onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          Back to Lessons
+        </a>
+      </div>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:32,padding:'16px 0',borderTop:'1px solid var(--border-subtle)',maxWidth:500,width:'100%'}}>
+        <a href="08-functions.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>&larr; Previous Lesson: Functions &amp; Transformations</a>
+        <a href="10-trigonometry.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>Next Lesson: Trigonometry &rarr;</a>
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   MAIN APP
+   ================================================================ */
+function App() {
+  const [step, setStep] = useState(1);
+  const [completed, setCompleted] = useState(false);
+
+  const goNext = useCallback(() => {
+    if (step >= TOTAL_STEPS) {
+      setCompleted(true);
+    } else {
+      setStep(s => s + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [step]);
+
+  const goPrev = useCallback(() => {
+    setStep(s => Math.max(1, s - 1));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  if (completed) {
+    return (
+      <div style={{ position: 'relative', zIndex: 1, maxWidth: 720, margin: '0 auto', padding: '0 20px' }}>
+        <CompletionScreen />
+      </div>
+    );
+  }
+
+  const renderStep = () => {
+    switch (step) {
+      case 1: return <LandingStep onNext={goNext} />;
+      case 2: return <DistanceStep />;
+      case 3: return <MidpointStep />;
+      case 4: return <LineEquationStep />;
+      case 5: return <ParallelPerpStep />;
+      case 6: return <CircleStep />;
+      case 7: return <PracticeStep onComplete={() => setCompleted(true)} />;
+      default: return null;
+    }
+  };
+
+  return (
+    <div style={{ position: 'relative', zIndex: 1 }}>
+      {/* Decorative background grid */}
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', opacity: 0.35,
+      }}>
+        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+              <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(255,255,255,0.015)" strokeWidth="1"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grid)" />
+        </svg>
+      </div>
+
+      {step > 1 && <ProgressBar step={step} total={TOTAL_STEPS} />}
+
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: '0 20px', position: 'relative', zIndex: 1 }}>
+        <div key={step} style={{ paddingTop: step === 1 ? 0 : 20, paddingBottom: 40 }}>
+          {renderStep()}
+        </div>
+        {step > 1 && step <= TOTAL_STEPS && (
+          <NavButtons step={step} total={TOTAL_STEPS} onPrev={goPrev} onNext={goNext} />
+        )}
+
+        {/* Footer */}
+        {step > 1 && (
+          <footer style={{
+            textAlign: 'center', padding: '32px 24px 48px',
+            borderTop: '1px solid var(--border-subtle)', marginTop: 20,
+          }}>
+            <a href="index.html" style={{
+              fontFamily: 'var(--font-mono)', fontSize: 11,
+              letterSpacing: '0.06em', textTransform: 'uppercase',
+              color: 'var(--text-tertiary)', textDecoration: 'none',
+              transition: 'color 0.3s ease',
+            }}
+              onMouseEnter={e => e.target.style.color = 'var(--text-secondary)'}
+              onMouseLeave={e => e.target.style.color = 'var(--text-tertiary)'}
+            >
+              Back to all lessons
+            </a>
+          </footer>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>

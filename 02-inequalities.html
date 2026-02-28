@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inequalities — Interactive Lesson</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07080c;--bg2:#0d0f16;--bg3:#161923;--bg4:#222632;
+  --text:#bfc5d2;--text-dim:#5c6370;--text-bright:#e4e8f0;
+  --emerald:#34d399;--emerald-mid:#10b981;--emerald-dim:#34d39928;--emerald-glow:#34d39915;--emerald-deep:#059669;
+  --green:#4ade80;--green-dim:#4ade8025;
+  --red:#fb7185;--red-dim:#fb718525;--red-deep:#e11d48;
+  --blue:#60a5fa;--blue-dim:#60a5fa25;
+  --amber:#fbbf24;--amber-dim:#fbbf2425;
+  --violet:#a78bfa;--violet-dim:#a78bfa25;
+  --cyan:#22d3ee;--cyan-dim:#22d3ee25;
+  --font-display:'Fraunces',serif;
+  --font-body:'IBM Plex Sans',sans-serif;
+  --font-mono:'DM Mono',monospace;
+}
+html{font-size:16px;scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);line-height:1.7;overflow-x:hidden;-webkit-font-smoothing:antialiased;min-height:100vh}
+::selection{background:var(--emerald-mid);color:#000}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text-dim)}
+#root{min-height:100vh}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes glow{0%,100%{filter:drop-shadow(0 0 6px var(--emerald-dim))}50%{filter:drop-shadow(0 0 24px var(--emerald))}}
+@keyframes flipSign{
+  0%{transform:rotateX(0deg) scale(1);color:var(--emerald)}
+  20%{transform:rotateX(60deg) scale(1.15)}
+  40%{transform:rotateX(120deg) scale(1.35);color:var(--amber)}
+  60%{transform:rotateX(200deg) scale(1.35);color:var(--red)}
+  80%{transform:rotateX(310deg) scale(1.15);color:var(--red)}
+  100%{transform:rotateX(360deg) scale(1);color:var(--red)}
+}
+@keyframes shakeX{0%,100%{transform:translateX(0)}15%{transform:translateX(-5px)}30%{transform:translateX(5px)}45%{transform:translateX(-4px)}60%{transform:translateX(4px)}75%{transform:translateX(-2px)}90%{transform:translateX(2px)}}
+@keyframes slideInLeft{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:translateX(0)}}
+@keyframes slideInRight{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+@keyframes scaleIn{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:scale(1)}}
+@keyframes pulseGreen{0%,100%{box-shadow:0 0 0 0 var(--emerald-dim)}50%{box-shadow:0 0 0 12px transparent}}
+@keyframes ripple{0%{transform:scale(.5);opacity:.6}100%{transform:scale(2.5);opacity:0}}
+@keyframes correctBounce{0%{transform:scale(1)}30%{transform:scale(1.25)}60%{transform:scale(.95)}100%{transform:scale(1)}}
+@keyframes wrongShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+@keyframes dashMove{from{stroke-dashoffset:20}to{stroke-dashoffset:0}}
+@keyframes gradientShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+
+.btn-primary{
+  padding:11px 26px;background:var(--emerald-mid);border:none;color:#000;border-radius:8px;
+  cursor:pointer;font-family:var(--font-mono);font-size:13px;font-weight:500;
+  transition:all .25s;letter-spacing:.5px;box-shadow:0 2px 16px var(--emerald-dim);
+}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 24px var(--emerald-dim);background:var(--emerald)}
+.btn-primary:active{transform:translateY(0);box-shadow:0 1px 8px var(--emerald-dim)}
+.btn-secondary{
+  padding:11px 26px;background:transparent;border:1px solid var(--bg4);color:var(--text-dim);
+  border-radius:8px;cursor:pointer;font-family:var(--font-mono);font-size:13px;
+  transition:all .25s;letter-spacing:.5px;
+}
+.btn-secondary:hover{border-color:var(--text-dim);color:var(--text)}
+.btn-sm{padding:7px 16px;font-size:12px}
+
+input[type="range"]{-webkit-appearance:none;appearance:none;height:4px;background:var(--bg4);border-radius:2px;outline:none}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--emerald);cursor:pointer;border:2px solid var(--bg);box-shadow:0 0 8px var(--emerald-dim)}
+select{-webkit-appearance:none;appearance:none}
+</style>
+
+<script type="text/babel">
+const {useState,useEffect,useRef,useCallback,useMemo,Fragment} = React;
+
+const TOTAL_STEPS=8; // 0=Landing,1=EqVsIneq,2=NumberLine,3=Solving,4=Flipping,5=Compound,6=Practice,7=Complete
+
+/* ═══════════════════════════════════════
+   SHARED COMPONENTS
+   ═══════════════════════════════════════ */
+
+function ProgressBar({current,total}){
+  const pct=current<=0?0:current>=total-1?100:(current/(total-1))*100;
+  return(
+    <div style={{position:'fixed',top:0,left:0,right:0,zIndex:1000,height:3,background:current===0?'transparent':'var(--bg3)',transition:'background .5s'}}>
+      <div style={{height:'100%',width:`${pct}%`,background:'linear-gradient(90deg,var(--emerald-deep),var(--emerald),var(--green))',transition:'width .6s cubic-bezier(.4,0,.2,1)',boxShadow:'0 0 16px var(--emerald-dim)',borderRadius:'0 2px 2px 0'}}/>
+    </div>
+  );
+}
+
+function StepDots({current,total,onNavigate}){
+  return(
+    <div style={{position:'fixed',right:20,top:'50%',transform:'translateY(-50%)',zIndex:900,display:'flex',flexDirection:'column',gap:10,alignItems:'center'}}>
+      {Array.from({length:total},(_,i)=>(
+        <button key={i} onClick={()=>onNavigate(i)} aria-label={`Go to step ${i+1}`} style={{
+          width:i===current?10:6,height:i===current?10:6,borderRadius:'50%',border:'none',cursor:'pointer',padding:0,
+          background:i<current?'var(--emerald)':i===current?'var(--green)':'var(--bg4)',
+          transition:'all .3s',boxShadow:i===current?'0 0 10px var(--emerald-dim)':'none',opacity:i===current?1:.6
+        }}/>
+      ))}
+    </div>
+  );
+}
+
+function NavButtons({current,total,onPrev,onNext,nextLabel}){
+  return(
+    <div style={{display:'flex',gap:12,marginTop:48,justifyContent:'center',flexWrap:'wrap'}}>
+      {current>0&&<button className="btn-secondary" onClick={onPrev}>&larr; Previous</button>}
+      {current<total-1&&<button className="btn-primary" onClick={onNext}>{nextLabel||'Next Step'} &rarr;</button>}
+    </div>
+  );
+}
+
+function SectionLabel({number,title,sub}){
+  return(
+    <div style={{marginBottom:36,animation:'fadeUp .6s ease'}}>
+      <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--emerald)',letterSpacing:3,textTransform:'uppercase',marginBottom:8}}>Step {String(number).padStart(2,'0')}</div>
+      <h2 style={{fontFamily:'var(--font-display)',fontSize:'clamp(26px,5vw,44px)',fontWeight:700,color:'var(--text-bright)',lineHeight:1.15,letterSpacing:'-0.02em'}}>{title}</h2>
+      {sub&&<p style={{marginTop:10,fontSize:15,color:'var(--text-dim)',lineHeight:1.7,maxWidth:600}}>{sub}</p>}
+    </div>
+  );
+}
+
+function InfoCard({children,accent='var(--blue)'}){
+  return <div style={{background:'var(--bg2)',border:`1px solid ${accent}20`,borderLeft:`3px solid ${accent}`,borderRadius:'0 8px 8px 0',padding:'14px 18px',margin:'18px 0',fontSize:14,lineHeight:1.8}}>{children}</div>;
+}
+
+function Tag({children,color='var(--emerald)'}){
+  return <span style={{display:'inline-block',padding:'3px 10px',borderRadius:5,background:`${color}15`,color,fontFamily:'var(--font-mono)',fontSize:11,fontWeight:500,letterSpacing:'.3px'}}>{children}</span>;
+}
+
+function Wrap({children}){
+  return <div style={{minHeight:'100vh',display:'flex',flexDirection:'column',justifyContent:'center',padding:'80px 24px 60px',maxWidth:780,margin:'0 auto'}}>{children}</div>;
+}
+
+function MathEx({children,size=26}){
+  return <span style={{fontFamily:'var(--font-mono)',fontSize:size,color:'var(--text-bright)',fontWeight:500}}>{children}</span>;
+}
+
+function Panel({children,glow,border}){
+  return <div style={{background:'var(--bg2)',borderRadius:12,padding:'22px 20px',border:`1px solid ${border||'var(--bg4)'}`,position:'relative',overflow:'hidden',...(glow?{boxShadow:`0 0 40px ${glow}`}:{})}}>{children}</div>;
+}
+
+
+/* ═══════════════════════════════════════
+   NUMBER LINE (reusable SVG)
+   ═══════════════════════════════════════ */
+
+function NumberLine({min=-10,max=10,regions=[],points=[],draggable=false,onDrag,dragValue=0,height=76,animate=false,showLabels=true,compact=false}){
+  const svgRef=useRef(null);
+  const [dragging,setDragging]=useState(false);
+  const [animP,setAnimP]=useState(animate?0:1);
+  const regionKey=JSON.stringify(regions);
+
+  useEffect(()=>{
+    if(!animate){setAnimP(1);return}
+    setAnimP(0);
+    let start=null;const dur=700;
+    function tick(t){if(!start)start=t;const p=Math.min((t-start)/dur,1);setAnimP(p);if(p<1)requestAnimationFrame(tick)}
+    requestAnimationFrame(tick);
+  },[animate,regionKey]);
+
+  const pad=36,w=compact?420:580,lineY=height/2;
+  const range=max-min||1;
+  const toX=v=>pad+((v-min)/range)*(w-2*pad);
+  const toVal=x=>{const v=min+((x-pad)/(w-2*pad))*range;return Math.round(v*2)/2};
+  const ticks=[];for(let i=Math.ceil(min);i<=Math.floor(max);i++)ticks.push(i);
+
+  function ptrToVal(e){
+    if(!svgRef.current)return dragValue;
+    const rect=svgRef.current.getBoundingClientRect();
+    const x=(e.clientX-rect.left)/rect.width*w;
+    return Math.max(min,Math.min(max,toVal(x)));
+  }
+  function onDown(e){if(!draggable)return;setDragging(true);onDrag&&onDrag(ptrToVal(e))}
+  function onMove(e){if(!dragging)return;onDrag&&onDrag(ptrToVal(e))}
+  function onUp(){setDragging(false)}
+  useEffect(()=>{if(!dragging)return;const up=()=>setDragging(false);window.addEventListener('pointerup',up);return()=>window.removeEventListener('pointerup',up)},[dragging]);
+
+  return(
+    <svg ref={svgRef} viewBox={`0 0 ${w} ${height}`} style={{width:'100%',maxWidth:w,display:'block',margin:'0 auto',cursor:draggable?'pointer':'default',userSelect:'none',touchAction:'none'}}
+      onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp}>
+
+      {/* Shaded regions */}
+      {regions.map((r,i)=>{
+        const x1=r.from==='-inf'?0:toX(r.from);
+        const x2=r.to==='inf'?w:toX(r.to);
+        const rw=Math.abs(x2-x1)*animP;
+        const rx=r.from==='-inf'?x2-rw:x1;
+        return <rect key={i} x={rx} y={lineY-14} width={Math.max(0,rw)} height={28} fill={r.color||'var(--emerald)'} opacity={.16} rx={4}/>;
+      })}
+
+      {/* Axis */}
+      <line x1={pad-12} y1={lineY} x2={w-pad+12} y2={lineY} stroke="var(--bg4)" strokeWidth={1.5}/>
+      <polygon points={`${pad-18},${lineY} ${pad-10},${lineY-4} ${pad-10},${lineY+4}`} fill="var(--text-dim)" opacity={.5}/>
+      <polygon points={`${w-pad+18},${lineY} ${w-pad+10},${lineY-4} ${w-pad+10},${lineY+4}`} fill="var(--text-dim)" opacity={.5}/>
+
+      {/* Ticks */}
+      {ticks.map(t=>(
+        <g key={t}>
+          <line x1={toX(t)} y1={lineY-4} x2={toX(t)} y2={lineY+4} stroke={t===0?'var(--text-dim)':'var(--bg4)'} strokeWidth={t===0?1.5:1}/>
+          {showLabels&&<text x={toX(t)} y={lineY+18} textAnchor="middle" fill="var(--text-dim)" fontSize={9} fontFamily="var(--font-mono)">{t}</text>}
+        </g>
+      ))}
+
+      {/* Points */}
+      {points.map((p,i)=>{
+        const cx=toX(p.value);
+        return <g key={i} style={{opacity:animP}}>
+          <circle cx={cx} cy={lineY} r={6} fill={p.open?'var(--bg)':(p.color||'var(--emerald)')} stroke={p.color||'var(--emerald)'} strokeWidth={2.5}/>
+          {p.label&&<text x={cx} y={lineY-13} textAnchor="middle" fill={p.color||'var(--emerald)'} fontSize={11} fontFamily="var(--font-mono)" fontWeight={600}>{p.label}</text>}
+        </g>;
+      })}
+
+      {/* Draggable */}
+      {draggable&&(
+        <g style={{transition:dragging?'none':'all .12s'}}>
+          <circle cx={toX(dragValue)} cy={lineY} r={10} fill="var(--emerald)" stroke="var(--text-bright)" strokeWidth={2}
+            style={{filter:'drop-shadow(0 0 10px var(--emerald))',cursor:'grab'}}/>
+          <text x={toX(dragValue)} y={lineY-18} textAnchor="middle" fill="var(--emerald)" fontSize={13} fontFamily="var(--font-mono)" fontWeight={700}>{dragValue}</text>
+        </g>
+      )}
+    </svg>
+  );
+}
+
+
+/* ═══════════════════════════════════════
+   STEP 0 — LANDING
+   ═══════════════════════════════════════ */
+function StepLanding({onNext}){
+  const [show,setShow]=useState(false);
+  const [idx,setIdx]=useState(0);
+  const syms=['<','>','\u2264','\u2265','\u2260'];
+  useEffect(()=>{setTimeout(()=>setShow(true),120)},[]);
+  useEffect(()=>{const iv=setInterval(()=>setIdx(p=>(p+1)%syms.length),1100);return()=>clearInterval(iv)},[]);
+
+  return(
+    <div style={{minHeight:'100vh',display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',padding:'40px 24px',textAlign:'center',position:'relative',overflow:'hidden'}}>
+      {/* Dot grid bg */}
+      <svg style={{position:'absolute',inset:0,width:'100%',height:'100%',opacity:.035}} xmlns="http://www.w3.org/2000/svg">
+        <defs><pattern id="dots" width="28" height="28" patternUnits="userSpaceOnUse"><circle cx="14" cy="14" r="1" fill="var(--emerald)"/></pattern></defs>
+        <rect width="100%" height="100%" fill="url(#dots)"/>
+      </svg>
+      <div style={{position:'absolute',top:'22%',left:'50%',transform:'translate(-50%,-50%)',width:700,height:700,background:'radial-gradient(circle,var(--emerald-glow) 0%,transparent 60%)',pointerEvents:'none'}}/>
+
+      <div style={{position:'relative',opacity:show?1:0,transform:show?'translateY(0)':'translateY(36px)',transition:'all 1s cubic-bezier(.4,0,.2,1)'}}>
+        <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--emerald)',letterSpacing:5,textTransform:'uppercase',marginBottom:28}}>Interactive Lesson</div>
+
+        {/* Animated comparison */}
+        <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:20,marginBottom:28}}>
+          <span style={{fontFamily:'var(--font-display)',fontSize:'clamp(52px,11vw,88px)',fontWeight:700,color:'var(--text-dim)',opacity:.45,animation:'float 3.5s ease-in-out infinite'}}>3</span>
+          <span style={{fontFamily:'var(--font-mono)',fontSize:'clamp(52px,11vw,88px)',fontWeight:700,color:'var(--emerald)',animation:'glow 2.2s ease-in-out infinite',transition:'all .25s',display:'inline-block',minWidth:'1.3em',textAlign:'center'}}>{syms[idx]}</span>
+          <span style={{fontFamily:'var(--font-display)',fontSize:'clamp(52px,11vw,88px)',fontWeight:700,color:'var(--text-dim)',opacity:.45,animation:'float 3.5s ease-in-out infinite .6s'}}>7</span>
+        </div>
+
+        <h1 style={{fontFamily:'var(--font-display)',fontSize:'clamp(34px,7vw,60px)',fontWeight:700,color:'var(--text-bright)',lineHeight:1.1,letterSpacing:'-0.03em'}}>Inequalities</h1>
+        <p style={{marginTop:18,fontSize:16,color:'var(--text-dim)',maxWidth:460,lineHeight:1.8,fontWeight:300,margin:'18px auto 0'}}>
+          When things aren't quite equal &mdash; exploring the mathematics of comparison, ordering, and ranges.
+        </p>
+
+        <div style={{display:'flex',gap:14,marginTop:28,justifyContent:'center',flexWrap:'wrap'}}>
+          <Tag>7 Steps</Tag>
+          <Tag color="var(--green)">Interactive</Tag>
+          <Tag color="var(--blue)">Visualizations</Tag>
+        </div>
+
+        <button className="btn-primary" onClick={onNext} style={{marginTop:36,fontSize:14,padding:'13px 34px'}}>Begin Lesson &rarr;</button>
+
+        <div style={{marginTop:28}}>
+          <a href="index.html" style={{color:'var(--text-dim)',fontSize:12,fontFamily:'var(--font-mono)',textDecoration:'none',letterSpacing:'.5px',transition:'color .2s'}}
+            onMouseEnter={e=>e.target.style.color='var(--emerald)'} onMouseLeave={e=>e.target.style.color='var(--text-dim)'}>&larr; Back to Lessons</a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+/* ═══════════════════════════════════════
+   STEP 1 — EQUATIONS vs INEQUALITIES
+   ═══════════════════════════════════════ */
+function StepEqVsIneq({onPrev,onNext,step}){
+  const symbols=[
+    {sym:'=', name:'Equal to',       example:'5 = 5',   desc:'Both sides are exactly the same value.',     type:'equation',  color:'var(--blue)'},
+    {sym:'<', name:'Less than',      example:'3 < 7',   desc:'Left side is strictly smaller than right.',  type:'inequality',color:'var(--emerald)'},
+    {sym:'>', name:'Greater than',   example:'9 > 2',   desc:'Left side is strictly larger than right.',   type:'inequality',color:'var(--emerald)'},
+    {sym:'\u2264',name:'Less or equal',example:'x \u2264 5',desc:'Left is at most the right side.',       type:'inequality',color:'var(--green)'},
+    {sym:'\u2265',name:'Greater or equal',example:'x \u2265 3',desc:'Left is at least the right side.',   type:'inequality',color:'var(--green)'},
+  ];
+  const items=[
+    {text:'5 + 3 = 8',answer:'equation'},{text:'x > 12',answer:'inequality'},
+    {text:'2y = 10',answer:'equation'},{text:'temperature \u2264 100\u00b0C',answer:'inequality'},
+    {text:'speed \u2265 60 mph',answer:'inequality'},{text:'a + b = c',answer:'equation'},
+  ];
+  const [revealed,setRevealed]=useState({});
+  const [answers,setAnswers]=useState({});
+
+  return(
+    <Wrap>
+      <SectionLabel number={1} title="Equations vs Inequalities" sub="An equation says two things are equal. An inequality says one side is bigger, smaller, or bounded by the other."/>
+
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))',gap:10,marginBottom:36}}>
+        {symbols.map((s,i)=>(
+          <div key={i} onClick={()=>setRevealed(p=>({...p,[i]:!p[i]}))} style={{
+            background:revealed[i]?`${s.color}08`:'var(--bg2)',border:`1px solid ${revealed[i]?s.color+'40':'var(--bg4)'}`,
+            borderRadius:10,padding:'18px 14px',cursor:'pointer',transition:'all .3s',textAlign:'center',animation:`fadeUp .5s ease ${i*70}ms both`
+          }}>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:32,color:s.color,fontWeight:700,marginBottom:6}}>{s.sym}</div>
+            <div style={{fontSize:12,color:'var(--text-bright)',fontWeight:500,marginBottom:3}}>{s.name}</div>
+            <div style={{fontSize:11,color:'var(--text-dim)',fontFamily:'var(--font-mono)',marginBottom:6}}>{s.example}</div>
+            {revealed[i]&&<div style={{fontSize:11,color:'var(--text)',marginBottom:6,animation:'fadeIn .25s'}}>{s.desc}</div>}
+            <Tag color={s.color}>{s.type}</Tag>
+          </div>
+        ))}
+      </div>
+
+      <InfoCard accent="var(--emerald)"><strong style={{color:'var(--text-bright)'}}>Click each card</strong> to see details. Now classify these expressions below.</InfoCard>
+
+      <div style={{display:'grid',gap:6,marginTop:12}}>
+        {items.map((item,i)=>{
+          const ans=answers[i];const correct=ans===item.answer;
+          const bg=ans==null?'var(--bg2)':correct?'var(--emerald-dim)':'var(--red-dim)';
+          return(
+            <div key={i} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 14px',background:bg,borderRadius:8,transition:'all .3s',animation:`slideInLeft .4s ease ${i*50}ms both`}}>
+              <span style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--text-bright)',flex:1}}>{item.text}</span>
+              <div style={{display:'flex',gap:5}}>
+                {['equation','inequality'].map(t=>{
+                  const chosen=ans===t;const isCorrect=t===item.answer&&ans!=null;
+                  return <button key={t} className="btn-secondary btn-sm" onClick={()=>setAnswers(p=>({...p,[i]:t}))} style={{
+                    background:chosen?(correct?'var(--emerald)':'var(--red)'):'transparent',
+                    color:chosen?'#000':'var(--text-dim)',borderColor:chosen?'transparent':'var(--bg4)',fontSize:11,padding:'5px 12px',
+                    animation:chosen&&!correct?'wrongShake .4s':'none'
+                  }}>{t.charAt(0).toUpperCase()+t.slice(1)}</button>;
+                })}
+              </div>
+              {ans!=null&&<span style={{fontSize:14,color:correct?'var(--emerald)':'var(--red)',animation:correct?'correctBounce .4s':'wrongShake .4s'}}>{correct?'\u2713':'\u2717'}</span>}
+            </div>
+          );
+        })}
+      </div>
+
+      <NavButtons current={step} total={TOTAL_STEPS} onPrev={onPrev} onNext={onNext}/>
+    </Wrap>
+  );
+}
+
+
+/* ═══════════════════════════════════════
+   STEP 2 — NUMBER LINE VISUALIZATION
+   ═══════════════════════════════════════ */
+function StepNumberLine({onPrev,onNext,step}){
+  const [selEx,setSelEx]=useState(0);
+  const [dragVal,setDragVal]=useState(3);
+  const [dragOp,setDragOp]=useState('\u2264');
+
+  const examples=[
+    {label:'x > 2',  val:2, open:true,  dir:'right',desc:'All numbers strictly greater than 2 (open circle = 2 excluded).'},
+    {label:'x \u2264 5',val:5, open:false, dir:'left', desc:'All numbers less than or equal to 5 (closed circle = 5 included).'},
+    {label:'x < -1', val:-1,open:true,  dir:'left', desc:'All numbers strictly less than -1.'},
+    {label:'x \u2265 0',val:0, open:false, dir:'right',desc:'All numbers greater than or equal to 0.'},
+  ];
+  const ex=examples[selEx];
+  const exRegions=ex.dir==='right'?[{from:ex.val,to:'inf'}]:[{from:'-inf',to:ex.val}];
+
+  const isLeftDir=dragOp==='\u2264'||dragOp==='<';
+  const dragOpen=dragOp==='<'||dragOp==='>';
+  const dragRegions=isLeftDir?[{from:'-inf',to:dragVal,color:'var(--green)'}]:[{from:dragVal,to:'inf',color:'var(--green)'}];
+  const dragLabel=isLeftDir?`x ${dragOp} ${dragVal}`:`x ${dragOp} ${dragVal}`;
+
+  return(
+    <Wrap>
+      <SectionLabel number={2} title="Number Line Visualization" sub="Inequalities describe regions on a number line, not just single points. The circle type and shading direction tell us exactly which numbers satisfy the inequality."/>
+
+      {/* Open vs Closed */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14,marginBottom:28}}>
+        <Panel>
+          <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:6}}>
+            <svg width={24} height={24}><circle cx={12} cy={12} r={7} fill="none" stroke="var(--emerald)" strokeWidth={2.5}/></svg>
+            <span style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--text-bright)'}}>Open Circle</span>
+          </div>
+          <p style={{fontSize:12,color:'var(--text-dim)',lineHeight:1.6}}>For <strong style={{color:'var(--emerald)'}}>&lt;</strong> and <strong style={{color:'var(--emerald)'}}>&gt;</strong> &mdash; boundary value is <em>excluded</em>.</p>
+        </Panel>
+        <Panel>
+          <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:6}}>
+            <svg width={24} height={24}><circle cx={12} cy={12} r={7} fill="var(--emerald)" stroke="var(--emerald)" strokeWidth={2.5}/></svg>
+            <span style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--text-bright)'}}>Closed Circle</span>
+          </div>
+          <p style={{fontSize:12,color:'var(--text-dim)',lineHeight:1.6}}>For <strong style={{color:'var(--emerald)'}}>&le;</strong> and <strong style={{color:'var(--emerald)'}}>&ge;</strong> &mdash; boundary value is <em>included</em>.</p>
+        </Panel>
+      </div>
+
+      {/* Example picker */}
+      <div style={{display:'flex',gap:6,marginBottom:14,flexWrap:'wrap'}}>
+        {examples.map((e,i)=><button key={i} className={i===selEx?'btn-primary btn-sm':'btn-secondary btn-sm'} onClick={()=>setSelEx(i)} style={{fontFamily:'var(--font-mono)'}}>{e.label}</button>)}
+      </div>
+      <Panel>
+        <div style={{textAlign:'center',marginBottom:10}}><MathEx size={20}>{ex.label}</MathEx></div>
+        <NumberLine min={-6} max={8} regions={exRegions} points={[{value:ex.val,open:ex.open}]} animate={true} height={65}/>
+        <p style={{textAlign:'center',fontSize:12,color:'var(--text-dim)',marginTop:8}}>{ex.desc}</p>
+      </Panel>
+
+      {/* Draggable */}
+      <InfoCard accent="var(--green)"><strong style={{color:'var(--text-bright)'}}>Try it yourself!</strong> Drag the point below and change the operator to see how the shaded region updates.</InfoCard>
+      <Panel border="var(--green-dim)">
+        <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:10,marginBottom:12}}>
+          <span style={{fontFamily:'var(--font-mono)',fontSize:14,color:'var(--text-dim)'}}>x</span>
+          <select value={dragOp} onChange={e=>setDragOp(e.target.value)} style={{background:'var(--bg3)',color:'var(--text-bright)',border:'1px solid var(--bg4)',borderRadius:6,padding:'5px 10px',fontFamily:'var(--font-mono)',fontSize:14,cursor:'pointer'}}>
+            <option value="<">&lt;</option><option value=">">&gt;</option><option value={'\u2264'}>&le;</option><option value={'\u2265'}>&ge;</option>
+          </select>
+          <span style={{fontFamily:'var(--font-mono)',fontSize:18,color:'var(--green)',fontWeight:700,minWidth:28,textAlign:'center'}}>{dragVal}</span>
+        </div>
+        <NumberLine min={-8} max={8} regions={dragRegions} points={[{value:dragVal,open:dragOpen}]} draggable onDrag={setDragVal} dragValue={dragVal} height={68}/>
+        <p style={{textAlign:'center',fontSize:11,color:'var(--text-dim)',marginTop:6,fontFamily:'var(--font-mono)'}}>
+          Solution set: {'{ x | '}{dragLabel}{' }'}
+        </p>
+      </Panel>
+
+      <NavButtons current={step} total={TOTAL_STEPS} onPrev={onPrev} onNext={onNext}/>
+    </Wrap>
+  );
+}
+
+
+/* ═══════════════════════════════════════
+   STEP 3 — SOLVING INEQUALITIES
+   ═══════════════════════════════════════ */
+function StepSolving({onPrev,onNext,step}){
+  const problems=[
+    {title:'2x + 3 < 11',steps:[
+      {lhs:'2x + 3',op:'<',rhs:'11',action:'Subtract 3 from both sides',rule:'Subtraction property'},
+      {lhs:'2x',op:'<',rhs:'8',action:'Divide both sides by 2',rule:'Division (positive divisor)'},
+      {lhs:'x',op:'<',rhs:'4',action:null,rule:'Solution'}
+    ],val:4,open:true,dir:'left'},
+    {title:'3x - 7 \u2265 2',steps:[
+      {lhs:'3x - 7',op:'\u2265',rhs:'2',action:'Add 7 to both sides',rule:'Addition property'},
+      {lhs:'3x',op:'\u2265',rhs:'9',action:'Divide both sides by 3',rule:'Division (positive divisor)'},
+      {lhs:'x',op:'\u2265',rhs:'3',action:null,rule:'Solution'}
+    ],val:3,open:false,dir:'right'},
+    {title:'10 - 4x > -6',steps:[
+      {lhs:'10 - 4x',op:'>',rhs:'-6',action:'Subtract 10 from both sides',rule:'Subtraction property'},
+      {lhs:'-4x',op:'>',rhs:'-16',action:'Divide by -4 (FLIP the sign!)',rule:'Division by negative'},
+      {lhs:'x',op:'<',rhs:'4',action:null,rule:'Solution'}
+    ],val:4,open:true,dir:'left'},
+  ];
+  const [sel,setSel]=useState(0);
+  const [revealed,setRevealed]=useState(0);
+  const prob=problems[sel];
+  const regions=prob.dir==='right'?[{from:prob.val,to:'inf'}]:[{from:'-inf',to:prob.val}];
+
+  useEffect(()=>setRevealed(0),[sel]);
+
+  return(
+    <Wrap>
+      <SectionLabel number={3} title="Solving Inequalities" sub="Apply the same operation to both sides, just like equations. The inequality sign is preserved when adding, subtracting, or multiplying/dividing by a positive number."/>
+
+      <InfoCard accent="var(--emerald)">
+        <div style={{fontFamily:'var(--font-mono)',fontSize:12,lineHeight:2.2,display:'grid',gridTemplateColumns:'auto 1fr',gap:'0 12px'}}>
+          <span style={{color:'var(--emerald)'}}>+/-</span><span>Add or subtract &rarr; sign unchanged</span>
+          <span style={{color:'var(--emerald)'}}>&times;/&divide; (+)</span><span>Multiply or divide by positive &rarr; sign unchanged</span>
+          <span style={{color:'var(--red)'}}>&times;/&divide; (&minus;)</span><span>Multiply or divide by <strong style={{color:'var(--red)'}}>negative</strong> &rarr; <strong style={{color:'var(--red)'}}>FLIP the sign</strong></span>
+        </div>
+      </InfoCard>
+
+      <div style={{display:'flex',gap:6,marginTop:20,marginBottom:14,flexWrap:'wrap'}}>
+        {problems.map((p,i)=><button key={i} className={i===sel?'btn-primary btn-sm':'btn-secondary btn-sm'} onClick={()=>setSel(i)}>Example {i+1}</button>)}
+      </div>
+
+      <Panel>
+        <div style={{fontFamily:'var(--font-mono)',fontSize:16,color:'var(--text-bright)',marginBottom:20,textAlign:'center'}}>Solve: {prob.title}</div>
+
+        {prob.steps.map((s,i)=>{
+          const visible=i<=revealed;
+          const isSolution=s.action===null;
+          const isFlip=s.rule&&s.rule.includes('negative');
+          return(
+            <div key={i} style={{opacity:visible?1:.12,transition:'opacity .35s',marginBottom:isSolution?0:14,animation:visible?`fadeUp .35s ease ${i*100}ms both`:'none'}}>
+              {!isSolution&&visible&&(
+                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:5}}>
+                  <div style={{width:22,height:22,borderRadius:'50%',background:i<revealed?'var(--emerald)':'var(--emerald-dim)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontFamily:'var(--font-mono)',color:i<revealed?'#000':'var(--emerald)',fontWeight:700}}>{i+1}</div>
+                  <span style={{fontSize:12,color:'var(--text-dim)'}}>{s.action}</span>
+                  {isFlip&&<Tag color="var(--red)">FLIP!</Tag>}
+                </div>
+              )}
+              {visible&&(
+                <div style={{marginLeft:isSolution?0:30,padding:'8px 14px',background:isSolution?'var(--emerald-dim)':'var(--bg3)',borderRadius:7,fontFamily:'var(--font-mono)',fontSize:14,textAlign:'center',
+                  border:isSolution?'1px solid var(--emerald)':'none'}}>
+                  <span style={{color:isSolution?'var(--emerald)':'var(--text-bright)',fontWeight:isSolution?700:400}}>
+                    {s.lhs} {s.op} {s.rhs}
+                  </span>
+                  {isSolution&&<span style={{color:'var(--emerald)',marginLeft:12,fontSize:12}}>&larr; {s.rule}</span>}
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {revealed<prob.steps.length-1&&(
+          <button className="btn-primary btn-sm" onClick={()=>setRevealed(r=>r+1)} style={{marginTop:12,display:'block',marginLeft:'auto',marginRight:'auto'}}>
+            Reveal Next Step
+          </button>
+        )}
+
+        {revealed>=prob.steps.length-1&&(
+          <div style={{marginTop:20,animation:'scaleIn .4s'}}>
+            <NumberLine min={-2} max={8} regions={regions} points={[{value:prob.val,open:prob.open}]} animate height={58}/>
+          </div>
+        )}
+      </Panel>
+
+      <NavButtons current={step} total={TOTAL_STEPS} onPrev={onPrev} onNext={onNext}/>
+    </Wrap>
+  );
+}
+
+
+/* ═══════════════════════════════════════
+   STEP 4 — THE FLIPPING RULE
+   ═══════════════════════════════════════ */
+function StepFlipping({onPrev,onNext,step}){
+  const [flipping,setFlipping]=useState(false);
+  const [flipped,setFlipped]=useState(false);
+  const [showWhy,setShowWhy]=useState(false);
+  const [qIdx,setQIdx]=useState(0);
+  const [qAns,setQAns]=useState(null);
+
+  const quiz=[
+    {q:'-2x > 6',choices:['x > -3','x < -3','x > 3','x < 3'],ans:1,exp:'Divide by -2 and FLIP: x < -3'},
+    {q:'-x + 4 \u2264 7',choices:['x \u2265 -3','x \u2264 -3','x \u2265 3','x \u2264 3'],ans:0,exp:'Subtract 4: -x \u2264 3. Multiply by -1 and FLIP: x \u2265 -3'},
+    {q:'8 - 3x < 2',choices:['x < 2','x > 2','x < -2','x > -2'],ans:1,exp:'Subtract 8: -3x < -6. Divide by -3 and FLIP: x > 2'},
+  ];
+
+  function doFlip(){
+    setFlipping(true);
+    setTimeout(()=>{setFlipping(false);setFlipped(true)},1100);
+  }
+  function resetFlip(){setFlipped(false)}
+
+  const cq=quiz[qIdx];
+
+  return(
+    <Wrap>
+      <SectionLabel number={4} title="The Flipping Rule" sub="The single most critical rule: when you multiply or divide both sides by a negative number, the inequality sign reverses direction."/>
+
+      {/* Big dramatic flip demo */}
+      <div style={{background:'var(--bg2)',borderRadius:16,padding:'44px 24px 36px',border:'1px solid var(--bg4)',textAlign:'center',marginBottom:28,position:'relative',overflow:'hidden'}}>
+        <div style={{position:'absolute',inset:0,background:`radial-gradient(circle at 50% 40%, ${flipping?'var(--red-dim)':flipped?'var(--red-dim)':'var(--emerald-glow)'} 0%, transparent 65%)`,transition:'all .6s',pointerEvents:'none'}}/>
+        <div style={{position:'relative'}}>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--text-dim)',marginBottom:28}}>
+            {flipped?'After multiplying by':'Multiply both sides by'} <strong style={{color:'var(--red)'}}>&minus;1</strong>
+          </div>
+
+          <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:28}}>
+            <div style={{fontFamily:'var(--font-display)',fontSize:'clamp(40px,8vw,64px)',fontWeight:700,color:'var(--text-bright)',transition:'all .6s'}}>
+              {flipped?'-3':'3'}
+            </div>
+            <div style={{
+              fontFamily:'var(--font-mono)',fontSize:'clamp(40px,8vw,64px)',fontWeight:700,
+              color:flipping||flipped?'var(--red)':'var(--emerald)',
+              animation:flipping?'flipSign 1.1s ease-in-out':'none',
+              transition:'color .4s',display:'inline-block',minWidth:'1.4em'
+            }}>
+              {flipped?'>':'<'}
+            </div>
+            <div style={{fontFamily:'var(--font-display)',fontSize:'clamp(40px,8vw,64px)',fontWeight:700,color:'var(--text-bright)',transition:'all .6s'}}>
+              {flipped?'-7':'7'}
+            </div>
+          </div>
+
+          <div style={{marginTop:8,fontFamily:'var(--font-mono)',fontSize:13,color:flipped?'var(--emerald)':'var(--text-dim)',transition:'color .4s'}}>
+            {flipped?'-3 > -7  \u2713  Correct! The sign flipped.':'3 < 7  \u2713  True statement.'}
+          </div>
+
+          <div style={{marginTop:24,display:'flex',gap:10,justifyContent:'center'}}>
+            {!flipped&&<button className="btn-primary" onClick={doFlip} disabled={flipping} style={{background:flipping?'var(--amber)':'var(--emerald-mid)'}}>{flipping?'Flipping...':'Multiply by -1'}</button>}
+            {flipped&&<button className="btn-secondary" onClick={resetFlip}>Reset</button>}
+          </div>
+        </div>
+      </div>
+
+      {/* Why? */}
+      <button className="btn-secondary btn-sm" onClick={()=>setShowWhy(p=>!p)} style={{marginBottom:14}}>{showWhy?'Hide':'Show'} why the sign must flip</button>
+      {showWhy&&(
+        <InfoCard accent="var(--amber)">
+          <p style={{fontSize:13,lineHeight:1.8,marginBottom:10}}>
+            On a number line, <strong style={{color:'var(--text-bright)'}}>3 is to the left of 7</strong> (so 3 &lt; 7).
+            Multiplying by &minus;1 <strong style={{color:'var(--amber)'}}>mirrors everything across zero</strong>.
+            Now &minus;3 is to the <em>right</em> of &minus;7 &mdash; their order reversed!
+          </p>
+          <NumberLine min={-8} max={8} height={52} points={[{value:3,open:false,label:'3',color:'var(--emerald)'},{value:7,open:false,label:'7',color:'var(--emerald)'},{value:-3,open:false,label:'-3',color:'var(--red)'},{value:-7,open:false,label:'-7',color:'var(--red)'}]}/>
+          <p style={{fontSize:12,color:'var(--text-dim)',marginTop:10,fontFamily:'var(--font-mono)'}}>
+            Negation = reflection about 0 = order reversal.
+          </p>
+        </InfoCard>
+      )}
+
+      {/* Practice quiz */}
+      <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--emerald)',letterSpacing:3,textTransform:'uppercase',marginTop:28,marginBottom:14}}>Practice</div>
+      <Panel>
+        <div style={{fontFamily:'var(--font-mono)',fontSize:20,color:'var(--text-bright)',textAlign:'center',marginBottom:18}}>Solve: {cq.q}</div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+          {cq.choices.map((c,i)=>{
+            const show=qAns!=null;const isRight=i===cq.ans;const picked=qAns===i;
+            return <button key={i} onClick={()=>qAns==null&&setQAns(i)} style={{
+              padding:'12px',borderRadius:8,border:'1px solid',cursor:qAns==null?'pointer':'default',
+              fontFamily:'var(--font-mono)',fontSize:14,transition:'all .25s',
+              background:show&&isRight?'var(--emerald-dim)':show&&picked&&!isRight?'var(--red-dim)':'var(--bg3)',
+              borderColor:show&&isRight?'var(--emerald)':show&&picked&&!isRight?'var(--red)':'var(--bg4)',
+              color:show&&isRight?'var(--emerald)':show&&picked&&!isRight?'var(--red)':'var(--text)',
+              animation:show&&picked&&!isRight?'wrongShake .4s':'none'
+            }}>{c}</button>;
+          })}
+        </div>
+        {qAns!=null&&(
+          <div style={{marginTop:14,animation:'fadeUp .3s'}}>
+            <p style={{fontSize:13,fontFamily:'var(--font-mono)',color:qAns===cq.ans?'var(--emerald)':'var(--red)',marginBottom:3}}>{qAns===cq.ans?'Correct!':'Not quite.'}</p>
+            <p style={{fontSize:12,color:'var(--text-dim)'}}>{cq.exp}</p>
+            {qIdx<quiz.length-1&&<button className="btn-primary btn-sm" onClick={()=>{setQIdx(q=>q+1);setQAns(null)}} style={{marginTop:10}}>Next &rarr;</button>}
+          </div>
+        )}
+        <div style={{marginTop:14,display:'flex',gap:5,justifyContent:'center'}}>
+          {quiz.map((_,i)=><div key={i} style={{width:7,height:7,borderRadius:'50%',background:i<qIdx?'var(--emerald)':i===qIdx?'var(--green)':'var(--bg4)',transition:'all .3s'}}/>)}
+        </div>
+      </Panel>
+
+      <NavButtons current={step} total={TOTAL_STEPS} onPrev={onPrev} onNext={onNext}/>
+    </Wrap>
+  );
+}
+
+
+/* ═══════════════════════════════════════
+   STEP 5 — COMPOUND INEQUALITIES
+   ═══════════════════════════════════════ */
+function StepCompound({onPrev,onNext,step}){
+  const [mode,setMode]=useState('and');
+  const [lo,setLo]=useState(-2);
+  const [hi,setHi]=useState(4);
+  const [loOp,setLoOp]=useState('<');
+  const [hiOp,setHiOp]=useState('\u2264');
+
+  const loOpen=loOp==='<'||loOp==='>';
+  const hiOpen=hiOp==='<'||hiOp==='>';
+
+  const left=Math.min(lo,hi),right=Math.max(lo,hi);
+
+  let regions=[],pts=[];
+  if(mode==='and'){
+    regions=[{from:left,to:right,color:'var(--emerald)'}];
+    pts=[{value:left,open:lo<=hi?loOpen:hiOpen},{value:right,open:lo<=hi?hiOpen:loOpen}];
+  } else {
+    regions=[{from:'-inf',to:left,color:'var(--blue)'},{from:right,to:'inf',color:'var(--amber)'}];
+    pts=[{value:left,open:lo<=hi?loOpen:hiOpen,color:'var(--blue)'},{value:right,open:lo<=hi?hiOpen:loOpen,color:'var(--amber)'}];
+  }
+
+  return(
+    <Wrap>
+      <SectionLabel number={5} title="Compound Inequalities" sub="Combine two inequality conditions with AND (both must hold) or OR (at least one must hold) to describe more complex solution sets."/>
+
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14,marginBottom:28}}>
+        {[['and','AND','Intersection','Both conditions true simultaneously. Solutions lie in the overlap.','\u2229','var(--emerald)'],
+          ['or','OR','Union','At least one condition true. Solutions satisfy either inequality.','\u222a','var(--blue)']].map(([key,label,sub,desc,sym,col])=>(
+          <div key={key} onClick={()=>setMode(key)} style={{
+            background:mode===key?`${col}10`:'var(--bg2)',borderRadius:12,padding:18,
+            border:`1px solid ${mode===key?col:'var(--bg4)'}`,cursor:'pointer',transition:'all .3s'
+          }}>
+            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+              <span style={{fontFamily:'var(--font-mono)',fontSize:22,color:mode===key?col:'var(--text-bright)',fontWeight:700}}>{label}</span>
+              <span style={{fontSize:18,opacity:.5}}>{sym}</span>
+            </div>
+            <div style={{fontSize:13,color:'var(--text-dim)',lineHeight:1.5,marginBottom:6}}><strong style={{color:'var(--text)'}}>{sub}.</strong> {desc}</div>
+            <Tag color={col}>{key==='and'?'a \u2264 x \u2264 b':'x \u2264 a or x \u2265 b'}</Tag>
+          </div>
+        ))}
+      </div>
+
+      {/* Builder */}
+      <Panel border={mode==='and'?'var(--emerald-dim)':'var(--blue-dim)'}>
+        <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:mode==='and'?'var(--emerald)':'var(--blue)',letterSpacing:2,textTransform:'uppercase',marginBottom:14}}>Interactive Builder</div>
+
+        <div style={{display:'flex',gap:14,marginBottom:18,flexWrap:'wrap',alignItems:'center',justifyContent:'center'}}>
+          <div style={{display:'flex',alignItems:'center',gap:6}}>
+            <label style={{fontSize:11,color:'var(--text-dim)',fontFamily:'var(--font-mono)'}}>Left bound</label>
+            <input type="range" min={-7} max={6} value={lo} onChange={e=>setLo(+e.target.value)} style={{width:70}}/>
+            <span style={{fontFamily:'var(--font-mono)',fontSize:14,color:'var(--text-bright)',minWidth:24,textAlign:'center'}}>{lo}</span>
+            <select value={loOp} onChange={e=>setLoOp(e.target.value)} style={{background:'var(--bg3)',color:'var(--text)',border:'1px solid var(--bg4)',borderRadius:5,padding:'4px 8px',fontFamily:'var(--font-mono)',fontSize:12,cursor:'pointer'}}>
+              <option value="<">&lt;</option><option value={'\u2264'}>&le;</option>
+            </select>
+          </div>
+          <span style={{fontFamily:'var(--font-mono)',color:mode==='and'?'var(--emerald)':'var(--blue)',fontWeight:700,fontSize:16}}>x</span>
+          <div style={{display:'flex',alignItems:'center',gap:6}}>
+            <select value={hiOp} onChange={e=>setHiOp(e.target.value)} style={{background:'var(--bg3)',color:'var(--text)',border:'1px solid var(--bg4)',borderRadius:5,padding:'4px 8px',fontFamily:'var(--font-mono)',fontSize:12,cursor:'pointer'}}>
+              <option value="<">&lt;</option><option value={'\u2264'}>&le;</option>
+            </select>
+            <input type="range" min={-6} max={7} value={hi} onChange={e=>setHi(+e.target.value)} style={{width:70}}/>
+            <span style={{fontFamily:'var(--font-mono)',fontSize:14,color:'var(--text-bright)',minWidth:24,textAlign:'center'}}>{hi}</span>
+          </div>
+        </div>
+
+        <div style={{textAlign:'center',fontFamily:'var(--font-mono)',fontSize:14,color:'var(--text-bright)',marginBottom:14}}>
+          {mode==='and'
+            ?`${lo} ${loOp} x  AND  x ${hiOp} ${hi}`
+            :`x ${loOp==='<'?'\u2265':'>'}  ${lo}   OR   x ${hiOp} ${hi}`}
+        </div>
+
+        <NumberLine min={-9} max={9} regions={regions} points={pts} animate height={66}/>
+
+        <div style={{textAlign:'center',marginTop:10}}>
+          <Tag color={mode==='and'?'var(--emerald)':'var(--blue)'}>{mode==='and'?'Intersection region shaded':'Union regions shaded'}</Tag>
+        </div>
+      </Panel>
+
+      {/* Patterns */}
+      <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--text-dim)',letterSpacing:2,textTransform:'uppercase',marginTop:28,marginBottom:14}}>Common patterns</div>
+      <div style={{display:'grid',gap:10}}>
+        <Panel>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--emerald)',marginBottom:8}}>-3 &lt; x &le; 5 &nbsp;(AND)</div>
+          <NumberLine min={-6} max={8} height={48} regions={[{from:-3,to:5}]} points={[{value:-3,open:true},{value:5,open:false}]} animate compact/>
+        </Panel>
+        <Panel>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--blue)',marginBottom:8}}>x &lt; -2 &nbsp;OR&nbsp; x &ge; 3</div>
+          <NumberLine min={-6} max={8} height={48} regions={[{from:'-inf',to:-2,color:'var(--blue)'},{from:3,to:'inf',color:'var(--amber)'}]} points={[{value:-2,open:true,color:'var(--blue)'},{value:3,open:false,color:'var(--amber)'}]} animate compact/>
+        </Panel>
+      </div>
+
+      <NavButtons current={step} total={TOTAL_STEPS} onPrev={onPrev} onNext={onNext}/>
+    </Wrap>
+  );
+}
+
+
+/* ═══════════════════════════════════════
+   STEP 6 — PRACTICE
+   ═══════════════════════════════════════ */
+function StepPractice({onPrev,onNext,step}){
+  const gen=useCallback(()=>{
+    const r=n=>Math.floor(Math.random()*n);
+    const ops=['<','>','\u2264','\u2265'];
+    const flipMap={'<':'>','>':'<','\u2264':'\u2265','\u2265':'\u2264'};
+    const pick=arr=>arr[r(arr.length)];
+    const templates=[
+      // ax op b (positive a)
+      ()=>{
+        const a=r(4)+2,b=(r(8)+1)*a,op=pick(ops);// ensure clean division
+        const sol=b/a;
+        return{text:`${a}x ${op} ${b}`,answer:`x ${op} ${sol}`,val:sol,open:op==='<'||op==='>',dir:op==='<'||op==='\u2264'?'left':'right',
+          steps:[{s:`Divide both sides by ${a}`},{s:`x ${op} ${sol}`}],flip:false};
+      },
+      // ax + b op c (positive a)
+      ()=>{
+        const a=r(4)+2,b=r(10)+1,op=pick(ops);
+        const c=a*(r(6)+1)+b;
+        const rhs=c-b,sol=rhs/a;
+        const solStr=Number.isInteger(sol)?`${sol}`:`${rhs}/${a}`;
+        return{text:`${a}x + ${b} ${op} ${c}`,answer:`x ${op} ${solStr}`,val:sol,open:op==='<'||op==='>',dir:op==='<'||op==='\u2264'?'left':'right',
+          steps:[{s:`Subtract ${b}: ${a}x ${op} ${rhs}`},{s:`Divide by ${a}: x ${op} ${solStr}`}],flip:false};
+      },
+      // -ax op b (negative a, must flip)
+      ()=>{
+        const a=r(4)+2,b=(r(6)+1)*a,op=pick(ops),fl=flipMap[op];
+        const sol=-(b/a);
+        return{text:`-${a}x ${op} ${b}`,answer:`x ${fl} ${sol}`,val:sol,open:fl==='<'||fl==='>',dir:fl==='<'||fl==='\u2264'?'left':'right',
+          steps:[{s:`Divide by -${a} and FLIP: x ${fl} ${sol}`}],flip:true};
+      },
+      // c - ax op d
+      ()=>{
+        const a=r(3)+2,c=r(10)+5,d=r(10)-3,op=pick(ops),fl=flipMap[op];
+        const diff=d-c,sol=diff/(-a);
+        const solStr=Number.isInteger(sol)?`${sol}`:`${-diff}/${a}`;
+        const solVal=sol;
+        return{text:`${c} - ${a}x ${op} ${d}`,answer:`x ${fl} ${solStr}`,val:solVal,open:fl==='<'||fl==='>',dir:fl==='<'||fl==='\u2264'?'left':'right',
+          steps:[{s:`Subtract ${c}: -${a}x ${op} ${d-c}`},{s:`Divide by -${a} and FLIP: x ${fl} ${solStr}`}],flip:true};
+      },
+    ];
+    return pick(templates)();
+  },[]);
+
+  const [prob,setProb]=useState(()=>gen());
+  const [input,setInput]=useState('');
+  const [hint,setHint]=useState(false);
+  const [solved,setSolved]=useState(false);
+  const [feedback,setFeedback]=useState(null); // 'correct'|'wrong'
+  const [score,setScore]=useState({c:0,t:0});
+
+  function normalize(s){return s.trim().replace(/\s+/g,'').replace(/<=|=</g,'\u2264').replace(/>=|=>/g,'\u2265')}
+  function check(){
+    const n=normalize(input),exp=normalize(prob.answer);
+    if(n===exp){
+      setFeedback('correct');setSolved(true);setScore(s=>({c:s.c+1,t:s.t+1}));
+    } else {
+      setFeedback('wrong');setScore(s=>({...s,t:s.t+1}));
+    }
+  }
+  function next(){setProb(gen());setInput('');setHint(false);setSolved(false);setFeedback(null)}
+
+  const regions=prob.dir==='right'?[{from:prob.val,to:'inf'}]:[{from:'-inf',to:prob.val}];
+  const nlMin=Math.floor(prob.val)-5,nlMax=Math.ceil(prob.val)+5;
+
+  return(
+    <Wrap>
+      <SectionLabel number={6} title="Practice" sub="Put it all together. Solve each inequality and check your answer. Watch out for sign flips!"/>
+
+      <div style={{display:'flex',gap:12,marginBottom:20,alignItems:'center'}}>
+        <Tag color="var(--emerald)">{score.c} / {score.t} correct</Tag>
+        {score.t>0&&<Tag color={score.c/score.t>=.7?'var(--green)':'var(--amber)'}>{Math.round(score.c/score.t*100)}%</Tag>}
+        {prob.flip&&!hint&&!solved&&<Tag color="var(--red)">Negative coefficient</Tag>}
+      </div>
+
+      <Panel border={solved?'var(--emerald-dim)':feedback==='wrong'?'var(--red-dim)':'var(--bg4)'}>
+        <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--text-dim)',letterSpacing:2,textTransform:'uppercase',marginBottom:10}}>Solve the inequality</div>
+
+        <div style={{textAlign:'center',fontFamily:'var(--font-mono)',fontSize:'clamp(22px,5vw,30px)',color:'var(--text-bright)',fontWeight:700,marginBottom:22,animation:feedback==='wrong'?'shakeX .4s':'none'}}>
+          {prob.text}
+        </div>
+
+        {!solved&&(
+          <div style={{display:'flex',gap:10,justifyContent:'center',alignItems:'center',flexWrap:'wrap'}}>
+            <input type="text" value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&input.trim()&&check()}
+              placeholder="e.g. x < 5  or  x >= -3" style={{
+                background:'var(--bg3)',border:`1px solid ${feedback==='wrong'?'var(--red)':'var(--bg4)'}`,borderRadius:8,padding:'11px 14px',
+                color:'var(--text-bright)',fontFamily:'var(--font-mono)',fontSize:15,width:220,outline:'none',transition:'border-color .25s'
+              }}
+              onFocus={e=>e.target.style.borderColor=feedback==='wrong'?'var(--red)':'var(--emerald)'}
+              onBlur={e=>e.target.style.borderColor=feedback==='wrong'?'var(--red)':'var(--bg4)'}/>
+            <button className="btn-primary btn-sm" onClick={check} disabled={!input.trim()}>Check</button>
+          </div>
+        )}
+        {!solved&&(
+          <div style={{display:'flex',gap:6,justifyContent:'center',marginTop:8}}>
+            {['\u2264','\u2265'].map(s=>(
+              <button key={s} onClick={()=>setInput(prev=>prev+s)} style={{
+                background:'var(--bg3)',border:'1px solid var(--bg4)',borderRadius:6,
+                padding:'3px 10px',color:'var(--text-dim)',fontFamily:'var(--font-mono)',
+                fontSize:15,cursor:'pointer',lineHeight:'1.4'
+              }}>{s}</button>
+            ))}
+          </div>
+        )}
+
+        {feedback==='wrong'&&!solved&&(
+          <div style={{textAlign:'center',marginTop:14,animation:'fadeUp .25s'}}>
+            <span style={{color:'var(--red)',fontFamily:'var(--font-mono)',fontSize:13}}>Not quite &mdash; try again!</span>
+            <div style={{marginTop:8,display:'flex',gap:8,justifyContent:'center'}}>
+              <button className="btn-secondary btn-sm" onClick={()=>setHint(true)}>Hint</button>
+              <button className="btn-secondary btn-sm" onClick={()=>{setSolved(true);setFeedback('revealed')}}>Show Solution</button>
+            </div>
+          </div>
+        )}
+
+        {hint&&!solved&&(
+          <div style={{marginTop:14,animation:'fadeUp .25s'}}>
+            <InfoCard accent="var(--amber)">
+              <div style={{fontFamily:'var(--font-mono)',fontSize:12}}>
+                {prob.steps.map((s,i)=><div key={i}>{i+1}. {s.s}</div>)}
+              </div>
+            </InfoCard>
+          </div>
+        )}
+
+        {solved&&(
+          <div style={{marginTop:18,animation:'scaleIn .35s'}}>
+            <div style={{textAlign:'center',fontFamily:'var(--font-mono)',fontSize:17,color:'var(--emerald)',fontWeight:700,marginBottom:3}}>
+              {feedback==='correct'?'\u2713 ':''}{prob.answer}
+            </div>
+            <div style={{textAlign:'center',fontFamily:'var(--font-mono)',fontSize:11,color:'var(--text-dim)',marginBottom:14}}>
+              {prob.steps.map(s=>s.s).join(' \u2192 ')}
+            </div>
+            <NumberLine min={nlMin} max={nlMax} regions={regions} points={[{value:prob.val,open:prob.open}]} animate height={56}/>
+            <div style={{textAlign:'center',marginTop:18}}>
+              <button className="btn-primary" onClick={next}>Next Problem &rarr;</button>
+            </div>
+          </div>
+        )}
+      </Panel>
+
+      <NavButtons current={step} total={TOTAL_STEPS} onPrev={onPrev} onNext={onNext} nextLabel="Finish"/>
+    </Wrap>
+  );
+}
+
+
+/* ═══════════════════════════════════════
+   STEP 7 — COMPLETION
+   ═══════════════════════════════════════ */
+function StepCompletion({onPrev,step}){
+  const [show,setShow]=useState(false);
+  useEffect(()=>{
+    setTimeout(()=>setShow(true),150);
+    try{const p=JSON.parse(localStorage.getItem('math-progress')||'[]');if(!p.includes(2)){p.push(2);localStorage.setItem('math-progress',JSON.stringify(p))}}catch(e){}
+  },[]);
+
+  const items=[
+    {icon:'=\u2260',label:'Equations vs Inequalities',color:'var(--blue)'},
+    {icon:'\u2500\u25cb\u2192',label:'Number Line Graphing',color:'var(--emerald)'},
+    {icon:'+\u2212\u00d7',label:'Solving Inequalities',color:'var(--green)'},
+    {icon:'\u21c4',label:'The Flipping Rule',color:'var(--red)'},
+    {icon:'\u2229\u222a',label:'Compound Inequalities',color:'var(--violet)'},
+    {icon:'?!',label:'Practice Problems',color:'var(--amber)'},
+  ];
+
+  return(
+    <div style={{minHeight:'100vh',display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',padding:'60px 24px',textAlign:'center',position:'relative',overflow:'hidden'}}>
+      <div style={{position:'absolute',top:'28%',left:'50%',transform:'translate(-50%,-50%)',width:600,height:600,background:'radial-gradient(circle,var(--emerald-glow) 0%,transparent 55%)',pointerEvents:'none'}}/>
+      <div style={{position:'relative',opacity:show?1:0,transform:show?'translateY(0)':'translateY(28px)',transition:'all .9s ease'}}>
+        <div style={{fontFamily:'var(--font-mono)',fontSize:44,color:'var(--emerald)',fontWeight:700,marginBottom:12,letterSpacing:4}}>&le; &ge;</div>
+        <h2 style={{fontFamily:'var(--font-display)',fontSize:'clamp(26px,5vw,42px)',fontWeight:700,color:'var(--text-bright)',marginBottom:14}}>Lesson Complete</h2>
+        <p style={{fontSize:15,color:'var(--text-dim)',maxWidth:480,margin:'0 auto',lineHeight:1.8}}>
+          You have explored the full landscape of inequalities &mdash; from basic comparisons through sign-flipping to compound expressions with interactive number line visualization.
+        </p>
+
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(145px,1fr))',gap:10,maxWidth:580,margin:'36px auto',textAlign:'left'}}>
+          {items.map((c,i)=>(
+            <div key={i} style={{background:'var(--bg2)',borderRadius:9,padding:'12px 14px',border:'1px solid var(--bg4)',display:'flex',alignItems:'center',gap:9,animation:`fadeUp .4s ease ${i*70+150}ms both`}}>
+              <span style={{fontFamily:'var(--font-mono)',fontSize:15,color:c.color,minWidth:32,textAlign:'center'}}>{c.icon}</span>
+              <span style={{fontSize:11,color:'var(--text)',fontWeight:500}}>{c.label}</span>
+            </div>
+          ))}
+        </div>
+
+        <div style={{display:'flex',gap:14,justifyContent:'center',marginTop:24,flexWrap:'wrap'}}>
+          <button className="btn-secondary" onClick={onPrev}>&larr; Review</button>
+          <a href="index.html" style={{textDecoration:'none'}}><button className="btn-primary">Back to Lessons &rarr;</button></a>
+        </div>
+
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:32,padding:'16px 0',borderTop:'1px solid var(--bg4)',maxWidth:580,width:'100%'}}>
+          <a href="01-linear-equations.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--emerald)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>&larr; Previous Lesson: Linear Equations</a>
+          <a href="03-graphing-linear.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--emerald)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>Next Lesson: Graphing &amp; Linear Functions &rarr;</a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+/* ═══════════════════════════════════════
+   APP
+   ═══════════════════════════════════════ */
+function App(){
+  const [step,setStep]=useState(0);
+  function go(s){setStep(s);window.scrollTo({top:0,behavior:'smooth'})}
+  function next(){go(Math.min(step+1,TOTAL_STEPS-1))}
+  function prev(){go(Math.max(step-1,0))}
+
+  return(
+    <div>
+      <ProgressBar current={step} total={TOTAL_STEPS}/>
+      {step>0&&step<TOTAL_STEPS-1&&<StepDots current={step} total={TOTAL_STEPS} onNavigate={go}/>}
+
+      <div key={step} style={{animation:'fadeUp .45s ease'}}>
+        {step===0&&<StepLanding onNext={next}/>}
+        {step===1&&<StepEqVsIneq onPrev={prev} onNext={next} step={step}/>}
+        {step===2&&<StepNumberLine onPrev={prev} onNext={next} step={step}/>}
+        {step===3&&<StepSolving onPrev={prev} onNext={next} step={step}/>}
+        {step===4&&<StepFlipping onPrev={prev} onNext={next} step={step}/>}
+        {step===5&&<StepCompound onPrev={prev} onNext={next} step={step}/>}
+        {step===6&&<StepPractice onPrev={prev} onNext={next} step={step}/>}
+        {step===7&&<StepCompletion onPrev={prev} step={step}/>}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</head>
+<body>
+<div id="root"></div>
+</body>
+</html>

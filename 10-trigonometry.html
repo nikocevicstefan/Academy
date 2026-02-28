@@ -1,0 +1,2093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Trigonometry — Math Foundations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg-deep: #07060b;
+  --bg-primary: #0c0a12;
+  --bg-card: rgba(255, 255, 255, 0.03);
+  --bg-card-hover: rgba(255, 255, 255, 0.06);
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-hover: rgba(255, 255, 255, 0.12);
+  --text-primary: #ece9f3;
+  --text-secondary: rgba(236, 233, 243, 0.55);
+  --text-tertiary: rgba(236, 233, 243, 0.3);
+  --font-display: 'Instrument Serif', Georgia, serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --accent: #e8a530;
+  --accent-warm: #f0c050;
+  --accent-hot: #ff6b35;
+  --accent-glow: rgba(232, 165, 48, 0.15);
+  --hyp-color: #e8a530;
+  --opp-color: #ff6b6b;
+  --adj-color: #4ecdc4;
+  --sin-color: #ff6b6b;
+  --cos-color: #4ecdc4;
+  --tan-color: #e8a530;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+html {
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-height: 100vh;
+  overflow-x: hidden;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(232,165,48,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 60%, rgba(255,107,53,0.03) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 50% at 20% 80%, rgba(255,107,107,0.02) 0%, transparent 50%),
+    var(--bg-deep);
+}
+
+#root { min-height: 100vh; }
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.25;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.14); }
+
+::selection {
+  background: rgba(232, 165, 48, 0.3);
+  color: #fff;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes rotate360 {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes celebratePop {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes confettiFall {
+  0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(232,165,48,0.2); }
+  50% { box-shadow: 0 0 40px rgba(232,165,48,0.4); }
+}
+
+canvas { display: block; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback, useMemo, memo } = React;
+
+/* ================================================================
+   CONSTANTS & HELPERS
+   ================================================================ */
+const TOTAL_STEPS = 8;
+const STEP_TITLES = [
+  'Welcome', 'Right Triangles', 'SOH-CAH-TOA', 'Solving Triangles',
+  'The Unit Circle', 'Waves', 'Identities', 'Practice'
+];
+
+const DEG = Math.PI / 180;
+const RAD = 180 / Math.PI;
+const TAU = 2 * Math.PI;
+
+const SPECIAL_ANGLES = [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330, 360];
+
+const SPECIAL_VALUES = {
+  0:   { sin: '0', cos: '1', tan: '0' },
+  30:  { sin: '1/2', cos: '\u221a3/2', tan: '1/\u221a3' },
+  45:  { sin: '\u221a2/2', cos: '\u221a2/2', tan: '1' },
+  60:  { sin: '\u221a3/2', cos: '1/2', tan: '\u221a3' },
+  90:  { sin: '1', cos: '0', tan: 'undef' },
+  120: { sin: '\u221a3/2', cos: '-1/2', tan: '-\u221a3' },
+  135: { sin: '\u221a2/2', cos: '-\u221a2/2', tan: '-1' },
+  150: { sin: '1/2', cos: '-\u221a3/2', tan: '-1/\u221a3' },
+  180: { sin: '0', cos: '-1', tan: '0' },
+  210: { sin: '-1/2', cos: '-\u221a3/2', tan: '1/\u221a3' },
+  225: { sin: '-\u221a2/2', cos: '-\u221a2/2', tan: '1' },
+  240: { sin: '-\u221a3/2', cos: '-1/2', tan: '\u221a3' },
+  270: { sin: '-1', cos: '0', tan: 'undef' },
+  300: { sin: '-\u221a3/2', cos: '1/2', tan: '-\u221a3' },
+  315: { sin: '-\u221a2/2', cos: '\u221a2/2', tan: '-1' },
+  330: { sin: '-1/2', cos: '\u221a3/2', tan: '-1/\u221a3' },
+  360: { sin: '0', cos: '1', tan: '0' },
+};
+
+function clamp(val, min, max) { return Math.max(min, Math.min(max, val)); }
+function lerp(a, b, t) { return a + (b - a) * t; }
+function fmt(n, d=2) { return Number.isFinite(n) ? n.toFixed(d) : '—'; }
+function fmtAngle(deg) { return `${Math.round(deg)}\u00b0`; }
+
+function saveProgress() {
+  try {
+    const prev = JSON.parse(localStorage.getItem('math-progress') || '[]');
+    if (!prev.includes(10)) {
+      prev.push(10);
+      localStorage.setItem('math-progress', JSON.stringify(prev));
+    }
+  } catch(e) {}
+}
+
+function isAllComplete() {
+  try {
+    const prev = JSON.parse(localStorage.getItem('math-progress') || '[]');
+    return prev.length >= 10;
+  } catch(e) { return false; }
+}
+
+/* ================================================================
+   PROGRESS BAR
+   ================================================================ */
+function ProgressBar({ step }) {
+  return (
+    <div style={{
+      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
+      background: 'rgba(7,6,11,0.85)', backdropFilter: 'blur(12px)',
+      borderBottom: '1px solid var(--border-subtle)',
+      padding: '0 24px',
+    }}>
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '12px 0' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+          <a href="index.html" style={{
+            fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.08em',
+            textTransform: 'uppercase', color: 'var(--text-tertiary)',
+            textDecoration: 'none', transition: 'color 0.3s',
+          }}
+          onMouseEnter={e => e.target.style.color = 'var(--accent)'}
+          onMouseLeave={e => e.target.style.color = 'var(--text-tertiary)'}
+          >&larr; Back to Lessons</a>
+          <span style={{
+            fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.06em',
+            color: 'var(--text-tertiary)',
+          }}>
+            {step} / {TOTAL_STEPS}
+          </span>
+        </div>
+        <div style={{ display: 'flex', gap: 3 }}>
+          {Array.from({ length: TOTAL_STEPS }, (_, i) => (
+            <div key={i} style={{
+              flex: 1, height: 3, borderRadius: 2,
+              background: i < step
+                ? 'linear-gradient(90deg, var(--accent), var(--accent-hot))'
+                : 'rgba(255,255,255,0.06)',
+              transition: 'background 0.5s ease',
+            }} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   NAVIGATION
+   ================================================================ */
+function Navigation({ step, setStep, canNext }) {
+  return (
+    <div style={{
+      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+      padding: '32px 0', maxWidth: 900, margin: '0 auto',
+    }}>
+      {step > 1 ? (
+        <button onClick={() => setStep(step - 1)} style={{
+          fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 400,
+          color: 'var(--text-secondary)', background: 'var(--bg-card)',
+          border: '1px solid var(--border-subtle)', borderRadius: 10,
+          padding: '10px 24px', cursor: 'pointer', transition: 'all 0.3s',
+        }}
+        onMouseEnter={e => { e.target.style.borderColor = 'var(--border-hover)'; e.target.style.color = 'var(--text-primary)'; }}
+        onMouseLeave={e => { e.target.style.borderColor = 'var(--border-subtle)'; e.target.style.color = 'var(--text-secondary)'; }}
+        >&larr; Previous</button>
+      ) : <div />}
+      {canNext && step < TOTAL_STEPS ? (
+        <button onClick={() => setStep(step + 1)} style={{
+          fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 500,
+          color: '#fff', background: 'linear-gradient(135deg, var(--accent), var(--accent-hot))',
+          border: 'none', borderRadius: 10, padding: '10px 28px',
+          cursor: 'pointer', transition: 'all 0.3s',
+          boxShadow: '0 4px 20px rgba(232,165,48,0.25)',
+        }}
+        onMouseEnter={e => e.target.style.boxShadow = '0 4px 30px rgba(232,165,48,0.4)'}
+        onMouseLeave={e => e.target.style.boxShadow = '0 4px 20px rgba(232,165,48,0.25)'}
+        >Next &rarr;</button>
+      ) : null}
+    </div>
+  );
+}
+
+/* ================================================================
+   STEP 1 — LANDING
+   ================================================================ */
+function LandingCanvas({ width, height }) {
+  const canvasRef = useRef(null);
+  const animRef = useRef(null);
+  const timeRef = useRef(0);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    ctx.scale(dpr, dpr);
+
+    const cx = width * 0.32;
+    const cy = height * 0.5;
+    const r = Math.min(width, height) * 0.28;
+
+    function draw(t) {
+      timeRef.current = t;
+      ctx.clearRect(0, 0, width, height);
+
+      const angle = (t * 0.0006) % TAU;
+
+      // Grid lines
+      ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+      ctx.lineWidth = 1;
+      for (let i = -5; i <= 5; i++) {
+        const y = cy + i * (r / 4);
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
+      }
+      for (let i = -5; i <= 10; i++) {
+        const x = cx + i * (r / 4);
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
+      }
+
+      // Unit circle
+      ctx.strokeStyle = 'rgba(232,165,48,0.15)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, TAU);
+      ctx.stroke();
+
+      // Axes
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(cx - r - 20, cy); ctx.lineTo(cx + r + 20, cy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx, cy - r - 20); ctx.lineTo(cx, cy + r + 20); ctx.stroke();
+
+      // Rotating radius
+      const px = cx + Math.cos(angle) * r;
+      const py = cy - Math.sin(angle) * r;
+
+      ctx.strokeStyle = 'rgba(232,165,48,0.6)';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(px, py); ctx.stroke();
+
+      // Dot on circle
+      ctx.fillStyle = '#e8a530';
+      ctx.beginPath(); ctx.arc(px, py, 5, 0, TAU); ctx.fill();
+      ctx.fillStyle = 'rgba(232,165,48,0.3)';
+      ctx.beginPath(); ctx.arc(px, py, 10, 0, TAU); ctx.fill();
+
+      // Projection lines
+      ctx.strokeStyle = 'rgba(255,107,107,0.3)';
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, cy); ctx.stroke();
+      ctx.strokeStyle = 'rgba(78,205,196,0.3)';
+      ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(cx, py); ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Sine wave
+      const waveStart = cx + r + 40;
+      const waveWidth = width - waveStart - 20;
+      ctx.strokeStyle = 'rgba(255,107,107,0.5)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = 0; i <= waveWidth; i++) {
+        const wAngle = angle - (i / waveWidth) * TAU * 1.5;
+        const wy = cy - Math.sin(wAngle) * r;
+        if (i === 0) ctx.moveTo(waveStart + i, wy);
+        else ctx.lineTo(waveStart + i, wy);
+      }
+      ctx.stroke();
+
+      // Connection line from point to wave
+      ctx.strokeStyle = 'rgba(255,107,107,0.2)';
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.lineTo(waveStart, py);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Wave start dot
+      ctx.fillStyle = '#ff6b6b';
+      ctx.beginPath(); ctx.arc(waveStart, py, 4, 0, TAU); ctx.fill();
+
+      // Angle arc
+      const arcR = r * 0.18;
+      ctx.strokeStyle = 'rgba(232,165,48,0.4)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(cx, cy, arcR, -angle, 0);
+      ctx.stroke();
+
+      animRef.current = requestAnimationFrame(draw);
+    }
+
+    animRef.current = requestAnimationFrame(draw);
+    return () => cancelAnimationFrame(animRef.current);
+  }, [width, height]);
+
+  return <canvas ref={canvasRef} style={{ width, height }} />;
+}
+
+function StepLanding({ onStart }) {
+  const [dims, setDims] = useState({ w: 0, h: 0 });
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const update = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        setDims({ w: rect.width, h: Math.min(400, window.innerHeight * 0.45) });
+      }
+    };
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+
+  return (
+    <div style={{
+      minHeight: '85vh', display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center', textAlign: 'center',
+      padding: '80px 24px 40px',
+    }}>
+      <div style={{
+        fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.12em',
+        textTransform: 'uppercase', color: 'var(--accent)',
+        marginBottom: 16, animation: 'slideDown 0.8s var(--ease-out-expo) both',
+      }}>
+        Lesson 10 &mdash; Capstone
+      </div>
+      <h1 style={{
+        fontFamily: 'var(--font-display)', fontSize: 'clamp(52px, 10vw, 88px)',
+        fontWeight: 400, lineHeight: 1, letterSpacing: '-0.02em',
+        marginBottom: 16, animation: 'fadeInUp 1s var(--ease-out-expo) 0.1s both',
+      }}>
+        <span style={{
+          background: 'linear-gradient(135deg, var(--accent-warm) 0%, var(--accent) 40%, var(--accent-hot) 100%)',
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+        }}>Trigonometry</span>
+      </h1>
+      <p style={{
+        fontFamily: 'var(--font-display)', fontStyle: 'italic',
+        fontSize: 'clamp(18px, 2.5vw, 24px)', color: 'var(--text-secondary)',
+        maxWidth: 500, lineHeight: 1.5, marginBottom: 40,
+        animation: 'fadeInUp 1s var(--ease-out-expo) 0.25s both',
+      }}>
+        The study of triangles and circular motion
+      </p>
+
+      <div ref={containerRef} style={{
+        width: '100%', maxWidth: 700, marginBottom: 40,
+        borderRadius: 16, overflow: 'hidden',
+        border: '1px solid var(--border-subtle)',
+        background: 'rgba(0,0,0,0.3)',
+        animation: 'fadeIn 1.2s var(--ease-out-expo) 0.4s both',
+      }}>
+        {dims.w > 0 && <LandingCanvas width={dims.w} height={dims.h} />}
+      </div>
+
+      <button onClick={onStart} style={{
+        fontFamily: 'var(--font-body)', fontSize: 17, fontWeight: 500,
+        color: '#fff', background: 'linear-gradient(135deg, var(--accent), var(--accent-hot))',
+        border: 'none', borderRadius: 12, padding: '14px 44px',
+        cursor: 'pointer', transition: 'all 0.3s',
+        boxShadow: '0 4px 24px rgba(232,165,48,0.3)',
+        animation: 'fadeInUp 1s var(--ease-out-expo) 0.5s both',
+      }}
+      onMouseEnter={e => e.target.style.boxShadow = '0 6px 36px rgba(232,165,48,0.5)'}
+      onMouseLeave={e => e.target.style.boxShadow = '0 4px 24px rgba(232,165,48,0.3)'}
+      >
+        Begin &rarr;
+      </button>
+    </div>
+  );
+}
+
+/* ================================================================
+   STEP 2 — RIGHT TRIANGLES
+   ================================================================ */
+function StepRightTriangles() {
+  const canvasRef = useRef(null);
+  const [angle, setAngle] = useState(40);
+  const [dragging, setDragging] = useState(false);
+  const [dims, setDims] = useState({ w: 0, h: 0 });
+  const containerRef = useRef(null);
+  const [selectedAngle, setSelectedAngle] = useState('A');
+
+  useEffect(() => {
+    const update = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        setDims({ w: rect.width, h: Math.min(420, window.innerHeight * 0.5) });
+      }
+    };
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || dims.w === 0) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = dims.w * dpr;
+    canvas.height = dims.h * dpr;
+    ctx.scale(dpr, dpr);
+
+    const w = dims.w;
+    const h = dims.h;
+    const pad = 60;
+    const baseLen = w * 0.45;
+    const theta = angle * DEG;
+
+    // Triangle vertices: right angle at bottom-left
+    const ax = pad + 30;
+    const ay = h - pad;
+    const bx = ax + baseLen;
+    const by = ay;
+    const cx2 = bx;
+    const cy2 = ay - Math.tan(theta) * baseLen;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // Right angle marker
+    const sq = 14;
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(bx - sq, by);
+    ctx.lineTo(bx - sq, by - sq);
+    ctx.lineTo(bx, by - sq);
+    ctx.stroke();
+
+    // Triangle fill
+    ctx.fillStyle = 'rgba(232,165,48,0.04)';
+    ctx.beginPath();
+    ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.lineTo(cx2, cy2);
+    ctx.closePath();
+    ctx.fill();
+
+    // Sides
+    // Adjacent (bottom)
+    ctx.strokeStyle = selectedAngle === 'A' ? 'var(--adj-color)' : (selectedAngle === 'B' ? 'var(--opp-color)' : 'rgba(255,255,255,0.3)');
+    ctx.strokeStyle = selectedAngle === 'A' ? '#4ecdc4' : '#ff6b6b';
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+
+    // Opposite (right side, vertical)
+    ctx.strokeStyle = selectedAngle === 'A' ? '#ff6b6b' : '#4ecdc4';
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(cx2, cy2); ctx.stroke();
+
+    // Hypotenuse
+    ctx.strokeStyle = '#e8a530';
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(cx2, cy2); ctx.stroke();
+
+    // Labels
+    ctx.font = '14px "DM Sans", sans-serif';
+    ctx.textAlign = 'center';
+
+    // Hypotenuse label
+    const hMidX = (ax + cx2) / 2 - 16;
+    const hMidY = (ay + cy2) / 2;
+    ctx.fillStyle = '#e8a530';
+    ctx.save();
+    const hAngle = Math.atan2(cy2 - ay, cx2 - ax);
+    ctx.translate(hMidX, hMidY);
+    ctx.rotate(hAngle);
+    ctx.fillText('hypotenuse', 0, -10);
+    ctx.restore();
+
+    // Adjacent / opposite labels depending on selected angle
+    if (selectedAngle === 'A') {
+      // A is at bottom-left
+      ctx.fillStyle = '#4ecdc4';
+      ctx.fillText('adjacent', (ax + bx) / 2, ay + 24);
+      ctx.fillStyle = '#ff6b6b';
+      ctx.fillText('opposite', bx + 44, (by + cy2) / 2);
+    } else {
+      // B is at top-right
+      ctx.fillStyle = '#ff6b6b';
+      ctx.fillText('opposite', (ax + bx) / 2, ay + 24);
+      ctx.fillStyle = '#4ecdc4';
+      ctx.fillText('adjacent', bx + 44, (by + cy2) / 2);
+    }
+
+    // Angle arc at A
+    const arcR = 30;
+    ctx.strokeStyle = selectedAngle === 'A' ? 'rgba(232,165,48,0.7)' : 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(ax, ay, arcR, -theta, 0);
+    ctx.stroke();
+
+    ctx.fillStyle = selectedAngle === 'A' ? '#e8a530' : 'rgba(255,255,255,0.3)';
+    ctx.font = 'italic 16px "Instrument Serif", serif';
+    ctx.fillText(selectedAngle === 'A' ? `\u03b8 = ${Math.round(angle)}\u00b0` : `${Math.round(angle)}\u00b0`, ax + arcR + 20, ay - 8);
+
+    // Angle arc at B (top vertex)
+    const bArcR = 22;
+    const bAngle = (90 - angle) * DEG;
+    ctx.strokeStyle = selectedAngle === 'B' ? 'rgba(232,165,48,0.7)' : 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(cx2, cy2, bArcR, Math.PI / 2, Math.PI / 2 + bAngle);
+    ctx.stroke();
+
+    ctx.fillStyle = selectedAngle === 'B' ? '#e8a530' : 'rgba(255,255,255,0.3)';
+    ctx.font = 'italic 16px "Instrument Serif", serif';
+    ctx.fillText(selectedAngle === 'B' ? `\u03b8 = ${Math.round(90 - angle)}\u00b0` : `${Math.round(90 - angle)}\u00b0`, cx2 - 36, cy2 + bArcR + 18);
+
+    // Vertex labels
+    ctx.font = '600 13px "DM Sans", sans-serif';
+    ctx.fillStyle = 'var(--text-secondary)';
+    ctx.fillText('A', ax - 14, ay + 6);
+    ctx.fillText('B', cx2 + 4, cy2 - 12);
+    ctx.fillText('C', bx + 14, by + 6);
+
+    // Draggable indicator at B vertex
+    ctx.fillStyle = 'rgba(232,165,48,0.8)';
+    ctx.beginPath(); ctx.arc(cx2, cy2, 7, 0, TAU); ctx.fill();
+    ctx.fillStyle = 'rgba(232,165,48,0.2)';
+    ctx.beginPath(); ctx.arc(cx2, cy2, 14, 0, TAU); ctx.fill();
+
+  }, [angle, dims, selectedAngle]);
+
+  const handlePointer = useCallback((e) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const pad = 60;
+    const ax = pad + 30;
+    const ay = dims.h - pad;
+    const bx = ax + dims.w * 0.45;
+    const dy = ay - my;
+    const dx = bx - ax;
+    let newAngle = Math.atan2(dy, dx) * RAD;
+    newAngle = clamp(newAngle, 10, 80);
+    setAngle(newAngle);
+  }, [dims]);
+
+  const handleDown = useCallback((e) => {
+    setDragging(true);
+    handlePointer(e);
+  }, [handlePointer]);
+
+  useEffect(() => {
+    if (!dragging) return;
+    const move = (e) => { e.preventDefault(); handlePointer(e); };
+    const up = () => setDragging(false);
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    return () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+  }, [dragging, handlePointer]);
+
+  const oppLen = Math.tan(angle * DEG);
+  const hypLen = 1 / Math.cos(angle * DEG);
+
+  return (
+    <div style={{ animation: 'fadeInUp 0.7s var(--ease-out-expo) both' }}>
+      <div style={{ textAlign: 'center', marginBottom: 24 }}>
+        <h2 style={{
+          fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 5vw, 40px)',
+          fontWeight: 400, marginBottom: 8,
+        }}>Right Triangles</h2>
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: 15, color: 'var(--text-secondary)', maxWidth: 500, margin: '0 auto', lineHeight: 1.6 }}>
+          Every right triangle has three sides named relative to a chosen angle.
+          Drag the vertex to reshape the triangle.
+        </p>
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginBottom: 20 }}>
+        {['A', 'B'].map(a => (
+          <button key={a} onClick={() => setSelectedAngle(a)} style={{
+            fontFamily: 'var(--font-mono)', fontSize: 13,
+            color: selectedAngle === a ? '#fff' : 'var(--text-secondary)',
+            background: selectedAngle === a ? 'rgba(232,165,48,0.2)' : 'var(--bg-card)',
+            border: `1px solid ${selectedAngle === a ? 'rgba(232,165,48,0.4)' : 'var(--border-subtle)'}`,
+            borderRadius: 8, padding: '8px 20px', cursor: 'pointer', transition: 'all 0.3s',
+          }}>
+            View from angle {a}
+          </button>
+        ))}
+      </div>
+
+      <div ref={containerRef} style={{
+        borderRadius: 16, overflow: 'hidden',
+        border: '1px solid var(--border-subtle)', background: 'rgba(0,0,0,0.3)',
+        cursor: dragging ? 'grabbing' : 'grab', touchAction: 'none',
+      }}
+        onPointerDown={handleDown}
+      >
+        {dims.w > 0 && <canvas ref={canvasRef} style={{ width: dims.w, height: dims.h }} />}
+      </div>
+
+      <div style={{
+        display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12,
+        marginTop: 20, maxWidth: 500, margin: '20px auto 0',
+      }}>
+        {[
+          { label: 'Hypotenuse', color: '#e8a530', value: fmt(hypLen) },
+          { label: selectedAngle === 'A' ? 'Opposite' : 'Adjacent', color: selectedAngle === 'A' ? '#ff6b6b' : '#4ecdc4', value: fmt(oppLen) },
+          { label: selectedAngle === 'A' ? 'Adjacent' : 'Opposite', color: selectedAngle === 'A' ? '#4ecdc4' : '#ff6b6b', value: '1.00' },
+        ].map((s, i) => (
+          <div key={i} style={{
+            background: 'var(--bg-card)', border: '1px solid var(--border-subtle)',
+            borderRadius: 10, padding: '12px 16px', textAlign: 'center',
+          }}>
+            <div style={{
+              fontFamily: 'var(--font-mono)', fontSize: 11, color: s.color,
+              textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4,
+            }}>{s.label}</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 20, color: 'var(--text-primary)' }}>{s.value}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   STEP 3 — SOH-CAH-TOA
+   ================================================================ */
+function StepSOHCAHTOA() {
+  const [angle, setAngle] = useState(45);
+  const sinVal = Math.sin(angle * DEG);
+  const cosVal = Math.cos(angle * DEG);
+  const tanVal = Math.tan(angle * DEG);
+
+  const ratios = [
+    { name: 'SOH', fn: 'sin', formula: 'Opposite / Hypotenuse', value: sinVal, color: '#ff6b6b',
+      parts: [{ text: 'S', highlight: true, c: '#ff6b6b' }, { text: 'O', highlight: true, c: '#ff6b6b' }, { text: 'H', highlight: true, c: '#e8a530' }],
+      num: 'Opposite', den: 'Hypotenuse', numC: '#ff6b6b', denC: '#e8a530' },
+    { name: 'CAH', fn: 'cos', formula: 'Adjacent / Hypotenuse', value: cosVal, color: '#4ecdc4',
+      parts: [{ text: 'C', highlight: true, c: '#4ecdc4' }, { text: 'A', highlight: true, c: '#4ecdc4' }, { text: 'H', highlight: true, c: '#e8a530' }],
+      num: 'Adjacent', den: 'Hypotenuse', numC: '#4ecdc4', denC: '#e8a530' },
+    { name: 'TOA', fn: 'tan', formula: 'Opposite / Adjacent', value: tanVal, color: '#e8a530',
+      parts: [{ text: 'T', highlight: true, c: '#e8a530' }, { text: 'O', highlight: true, c: '#ff6b6b' }, { text: 'A', highlight: true, c: '#4ecdc4' }],
+      num: 'Opposite', den: 'Adjacent', numC: '#ff6b6b', denC: '#4ecdc4' },
+  ];
+
+  return (
+    <div style={{ animation: 'fadeInUp 0.7s var(--ease-out-expo) both' }}>
+      <div style={{ textAlign: 'center', marginBottom: 32 }}>
+        <h2 style={{
+          fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 5vw, 40px)',
+          fontWeight: 400, marginBottom: 8,
+        }}>SOH-CAH-TOA</h2>
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: 15, color: 'var(--text-secondary)', maxWidth: 500, margin: '0 auto', lineHeight: 1.6 }}>
+          The three fundamental trigonometric ratios. Adjust the angle and watch the ratios change.
+        </p>
+      </div>
+
+      <div style={{ textAlign: 'center', marginBottom: 28 }}>
+        <div style={{
+          fontFamily: 'var(--font-display)', fontStyle: 'italic',
+          fontSize: 36, color: 'var(--accent)', marginBottom: 8,
+        }}>&theta; = {Math.round(angle)}&deg;</div>
+        <input type="range" min="5" max="85" value={angle}
+          onChange={e => setAngle(Number(e.target.value))}
+          style={{ width: '100%', maxWidth: 320, accentColor: 'var(--accent)' }}
+        />
+      </div>
+
+      <div style={{
+        display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+        gap: 16, maxWidth: 760, margin: '0 auto',
+      }}>
+        {ratios.map((r, i) => (
+          <div key={i} style={{
+            background: 'var(--bg-card)', border: '1px solid var(--border-subtle)',
+            borderRadius: 14, padding: '24px 20px', textAlign: 'center',
+            transition: 'border-color 0.3s',
+          }}>
+            {/* Mnemonic */}
+            <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'center', gap: 2 }}>
+              {r.parts.map((p, j) => (
+                <span key={j} style={{
+                  fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 400,
+                  color: p.c, lineHeight: 1,
+                }}>{p.text}</span>
+              ))}
+            </div>
+
+            {/* Function name */}
+            <div style={{
+              fontFamily: 'var(--font-mono)', fontSize: 14, color: r.color,
+              marginBottom: 12, letterSpacing: '0.04em',
+            }}>
+              {r.fn}(&theta;)
+            </div>
+
+            {/* Fraction display */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, marginBottom: 16 }}>
+              <span style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: r.numC }}>{r.num}</span>
+              <div style={{ width: 80, height: 1, background: 'rgba(255,255,255,0.2)' }} />
+              <span style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: r.denC }}>{r.den}</span>
+            </div>
+
+            {/* Value */}
+            <div style={{
+              fontFamily: 'var(--font-mono)', fontSize: 28, color: 'var(--text-primary)',
+              fontWeight: 500,
+            }}>
+              {Math.abs(r.value) > 999 ? '\u221e' : fmt(r.value, 4)}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   STEP 4 — SOLVING TRIANGLES
+   ================================================================ */
+function StepSolving() {
+  const [mode, setMode] = useState('side');
+  const [knownAngle, setKnownAngle] = useState('35');
+  const [knownSide, setKnownSide] = useState('10');
+  const [findSide, setFindSide] = useState('opposite');
+  const [givenSide, setGivenSide] = useState('hypotenuse');
+
+  // For finding angle
+  const [side1Val, setSide1Val] = useState('3');
+  const [side2Val, setSide2Val] = useState('5');
+  const [side1Type, setSide1Type] = useState('opposite');
+  const [side2Type, setSide2Type] = useState('hypotenuse');
+
+  const solveForSide = () => {
+    const a = parseFloat(knownAngle) * DEG;
+    const s = parseFloat(knownSide);
+    if (!a || !s) return null;
+
+    let result, fn, formula, step1, step2;
+
+    if (givenSide === 'hypotenuse' && findSide === 'opposite') {
+      fn = 'sin'; result = s * Math.sin(a);
+      formula = `sin(${knownAngle}\u00b0) = opposite / ${knownSide}`;
+      step1 = `opposite = ${knownSide} \u00d7 sin(${knownAngle}\u00b0)`;
+      step2 = `opposite = ${knownSide} \u00d7 ${fmt(Math.sin(a), 4)} = ${fmt(result, 4)}`;
+    } else if (givenSide === 'hypotenuse' && findSide === 'adjacent') {
+      fn = 'cos'; result = s * Math.cos(a);
+      formula = `cos(${knownAngle}\u00b0) = adjacent / ${knownSide}`;
+      step1 = `adjacent = ${knownSide} \u00d7 cos(${knownAngle}\u00b0)`;
+      step2 = `adjacent = ${knownSide} \u00d7 ${fmt(Math.cos(a), 4)} = ${fmt(result, 4)}`;
+    } else if (givenSide === 'adjacent' && findSide === 'opposite') {
+      fn = 'tan'; result = s * Math.tan(a);
+      formula = `tan(${knownAngle}\u00b0) = opposite / ${knownSide}`;
+      step1 = `opposite = ${knownSide} \u00d7 tan(${knownAngle}\u00b0)`;
+      step2 = `opposite = ${knownSide} \u00d7 ${fmt(Math.tan(a), 4)} = ${fmt(result, 4)}`;
+    } else if (givenSide === 'opposite' && findSide === 'adjacent') {
+      fn = 'tan'; result = s / Math.tan(a);
+      formula = `tan(${knownAngle}\u00b0) = ${knownSide} / adjacent`;
+      step1 = `adjacent = ${knownSide} / tan(${knownAngle}\u00b0)`;
+      step2 = `adjacent = ${knownSide} / ${fmt(Math.tan(a), 4)} = ${fmt(result, 4)}`;
+    } else if (givenSide === 'opposite' && findSide === 'hypotenuse') {
+      fn = 'sin'; result = s / Math.sin(a);
+      formula = `sin(${knownAngle}\u00b0) = ${knownSide} / hypotenuse`;
+      step1 = `hypotenuse = ${knownSide} / sin(${knownAngle}\u00b0)`;
+      step2 = `hypotenuse = ${knownSide} / ${fmt(Math.sin(a), 4)} = ${fmt(result, 4)}`;
+    } else if (givenSide === 'adjacent' && findSide === 'hypotenuse') {
+      fn = 'cos'; result = s / Math.cos(a);
+      formula = `cos(${knownAngle}\u00b0) = ${knownSide} / hypotenuse`;
+      step1 = `hypotenuse = ${knownSide} / cos(${knownAngle}\u00b0)`;
+      step2 = `hypotenuse = ${knownSide} / ${fmt(Math.cos(a), 4)} = ${fmt(result, 4)}`;
+    }
+    return { fn, formula, step1, step2, result };
+  };
+
+  const solveForAngle = () => {
+    const s1 = parseFloat(side1Val);
+    const s2 = parseFloat(side2Val);
+    if (!s1 || !s2) return null;
+
+    let fn, ratio, angleDeg, formula, step1, step2;
+
+    if (side1Type === 'opposite' && side2Type === 'hypotenuse') {
+      fn = 'arcsin'; ratio = s1 / s2;
+      angleDeg = Math.asin(clamp(ratio, -1, 1)) * RAD;
+      formula = `sin(\u03b8) = ${side1Val} / ${side2Val} = ${fmt(ratio, 4)}`;
+      step1 = `\u03b8 = arcsin(${fmt(ratio, 4)})`;
+      step2 = `\u03b8 = ${fmt(angleDeg, 2)}\u00b0`;
+    } else if (side1Type === 'adjacent' && side2Type === 'hypotenuse') {
+      fn = 'arccos'; ratio = s1 / s2;
+      angleDeg = Math.acos(clamp(ratio, -1, 1)) * RAD;
+      formula = `cos(\u03b8) = ${side1Val} / ${side2Val} = ${fmt(ratio, 4)}`;
+      step1 = `\u03b8 = arccos(${fmt(ratio, 4)})`;
+      step2 = `\u03b8 = ${fmt(angleDeg, 2)}\u00b0`;
+    } else if (side1Type === 'opposite' && side2Type === 'adjacent') {
+      fn = 'arctan'; ratio = s1 / s2;
+      angleDeg = Math.atan(ratio) * RAD;
+      formula = `tan(\u03b8) = ${side1Val} / ${side2Val} = ${fmt(ratio, 4)}`;
+      step1 = `\u03b8 = arctan(${fmt(ratio, 4)})`;
+      step2 = `\u03b8 = ${fmt(angleDeg, 2)}\u00b0`;
+    } else {
+      return null;
+    }
+    return { fn, formula, step1, step2, result: angleDeg };
+  };
+
+  const sideResult = mode === 'side' ? solveForSide() : null;
+  const angleResult = mode === 'angle' ? solveForAngle() : null;
+
+  const inputStyle = {
+    fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--text-primary)',
+    background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-subtle)',
+    borderRadius: 8, padding: '8px 14px', width: '100%', outline: 'none',
+    transition: 'border-color 0.3s',
+  };
+  const selectStyle = {
+    ...inputStyle, cursor: 'pointer', appearance: 'none',
+    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`,
+    backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center',
+    paddingRight: 36,
+  };
+  const labelStyle = {
+    fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-tertiary)',
+    textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6,
+    display: 'block',
+  };
+
+  return (
+    <div style={{ animation: 'fadeInUp 0.7s var(--ease-out-expo) both' }}>
+      <div style={{ textAlign: 'center', marginBottom: 28 }}>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 5vw, 40px)', fontWeight: 400, marginBottom: 8 }}>
+          Solving Triangles
+        </h2>
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: 15, color: 'var(--text-secondary)', maxWidth: 500, margin: '0 auto', lineHeight: 1.6 }}>
+          Given some known values, find the unknowns. Choose what to solve for.
+        </p>
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginBottom: 28 }}>
+        {[{ k: 'side', l: 'Find a Side' }, { k: 'angle', l: 'Find an Angle' }].map(m => (
+          <button key={m.k} onClick={() => setMode(m.k)} style={{
+            fontFamily: 'var(--font-mono)', fontSize: 13,
+            color: mode === m.k ? '#fff' : 'var(--text-secondary)',
+            background: mode === m.k ? 'rgba(232,165,48,0.2)' : 'var(--bg-card)',
+            border: `1px solid ${mode === m.k ? 'rgba(232,165,48,0.4)' : 'var(--border-subtle)'}`,
+            borderRadius: 8, padding: '8px 20px', cursor: 'pointer', transition: 'all 0.3s',
+          }}>{m.l}</button>
+        ))}
+      </div>
+
+      <div style={{
+        maxWidth: 480, margin: '0 auto',
+        background: 'var(--bg-card)', border: '1px solid var(--border-subtle)',
+        borderRadius: 14, padding: 24,
+      }}>
+        {mode === 'side' ? (
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+              <div>
+                <label style={labelStyle}>Known Angle</label>
+                <input type="number" value={knownAngle} onChange={e => setKnownAngle(e.target.value)}
+                  style={inputStyle} min="1" max="89" />
+              </div>
+              <div>
+                <label style={labelStyle}>Known Side Value</label>
+                <input type="number" value={knownSide} onChange={e => setKnownSide(e.target.value)}
+                  style={inputStyle} min="0.1" step="0.1" />
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+              <div>
+                <label style={labelStyle}>Known Side Is</label>
+                <select value={givenSide} onChange={e => setGivenSide(e.target.value)} style={selectStyle}>
+                  <option value="hypotenuse">Hypotenuse</option>
+                  <option value="opposite">Opposite</option>
+                  <option value="adjacent">Adjacent</option>
+                </select>
+              </div>
+              <div>
+                <label style={labelStyle}>Find</label>
+                <select value={findSide} onChange={e => setFindSide(e.target.value)} style={selectStyle}>
+                  <option value="hypotenuse">Hypotenuse</option>
+                  <option value="opposite">Opposite</option>
+                  <option value="adjacent">Adjacent</option>
+                </select>
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+              <div>
+                <label style={labelStyle}>Side 1 Value</label>
+                <input type="number" value={side1Val} onChange={e => setSide1Val(e.target.value)}
+                  style={inputStyle} min="0.1" step="0.1" />
+              </div>
+              <div>
+                <label style={labelStyle}>Side 1 Is</label>
+                <select value={side1Type} onChange={e => setSide1Type(e.target.value)} style={selectStyle}>
+                  <option value="opposite">Opposite</option>
+                  <option value="adjacent">Adjacent</option>
+                </select>
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+              <div>
+                <label style={labelStyle}>Side 2 Value</label>
+                <input type="number" value={side2Val} onChange={e => setSide2Val(e.target.value)}
+                  style={inputStyle} min="0.1" step="0.1" />
+              </div>
+              <div>
+                <label style={labelStyle}>Side 2 Is</label>
+                <select value={side2Type} onChange={e => setSide2Type(e.target.value)} style={selectStyle}>
+                  <option value="hypotenuse">Hypotenuse</option>
+                  <option value="adjacent">Adjacent</option>
+                </select>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Solution Steps */}
+        {(sideResult || angleResult) && (
+          <div style={{
+            borderTop: '1px solid var(--border-subtle)', paddingTop: 20,
+          }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>
+              Solution
+            </div>
+            {[
+              { label: 'Setup', text: (sideResult || angleResult).formula },
+              { label: 'Rearrange', text: (sideResult || angleResult).step1 },
+              { label: 'Calculate', text: (sideResult || angleResult).step2 },
+            ].map((s, i) => (
+              <div key={i} style={{
+                display: 'flex', gap: 12, alignItems: 'baseline', marginBottom: 10,
+                animation: `fadeInUp 0.5s var(--ease-out-expo) ${i * 0.1}s both`,
+              }}>
+                <span style={{
+                  fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-tertiary)',
+                  textTransform: 'uppercase', flexShrink: 0, width: 70,
+                }}>{s.label}</span>
+                <span style={{
+                  fontFamily: 'var(--font-mono)', fontSize: 14,
+                  color: i === 2 ? 'var(--accent)' : 'var(--text-primary)',
+                  fontWeight: i === 2 ? 500 : 400,
+                }}>{s.text}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   STEP 5 — UNIT CIRCLE
+   ================================================================ */
+function StepUnitCircle() {
+  const canvasRef = useRef(null);
+  const [angle, setAngle] = useState(45);
+  const [dragging, setDragging] = useState(false);
+  const [showSpecial, setShowSpecial] = useState(true);
+  const [dims, setDims] = useState({ w: 0, h: 0 });
+  const containerRef = useRef(null);
+  const [snap, setSnap] = useState(false);
+
+  useEffect(() => {
+    const update = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const s = Math.min(rect.width, 520);
+        setDims({ w: s, h: s });
+      }
+    };
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || dims.w === 0) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = dims.w * dpr;
+    canvas.height = dims.h * dpr;
+    ctx.scale(dpr, dpr);
+
+    const w = dims.w;
+    const h = dims.h;
+    const cx = w / 2;
+    const cy = h / 2;
+    const r = w * 0.36;
+    const theta = angle * DEG;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // Grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+    ctx.lineWidth = 1;
+    for (let i = -5; i <= 5; i++) {
+      ctx.beginPath(); ctx.moveTo(0, cy + i * (r / 4)); ctx.lineTo(w, cy + i * (r / 4)); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx + i * (r / 4), 0); ctx.lineTo(cx + i * (r / 4), h); ctx.stroke();
+    }
+
+    // Axes
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(w, cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, h); ctx.stroke();
+
+    // Axis labels
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.font = '12px "DM Sans", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('1', cx + r, cy + 16);
+    ctx.fillText('-1', cx - r, cy + 16);
+    ctx.fillText('1', cx + 12, cy - r + 4);
+    ctx.fillText('-1', cx + 14, cy + r + 4);
+
+    // Unit circle
+    ctx.strokeStyle = 'rgba(232,165,48,0.25)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, TAU);
+    ctx.stroke();
+
+    // Quadrant labels
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.font = '11px "DM Sans", sans-serif';
+    ctx.textAlign = 'center';
+    const qr = r * 0.6;
+    ctx.fillText('All +', cx + qr, cy - qr);
+    ctx.fillText('sin +', cx - qr, cy - qr);
+    ctx.fillText('tan +', cx - qr, cy + qr + 4);
+    ctx.fillText('cos +', cx + qr, cy + qr + 4);
+
+    // Special angles
+    if (showSpecial) {
+      SPECIAL_ANGLES.slice(0, -1).forEach(deg => {
+        const a = deg * DEG;
+        const sx = cx + Math.cos(a) * r;
+        const sy = cy - Math.sin(a) * r;
+        ctx.fillStyle = 'rgba(232,165,48,0.3)';
+        ctx.beginPath(); ctx.arc(sx, sy, 3, 0, TAU); ctx.fill();
+
+        if ([0, 90, 180, 270].includes(deg)) {
+          ctx.fillStyle = 'rgba(255,255,255,0.2)';
+          ctx.font = '10px "JetBrains Mono", monospace';
+          const ox = Math.cos(a) * 16;
+          const oy = -Math.sin(a) * 16;
+          ctx.fillText(`${deg}\u00b0`, sx + ox, sy + oy);
+        }
+      });
+    }
+
+    // Current point
+    const px = cx + Math.cos(theta) * r;
+    const py = cy - Math.sin(theta) * r;
+
+    // Filled triangle
+    ctx.fillStyle = 'rgba(232,165,48,0.06)';
+    ctx.beginPath();
+    ctx.moveTo(cx, cy); ctx.lineTo(px, cy); ctx.lineTo(px, py);
+    ctx.closePath();
+    ctx.fill();
+
+    // cos projection (horizontal)
+    ctx.strokeStyle = '#4ecdc4';
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(px, cy); ctx.stroke();
+
+    // sin projection (vertical)
+    ctx.strokeStyle = '#ff6b6b';
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(px, cy); ctx.lineTo(px, py); ctx.stroke();
+
+    // Radius
+    ctx.strokeStyle = 'rgba(232,165,48,0.7)';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(px, py); ctx.stroke();
+
+    // Angle arc
+    const arcR = r * 0.14;
+    ctx.strokeStyle = 'rgba(232,165,48,0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(cx, cy, arcR, -theta, 0);
+    ctx.stroke();
+
+    // Point
+    ctx.fillStyle = '#e8a530';
+    ctx.beginPath(); ctx.arc(px, py, 7, 0, TAU); ctx.fill();
+    ctx.fillStyle = 'rgba(232,165,48,0.2)';
+    ctx.beginPath(); ctx.arc(px, py, 14, 0, TAU); ctx.fill();
+
+    // Coordinate label near point
+    ctx.fillStyle = '#e8a530';
+    ctx.font = '13px "JetBrains Mono", monospace';
+    ctx.textAlign = 'left';
+    const lx = px + 18;
+    const ly = py - 10;
+    ctx.fillText(`(${fmt(Math.cos(theta), 3)}, ${fmt(Math.sin(theta), 3)})`, lx, ly);
+
+  }, [angle, dims, showSpecial]);
+
+  const handlePointer = useCallback((e) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const cx = dims.w / 2;
+    const cy = dims.h / 2;
+    let a = Math.atan2(-(my - cy), mx - cx) * RAD;
+    if (a < 0) a += 360;
+
+    if (snap) {
+      const closest = SPECIAL_ANGLES.reduce((prev, curr) =>
+        Math.abs(curr - a) < Math.abs(prev - a) ? curr : prev
+      );
+      if (Math.abs(closest - a) < 8) a = closest;
+    }
+
+    setAngle(a);
+  }, [dims, snap]);
+
+  const handleDown = useCallback((e) => {
+    setDragging(true);
+    handlePointer(e);
+  }, [handlePointer]);
+
+  useEffect(() => {
+    if (!dragging) return;
+    const move = (e) => { e.preventDefault(); handlePointer(e); };
+    const up = () => setDragging(false);
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    return () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+  }, [dragging, handlePointer]);
+
+  const cosV = Math.cos(angle * DEG);
+  const sinV = Math.sin(angle * DEG);
+  const tanV = Math.tan(angle * DEG);
+  const nearSpecial = SPECIAL_ANGLES.find(sa => Math.abs(sa - angle) < 1);
+  const sv = nearSpecial != null ? SPECIAL_VALUES[nearSpecial] : null;
+
+  return (
+    <div style={{ animation: 'fadeInUp 0.7s var(--ease-out-expo) both' }}>
+      <div style={{ textAlign: 'center', marginBottom: 24 }}>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 5vw, 40px)', fontWeight: 400, marginBottom: 8 }}>
+          The Unit Circle
+        </h2>
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: 15, color: 'var(--text-secondary)', maxWidth: 500, margin: '0 auto', lineHeight: 1.6 }}>
+          A circle of radius 1. Drag the point around the circle to see coordinates update.
+          The x-coordinate is cos(&theta;), the y-coordinate is sin(&theta;).
+        </p>
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginBottom: 16 }}>
+        <button onClick={() => setShowSpecial(!showSpecial)} style={{
+          fontFamily: 'var(--font-mono)', fontSize: 12,
+          color: showSpecial ? '#fff' : 'var(--text-secondary)',
+          background: showSpecial ? 'rgba(232,165,48,0.15)' : 'var(--bg-card)',
+          border: `1px solid ${showSpecial ? 'rgba(232,165,48,0.3)' : 'var(--border-subtle)'}`,
+          borderRadius: 8, padding: '6px 16px', cursor: 'pointer', transition: 'all 0.3s',
+        }}>Special Angles</button>
+        <button onClick={() => setSnap(!snap)} style={{
+          fontFamily: 'var(--font-mono)', fontSize: 12,
+          color: snap ? '#fff' : 'var(--text-secondary)',
+          background: snap ? 'rgba(232,165,48,0.15)' : 'var(--bg-card)',
+          border: `1px solid ${snap ? 'rgba(232,165,48,0.3)' : 'var(--border-subtle)'}`,
+          borderRadius: 8, padding: '6px 16px', cursor: 'pointer', transition: 'all 0.3s',
+        }}>Snap to Special</button>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div ref={containerRef} style={{
+          width: '100%', maxWidth: 520, borderRadius: 16, overflow: 'hidden',
+          border: '1px solid var(--border-subtle)', background: 'rgba(0,0,0,0.3)',
+          cursor: dragging ? 'grabbing' : 'grab', touchAction: 'none',
+        }} onPointerDown={handleDown}>
+          {dims.w > 0 && <canvas ref={canvasRef} style={{ width: dims.w, height: dims.h }} />}
+        </div>
+      </div>
+
+      <div style={{
+        display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10,
+        maxWidth: 520, margin: '16px auto 0',
+      }}>
+        {[
+          { label: '\u03b8', value: `${Math.round(angle)}\u00b0`, color: '#e8a530' },
+          { label: 'cos(\u03b8)', value: sv ? sv.cos : fmt(cosV, 4), color: '#4ecdc4' },
+          { label: 'sin(\u03b8)', value: sv ? sv.sin : fmt(sinV, 4), color: '#ff6b6b' },
+          { label: 'tan(\u03b8)', value: sv ? sv.tan : (Math.abs(tanV) > 1000 ? 'undef' : fmt(tanV, 4)), color: '#e8a530' },
+        ].map((v, i) => (
+          <div key={i} style={{
+            background: 'var(--bg-card)', border: '1px solid var(--border-subtle)',
+            borderRadius: 10, padding: '10px 8px', textAlign: 'center',
+          }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: v.color, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{v.label}</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--text-primary)' }}>{v.value}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* ASTC Quadrant mnemonic */}
+      <div style={{
+        maxWidth: 520, margin: '20px auto 0',
+        background: 'var(--bg-card)', border: '1px solid var(--border-subtle)',
+        borderRadius: 12, padding: '16px 20px',
+      }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>
+          Quadrant Signs &mdash; "All Students Take Calculus"
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          {[
+            { q: 'II', m: 'Students', note: 'sin +', active: angle >= 90 && angle < 180 },
+            { q: 'I', m: 'All', note: 'all +', active: angle >= 0 && angle < 90 },
+            { q: 'III', m: 'Take', note: 'tan +', active: angle >= 180 && angle < 270 },
+            { q: 'IV', m: 'Calculus', note: 'cos +', active: angle >= 270 && angle < 360 },
+          ].map((qd, i) => (
+            <div key={i} style={{
+              padding: '10px 14px', borderRadius: 8,
+              background: qd.active ? 'rgba(232,165,48,0.1)' : 'transparent',
+              border: `1px solid ${qd.active ? 'rgba(232,165,48,0.3)' : 'transparent'}`,
+              transition: 'all 0.3s',
+            }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: qd.active ? 'var(--accent)' : 'var(--text-tertiary)' }}>
+                Q{qd.q}: </span>
+              <span style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: qd.active ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+                {qd.m} </span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-tertiary)' }}>
+                ({qd.note})
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   STEP 6 — TRIG FUNCTIONS AS WAVES
+   ================================================================ */
+function StepWaves() {
+  const canvasRef = useRef(null);
+  const animRef = useRef(null);
+  const angleRef = useRef(0);
+  const [playing, setPlaying] = useState(true);
+  const [speed, setSpeed] = useState(1);
+  const [showSin, setShowSin] = useState(true);
+  const [showCos, setShowCos] = useState(true);
+  const [dims, setDims] = useState({ w: 0, h: 0 });
+  const containerRef = useRef(null);
+  const playRef = useRef(playing);
+  const speedRef = useRef(speed);
+  const showSinRef = useRef(showSin);
+  const showCosRef = useRef(showCos);
+  playRef.current = playing;
+  speedRef.current = speed;
+  showSinRef.current = showSin;
+  showCosRef.current = showCos;
+
+  useEffect(() => {
+    const update = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        setDims({ w: rect.width, h: Math.min(400, window.innerHeight * 0.45) });
+      }
+    };
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || dims.w === 0) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = dims.w * dpr;
+    canvas.height = dims.h * dpr;
+    ctx.scale(dpr, dpr);
+
+    const w = dims.w;
+    const h = dims.h;
+    let lastTime = 0;
+
+    const circR = h * 0.3;
+    const circCx = circR + 40;
+    const circCy = h / 2;
+
+    const waveStartX = circCx + circR + 50;
+    const waveEndX = w - 20;
+    const waveLen = waveEndX - waveStartX;
+
+    function draw(time) {
+      const dt = lastTime ? (time - lastTime) / 1000 : 0;
+      lastTime = time;
+      if (playRef.current) {
+        angleRef.current = (angleRef.current + dt * speedRef.current * 1.5) % TAU;
+      }
+
+      const angle = angleRef.current;
+      ctx.clearRect(0, 0, w, h);
+
+      // Grid
+      ctx.strokeStyle = 'rgba(255,255,255,0.025)';
+      ctx.lineWidth = 1;
+      for (let i = -4; i <= 4; i++) {
+        ctx.beginPath(); ctx.moveTo(0, circCy + i * (circR / 3)); ctx.lineTo(w, circCy + i * (circR / 3)); ctx.stroke();
+      }
+
+      // Unit circle
+      ctx.strokeStyle = 'rgba(232,165,48,0.15)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(circCx, circCy, circR, 0, TAU); ctx.stroke();
+
+      // Circle axes
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(circCx - circR - 10, circCy); ctx.lineTo(circCx + circR + 10, circCy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(circCx, circCy - circR - 10); ctx.lineTo(circCx, circCy + circR + 10); ctx.stroke();
+
+      // Point on circle
+      const px = circCx + Math.cos(angle) * circR;
+      const py = circCy - Math.sin(angle) * circR;
+
+      // Radius line
+      ctx.strokeStyle = 'rgba(232,165,48,0.5)';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(circCx, circCy); ctx.lineTo(px, py); ctx.stroke();
+
+      // Projections
+      if (showSinRef.current) {
+        ctx.strokeStyle = 'rgba(255,107,107,0.4)';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, circCy); ctx.stroke();
+      }
+      if (showCosRef.current) {
+        ctx.strokeStyle = 'rgba(78,205,196,0.4)';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(circCx, py); ctx.stroke();
+      }
+
+      // Point
+      ctx.fillStyle = '#e8a530';
+      ctx.beginPath(); ctx.arc(px, py, 6, 0, TAU); ctx.fill();
+
+      // Wave axis
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(waveStartX, circCy); ctx.lineTo(waveEndX, circCy); ctx.stroke();
+
+      // Period marker
+      const period = waveLen * 0.7;
+      ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(waveStartX + period, circCy - circR - 10); ctx.lineTo(waveStartX + period, circCy + circR + 10); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(255,255,255,0.1)';
+      ctx.font = '10px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('2\u03c0', waveStartX + period, circCy + circR + 22);
+
+      // Sine wave
+      if (showSinRef.current) {
+        // Connection line
+        ctx.strokeStyle = 'rgba(255,107,107,0.2)';
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(waveStartX, py); ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.strokeStyle = '#ff6b6b';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let i = 0; i <= waveLen; i++) {
+          const wAngle = angle - (i / period) * TAU;
+          const wy = circCy - Math.sin(wAngle) * circR;
+          if (i === 0) ctx.moveTo(waveStartX + i, wy);
+          else ctx.lineTo(waveStartX + i, wy);
+        }
+        ctx.stroke();
+
+        ctx.fillStyle = '#ff6b6b';
+        ctx.beginPath(); ctx.arc(waveStartX, py, 4, 0, TAU); ctx.fill();
+      }
+
+      // Cosine wave
+      if (showCosRef.current) {
+        ctx.strokeStyle = '#4ecdc4';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let i = 0; i <= waveLen; i++) {
+          const wAngle = angle - (i / period) * TAU;
+          const wy = circCy - Math.cos(wAngle) * circR;
+          if (i === 0) ctx.moveTo(waveStartX + i, wy);
+          else ctx.lineTo(waveStartX + i, wy);
+        }
+        ctx.stroke();
+
+        const cpx = circCy - Math.cos(angle) * circR;
+        ctx.fillStyle = '#4ecdc4';
+        ctx.beginPath(); ctx.arc(waveStartX, cpx, 4, 0, TAU); ctx.fill();
+      }
+
+      // Labels on the wave area
+      ctx.font = '11px "JetBrains Mono", monospace';
+      ctx.textAlign = 'left';
+      if (showSinRef.current) {
+        ctx.fillStyle = '#ff6b6b';
+        ctx.fillText('sin(\u03b8)', waveStartX + 4, circCy - circR - 8);
+      }
+      if (showCosRef.current) {
+        ctx.fillStyle = '#4ecdc4';
+        ctx.fillText('cos(\u03b8)', waveStartX + 4, circCy - circR - (showSinRef.current ? 22 : 8));
+      }
+
+      // Amplitude markers
+      ctx.fillStyle = 'rgba(255,255,255,0.12)';
+      ctx.font = '10px "JetBrains Mono", monospace';
+      ctx.textAlign = 'right';
+      ctx.fillText('+1', waveStartX - 6, circCy - circR + 4);
+      ctx.fillText('-1', waveStartX - 6, circCy + circR + 4);
+
+      animRef.current = requestAnimationFrame(draw);
+    }
+
+    animRef.current = requestAnimationFrame(draw);
+    return () => cancelAnimationFrame(animRef.current);
+  }, [dims]);
+
+  return (
+    <div style={{ animation: 'fadeInUp 0.7s var(--ease-out-expo) both' }}>
+      <div style={{ textAlign: 'center', marginBottom: 24 }}>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 5vw, 40px)', fontWeight: 400, marginBottom: 8 }}>
+          Trig Functions as Waves
+        </h2>
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: 15, color: 'var(--text-secondary)', maxWidth: 520, margin: '0 auto', lineHeight: 1.6 }}>
+          Watch how circular motion generates sine and cosine waves.
+          The y-coordinate traces the sine wave, the x-coordinate traces cosine.
+        </p>
+      </div>
+
+      <div ref={containerRef} style={{
+        borderRadius: 16, overflow: 'hidden',
+        border: '1px solid var(--border-subtle)', background: 'rgba(0,0,0,0.3)',
+      }}>
+        {dims.w > 0 && <canvas ref={canvasRef} style={{ width: dims.w, height: dims.h }} />}
+      </div>
+
+      <div style={{
+        display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 10,
+        marginTop: 16,
+      }}>
+        <button onClick={() => setPlaying(!playing)} style={{
+          fontFamily: 'var(--font-mono)', fontSize: 12,
+          color: playing ? '#fff' : 'var(--text-secondary)',
+          background: playing ? 'rgba(232,165,48,0.15)' : 'var(--bg-card)',
+          border: `1px solid ${playing ? 'rgba(232,165,48,0.3)' : 'var(--border-subtle)'}`,
+          borderRadius: 8, padding: '6px 18px', cursor: 'pointer', transition: 'all 0.3s',
+        }}>{playing ? 'Pause' : 'Play'}</button>
+        <button onClick={() => setShowSin(!showSin)} style={{
+          fontFamily: 'var(--font-mono)', fontSize: 12,
+          color: showSin ? '#ff6b6b' : 'var(--text-tertiary)',
+          background: showSin ? 'rgba(255,107,107,0.1)' : 'var(--bg-card)',
+          border: `1px solid ${showSin ? 'rgba(255,107,107,0.3)' : 'var(--border-subtle)'}`,
+          borderRadius: 8, padding: '6px 18px', cursor: 'pointer', transition: 'all 0.3s',
+        }}>sin</button>
+        <button onClick={() => setShowCos(!showCos)} style={{
+          fontFamily: 'var(--font-mono)', fontSize: 12,
+          color: showCos ? '#4ecdc4' : 'var(--text-tertiary)',
+          background: showCos ? 'rgba(78,205,196,0.1)' : 'var(--bg-card)',
+          border: `1px solid ${showCos ? 'rgba(78,205,196,0.3)' : 'var(--border-subtle)'}`,
+          borderRadius: 8, padding: '6px 18px', cursor: 'pointer', transition: 'all 0.3s',
+        }}>cos</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-tertiary)' }}>Speed</span>
+          <input type="range" min="0.2" max="3" step="0.1" value={speed}
+            onChange={e => setSpeed(Number(e.target.value))}
+            style={{ width: 80, accentColor: 'var(--accent)' }}
+          />
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-secondary)', width: 30 }}>{speed.toFixed(1)}x</span>
+        </div>
+      </div>
+
+      <div style={{
+        display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12,
+        maxWidth: 480, margin: '20px auto 0',
+      }}>
+        {[
+          { label: 'Period', value: '2\u03c0', desc: 'One full cycle' },
+          { label: 'Amplitude', value: '1', desc: 'Max displacement' },
+          { label: 'Frequency', value: '1/(2\u03c0)', desc: 'Cycles per unit' },
+        ].map((c, i) => (
+          <div key={i} style={{
+            background: 'var(--bg-card)', border: '1px solid var(--border-subtle)',
+            borderRadius: 10, padding: '12px', textAlign: 'center',
+          }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{c.label}</div>
+            <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 22, color: 'var(--text-primary)', marginBottom: 2 }}>{c.value}</div>
+            <div style={{ fontFamily: 'var(--font-body)', fontSize: 11, color: 'var(--text-tertiary)' }}>{c.desc}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   STEP 7 — IDENTITIES
+   ================================================================ */
+function StepIdentities() {
+  const [angle, setAngle] = useState(37);
+  const sinV = Math.sin(angle * DEG);
+  const cosV = Math.cos(angle * DEG);
+  const identity = sinV * sinV + cosV * cosV;
+
+  return (
+    <div style={{ animation: 'fadeInUp 0.7s var(--ease-out-expo) both' }}>
+      <div style={{ textAlign: 'center', marginBottom: 28 }}>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 5vw, 40px)', fontWeight: 400, marginBottom: 8 }}>
+          Trig Identities
+        </h2>
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: 15, color: 'var(--text-secondary)', maxWidth: 500, margin: '0 auto', lineHeight: 1.6 }}>
+          Fundamental relationships that are always true, for any angle.
+        </p>
+      </div>
+
+      {/* Pythagorean Identity */}
+      <div style={{
+        maxWidth: 560, margin: '0 auto 24px',
+        background: 'var(--bg-card)', border: '1px solid var(--border-subtle)',
+        borderRadius: 14, padding: '28px 24px', textAlign: 'center',
+      }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 16 }}>
+          Pythagorean Identity
+        </div>
+        <div style={{
+          fontFamily: 'var(--font-display)', fontStyle: 'italic',
+          fontSize: 'clamp(24px, 4vw, 36px)', color: 'var(--text-primary)',
+          marginBottom: 20, lineHeight: 1.4,
+        }}>
+          <span style={{ color: '#ff6b6b' }}>sin&sup2;(&theta;)</span>
+          {' + '}
+          <span style={{ color: '#4ecdc4' }}>cos&sup2;(&theta;)</span>
+          {' = 1'}
+        </div>
+
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-secondary)', maxWidth: 400, margin: '0 auto 20px', lineHeight: 1.6 }}>
+          From the unit circle: if the radius is 1, then by the Pythagorean theorem,
+          x&sup2; + y&sup2; = 1. Since x = cos(&theta;) and y = sin(&theta;)...
+        </p>
+
+        <div style={{ marginBottom: 16 }}>
+          <div style={{
+            fontFamily: 'var(--font-display)', fontStyle: 'italic',
+            fontSize: 20, color: 'var(--accent)', marginBottom: 8,
+          }}>&theta; = {Math.round(angle)}&deg;</div>
+          <input type="range" min="0" max="360" value={angle}
+            onChange={e => setAngle(Number(e.target.value))}
+            style={{ width: '100%', maxWidth: 300, accentColor: 'var(--accent)' }}
+          />
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+          <div style={{ background: 'rgba(255,107,107,0.08)', borderRadius: 10, padding: '10px 8px' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#ff6b6b', marginBottom: 4 }}>sin&sup2;(&theta;)</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 18, color: 'var(--text-primary)' }}>{fmt(sinV * sinV, 6)}</div>
+          </div>
+          <div style={{ background: 'rgba(78,205,196,0.08)', borderRadius: 10, padding: '10px 8px' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#4ecdc4', marginBottom: 4 }}>cos&sup2;(&theta;)</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 18, color: 'var(--text-primary)' }}>{fmt(cosV * cosV, 6)}</div>
+          </div>
+          <div style={{ background: 'rgba(232,165,48,0.08)', borderRadius: 10, padding: '10px 8px' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--accent)', marginBottom: 4 }}>Sum</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 18, color: 'var(--accent)', fontWeight: 500 }}>{fmt(identity, 6)}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Reciprocal Identities */}
+      <div style={{
+        maxWidth: 560, margin: '0 auto',
+        background: 'var(--bg-card)', border: '1px solid var(--border-subtle)',
+        borderRadius: 14, padding: '24px',
+      }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 16, textAlign: 'center' }}>
+          Reciprocal Functions
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+          {[
+            { name: 'sec(&theta;)', def: '1 / cos(&theta;)', value: cosV !== 0 ? 1 / cosV : Infinity, color: '#4ecdc4' },
+            { name: 'csc(&theta;)', def: '1 / sin(&theta;)', value: sinV !== 0 ? 1 / sinV : Infinity, color: '#ff6b6b' },
+            { name: 'cot(&theta;)', def: '1 / tan(&theta;)', value: sinV !== 0 ? cosV / sinV : Infinity, color: '#e8a530' },
+          ].map((f, i) => (
+            <div key={i} style={{ textAlign: 'center', padding: '12px 8px' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: f.color, marginBottom: 6 }}
+                dangerouslySetInnerHTML={{ __html: f.name }} />
+              <div style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 8 }}
+                dangerouslySetInnerHTML={{ __html: f.def }} />
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 18, color: 'var(--text-primary)' }}>
+                {Math.abs(f.value) > 999 ? 'undef' : fmt(f.value, 4)}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   STEP 8 — PRACTICE
+   ================================================================ */
+function StepPractice({ onComplete }) {
+  const [score, setScore] = useState(0);
+  const [total, setTotal] = useState(0);
+  const [feedback, setFeedback] = useState(null);
+  const [problem, setProblem] = useState(null);
+  const [answer, setAnswer] = useState('');
+  const [completed, setCompleted] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
+
+  const generateProblem = useCallback(() => {
+    const types = ['unitCircle', 'rightTriangle', 'identity'];
+    const type = types[Math.floor(Math.random() * types.length)];
+
+    if (type === 'unitCircle') {
+      const angles = [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330];
+      const deg = angles[Math.floor(Math.random() * angles.length)];
+      const fns = ['sin', 'cos'];
+      const fn = fns[Math.floor(Math.random() * fns.length)];
+      const val = fn === 'sin' ? SPECIAL_VALUES[deg].sin : SPECIAL_VALUES[deg].cos;
+      return {
+        type: 'unitCircle',
+        question: `What is ${fn}(${deg}\u00b0)?`,
+        answer: val,
+        hint: `Think about the unit circle. At ${deg}\u00b0, what is the ${fn === 'sin' ? 'y' : 'x'}-coordinate?`,
+      };
+    } else if (type === 'rightTriangle') {
+      const angles = [30, 45, 60];
+      const deg = angles[Math.floor(Math.random() * angles.length)];
+      const hyp = Math.floor(Math.random() * 10) + 5;
+      const usesin = Math.random() > 0.5;
+      const side = usesin ? hyp * Math.sin(deg * DEG) : hyp * Math.cos(deg * DEG);
+      const sideLabel = usesin ? 'opposite' : 'adjacent';
+      return {
+        type: 'rightTriangle',
+        question: `In a right triangle with hypotenuse = ${hyp} and angle = ${deg}\u00b0, what is the ${sideLabel} side? (round to 2 decimal places)`,
+        answer: fmt(side),
+        hint: `Use ${usesin ? 'sin' : 'cos'}(${deg}\u00b0) = ${sideLabel} / hypotenuse`,
+      };
+    } else {
+      const deg = Math.floor(Math.random() * 360);
+      const sinV = Math.sin(deg * DEG);
+      const cosV = Math.cos(deg * DEG);
+      return {
+        type: 'identity',
+        question: `Verify: sin\u00b2(${deg}\u00b0) + cos\u00b2(${deg}\u00b0) = ?`,
+        answer: '1',
+        hint: `The Pythagorean identity always equals 1. sin\u00b2(${deg}\u00b0) = ${fmt(sinV*sinV, 4)}, cos\u00b2(${deg}\u00b0) = ${fmt(cosV*cosV, 4)}`,
+      };
+    }
+  }, []);
+
+  useEffect(() => {
+    setProblem(generateProblem());
+  }, [generateProblem]);
+
+  const checkAnswer = () => {
+    if (!problem || !answer.trim()) return;
+    const userAns = answer.trim().toLowerCase();
+    const correctAns = problem.answer.toLowerCase();
+
+    let correct = false;
+    if (userAns === correctAns) {
+      correct = true;
+    } else {
+      const userNum = parseFloat(userAns);
+      const correctNum = parseFloat(correctAns);
+      if (!isNaN(userNum) && !isNaN(correctNum) && Math.abs(userNum - correctNum) < 0.05) {
+        correct = true;
+      }
+      // Check common fraction forms
+      const fracMap = {
+        '0.5': '1/2', '0.87': '\u221a3/2', '0.71': '\u221a2/2',
+        'sqrt(3)/2': '\u221a3/2', 'sqrt(2)/2': '\u221a2/2',
+        '1/sqrt(3)': '1/\u221a3', 'sqrt(3)': '\u221a3',
+      };
+      if (fracMap[userAns] === correctAns || Object.entries(fracMap).some(([k, v]) => v === correctAns && userAns === k)) {
+        correct = true;
+      }
+    }
+
+    setTotal(t => t + 1);
+    if (correct) {
+      setScore(s => s + 1);
+      setFeedback({ correct: true, msg: 'Correct!' });
+    } else {
+      setFeedback({ correct: false, msg: `The answer is ${problem.answer}` });
+    }
+  };
+
+  const nextProblem = () => {
+    const newTotal = total;
+    if (newTotal >= 5 && !completed) {
+      setCompleted(true);
+      saveProgress();
+      if (isAllComplete()) {
+        setShowCelebration(true);
+      }
+    }
+    setFeedback(null);
+    setAnswer('');
+    setProblem(generateProblem());
+  };
+
+  if (showCelebration) {
+    return <Celebration score={score} total={total} />;
+  }
+
+  return (
+    <div style={{ animation: 'fadeInUp 0.7s var(--ease-out-expo) both' }}>
+      <div style={{ textAlign: 'center', marginBottom: 28 }}>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 5vw, 40px)', fontWeight: 400, marginBottom: 8 }}>
+          Practice
+        </h2>
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: 15, color: 'var(--text-secondary)', maxWidth: 500, margin: '0 auto', lineHeight: 1.6 }}>
+          Test your knowledge. Answer at least 5 questions to complete the lesson.
+        </p>
+      </div>
+
+      {/* Score */}
+      <div style={{
+        display: 'flex', justifyContent: 'center', gap: 20, marginBottom: 24,
+      }}>
+        <div style={{
+          fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text-secondary)',
+        }}>
+          Score: <span style={{ color: 'var(--accent)', fontWeight: 500 }}>{score}</span> / {total}
+        </div>
+        {completed && (
+          <div style={{
+            fontFamily: 'var(--font-mono)', fontSize: 12, color: '#4ade80',
+            background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)',
+            borderRadius: 6, padding: '2px 12px',
+          }}>
+            Lesson Complete!
+          </div>
+        )}
+      </div>
+
+      {problem && (
+        <div style={{
+          maxWidth: 520, margin: '0 auto',
+          background: 'var(--bg-card)', border: '1px solid var(--border-subtle)',
+          borderRadius: 14, padding: '28px 24px',
+        }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>
+            {problem.type === 'unitCircle' ? 'Unit Circle' : problem.type === 'rightTriangle' ? 'Right Triangle' : 'Identity Verification'}
+          </div>
+          <div style={{
+            fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--text-primary)',
+            marginBottom: 20, lineHeight: 1.5,
+          }}>
+            {problem.question}
+          </div>
+
+          {!feedback && (
+            <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 10 }}>
+              {['\u221a', '\u00b2'].map(s => (
+                <button key={s} onClick={() => setAnswer(prev => prev + s)} style={{
+                  background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-subtle)',
+                  borderRadius: 6, padding: '3px 10px', color: 'var(--text-secondary)',
+                  fontFamily: 'var(--font-mono)', fontSize: 15, cursor: 'pointer', lineHeight: '1.4'
+                }}>{s}</button>
+              ))}
+            </div>
+          )}
+          {!feedback ? (
+            <div style={{ display: 'flex', gap: 10 }}>
+              <input
+                type="text"
+                value={answer}
+                onChange={e => setAnswer(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') checkAnswer(); }}
+                placeholder="Your answer..."
+                style={{
+                  flex: 1, fontFamily: 'var(--font-mono)', fontSize: 16,
+                  color: 'var(--text-primary)', background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid var(--border-subtle)', borderRadius: 8,
+                  padding: '10px 14px', outline: 'none',
+                }}
+              />
+              <button onClick={checkAnswer} style={{
+                fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 500,
+                color: '#fff', background: 'linear-gradient(135deg, var(--accent), var(--accent-hot))',
+                border: 'none', borderRadius: 8, padding: '10px 20px',
+                cursor: 'pointer',
+              }}>Check</button>
+            </div>
+          ) : (
+            <div>
+              <div style={{
+                padding: '12px 16px', borderRadius: 10, marginBottom: 12,
+                background: feedback.correct ? 'rgba(74,222,128,0.08)' : 'rgba(255,107,107,0.08)',
+                border: `1px solid ${feedback.correct ? 'rgba(74,222,128,0.3)' : 'rgba(255,107,107,0.3)'}`,
+              }}>
+                <span style={{
+                  fontFamily: 'var(--font-body)', fontSize: 15,
+                  color: feedback.correct ? '#4ade80' : '#ff6b6b',
+                  fontWeight: 500,
+                }}>
+                  {feedback.msg}
+                </span>
+              </div>
+              {!feedback.correct && (
+                <div style={{
+                  fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-secondary)',
+                  marginBottom: 12, lineHeight: 1.5,
+                }}>
+                  <strong>Hint:</strong> {problem.hint}
+                </div>
+              )}
+              <button onClick={nextProblem} style={{
+                fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 500,
+                color: '#fff', background: 'linear-gradient(135deg, var(--accent), var(--accent-hot))',
+                border: 'none', borderRadius: 8, padding: '10px 24px',
+                cursor: 'pointer',
+              }}>Next Problem &rarr;</button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Quick Reference - Triangle Solver */}
+      <div style={{
+        maxWidth: 520, margin: '24px auto 0',
+        background: 'var(--bg-card)', border: '1px solid var(--border-subtle)',
+        borderRadius: 14, padding: '20px 24px',
+      }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>
+          Quick Reference
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+          {[
+            { fn: 'sin', eq: 'O / H', c: '#ff6b6b' },
+            { fn: 'cos', eq: 'A / H', c: '#4ecdc4' },
+            { fn: 'tan', eq: 'O / A', c: '#e8a530' },
+          ].map((r, i) => (
+            <div key={i} style={{ textAlign: 'center', padding: '8px 4px' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: r.c }}>{r.fn}</span>
+              <span style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--text-tertiary)' }}> = {r.eq}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   CELEBRATION
+   ================================================================ */
+function Celebration({ score, total }) {
+  const [particles, setParticles] = useState([]);
+
+  useEffect(() => {
+    const colors = ['#e8a530', '#ff6b35', '#ff6b6b', '#4ecdc4', '#4ade80', '#fbbf24', '#f97316'];
+    const ps = [];
+    for (let i = 0; i < 60; i++) {
+      ps.push({
+        id: i,
+        x: Math.random() * 100,
+        delay: Math.random() * 3,
+        duration: 2 + Math.random() * 3,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        size: 4 + Math.random() * 8,
+        shape: Math.random() > 0.5 ? 'circle' : 'square',
+      });
+    }
+    setParticles(ps);
+  }, []);
+
+  return (
+    <div style={{
+      minHeight: '70vh', display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center', textAlign: 'center',
+      position: 'relative', overflow: 'hidden',
+    }}>
+      {/* Confetti */}
+      {particles.map(p => (
+        <div key={p.id} style={{
+          position: 'absolute',
+          left: `${p.x}%`,
+          top: -20,
+          width: p.size,
+          height: p.shape === 'circle' ? p.size : p.size * 1.5,
+          borderRadius: p.shape === 'circle' ? '50%' : 2,
+          background: p.color,
+          animation: `confettiFall ${p.duration}s ease-in ${p.delay}s both`,
+          opacity: 0.8,
+        }} />
+      ))}
+
+      <div style={{ animation: 'celebratePop 0.8s var(--ease-out-expo) both', zIndex: 1 }}>
+        <div style={{ fontSize: 64, marginBottom: 20 }}>&#127942;</div>
+        <h2 style={{
+          fontFamily: 'var(--font-display)', fontSize: 'clamp(32px, 6vw, 52px)',
+          fontWeight: 400, marginBottom: 12,
+          background: 'linear-gradient(135deg, var(--accent-warm), var(--accent), var(--accent-hot))',
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+        }}>
+          Congratulations!
+        </h2>
+        <p style={{
+          fontFamily: 'var(--font-display)', fontStyle: 'italic',
+          fontSize: 'clamp(18px, 3vw, 24px)', color: 'var(--text-secondary)',
+          maxWidth: 500, lineHeight: 1.6, marginBottom: 8,
+        }}>
+          You have completed the entire Math Foundations curriculum.
+        </p>
+        <p style={{
+          fontFamily: 'var(--font-body)', fontSize: 15, color: 'var(--text-tertiary)',
+          marginBottom: 32,
+        }}>
+          Final score: {score} / {total}
+        </p>
+        <div style={{
+          animation: 'glowPulse 2s ease-in-out infinite',
+          display: 'inline-block', borderRadius: 14,
+        }}>
+          <a href="index.html" style={{
+            fontFamily: 'var(--font-body)', fontSize: 17, fontWeight: 500,
+            color: '#fff', background: 'linear-gradient(135deg, var(--accent), var(--accent-hot))',
+            border: 'none', borderRadius: 14, padding: '14px 40px',
+            cursor: 'pointer', textDecoration: 'none', display: 'inline-block',
+          }}>
+            Return to Curriculum &rarr;
+          </a>
+        </div>
+        <div style={{display:'flex',justifyContent:'flex-start',marginTop:32,padding:'16px 0',borderTop:'1px solid rgba(232,165,48,0.15)'}}>
+          <a href="09-coordinate-geometry.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>&larr; Previous Lesson: Coordinate Geometry</a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   MAIN APP
+   ================================================================ */
+function App() {
+  const [step, setStep] = useState(1);
+
+  const handleSetStep = useCallback((s) => {
+    setStep(s);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  const renderStep = () => {
+    switch (step) {
+      case 1: return <StepLanding onStart={() => handleSetStep(2)} />;
+      case 2: return <StepRightTriangles />;
+      case 3: return <StepSOHCAHTOA />;
+      case 4: return <StepSolving />;
+      case 5: return <StepUnitCircle />;
+      case 6: return <StepWaves />;
+      case 7: return <StepIdentities />;
+      case 8: return <StepPractice onComplete={() => {}} />;
+      default: return null;
+    }
+  };
+
+  return (
+    <div style={{ position: 'relative', zIndex: 1 }}>
+      {step > 1 && <ProgressBar step={step} />}
+      <div style={{
+        maxWidth: 900, margin: '0 auto', padding: step > 1 ? '72px 24px 40px' : '0 24px 40px',
+      }}>
+        {renderStep()}
+        {step > 1 && (
+          <Navigation step={step} setStep={handleSetStep} canNext={step < TOTAL_STEPS} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>

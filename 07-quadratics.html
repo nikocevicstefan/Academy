@@ -1,0 +1,1784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Quadratic Equations — Math Foundations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-deep: #06060b;
+    --bg-primary: #0a0a12;
+    --bg-card: rgba(255, 255, 255, 0.03);
+    --bg-card-hover: rgba(255, 255, 255, 0.06);
+    --border-subtle: rgba(255, 255, 255, 0.06);
+    --border-hover: rgba(255, 255, 255, 0.12);
+    --text-primary: #e8e6f0;
+    --text-secondary: rgba(232, 230, 240, 0.55);
+    --text-tertiary: rgba(232, 230, 240, 0.3);
+    --font-display: 'Instrument Serif', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --accent: #d946a8;
+    --accent-bright: #f472c4;
+    --accent-dim: #9d2a7a;
+    --accent-glow: rgba(217, 70, 168, 0.3);
+    --accent2: #a855f7;
+    --accent3: #ec4899;
+    --success: #4ade80;
+    --warning: #fbbf24;
+    --error: #f87171;
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  }
+
+  html {
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    min-height: 100vh;
+    overflow-x: hidden;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(217, 70, 168, 0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 50%, rgba(168, 85, 247, 0.04) 0%, transparent 50%),
+      radial-gradient(ellipse 50% 50% at 20% 80%, rgba(236, 72, 153, 0.03) 0%, transparent 50%),
+      var(--bg-deep);
+  }
+
+  #root { min-height: 100vh; }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.3;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 256px;
+  }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.14); }
+
+  ::selection {
+    background: rgba(217, 70, 168, 0.3);
+    color: #fff;
+  }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulseGlow {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  @keyframes drawParabola {
+    from { stroke-dashoffset: 2000; }
+    to { stroke-dashoffset: 0; }
+  }
+  @keyframes revealFormula {
+    0% { opacity: 0; transform: scale(0.8) translateY(20px); filter: blur(8px); }
+    60% { opacity: 1; transform: scale(1.05) translateY(-4px); filter: blur(0); }
+    100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  @keyframes glowPulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(217,70,168,0.2), 0 0 60px rgba(217,70,168,0.05); }
+    50% { box-shadow: 0 0 30px rgba(217,70,168,0.35), 0 0 80px rgba(217,70,168,0.1); }
+  }
+  @keyframes colorShift {
+    0%, 100% { color: var(--accent-bright); }
+    33% { color: var(--accent2); }
+    66% { color: var(--accent3); }
+  }
+  @keyframes vertexPulse {
+    0%, 100% { r: 5; }
+    50% { r: 7; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback, useMemo, Fragment } = React;
+
+/* ═══════════════════════════════════════════
+   UTILITY FUNCTIONS
+   ═══════════════════════════════════════════ */
+
+function clamp(val, min, max) { return Math.max(min, Math.min(max, val)); }
+
+function solveQuadratic(a, b, c) {
+  const disc = b * b - 4 * a * c;
+  if (disc > 0) {
+    const r1 = (-b + Math.sqrt(disc)) / (2 * a);
+    const r2 = (-b - Math.sqrt(disc)) / (2 * a);
+    return { disc, roots: [Math.min(r1, r2), Math.max(r1, r2)], count: 2 };
+  } else if (Math.abs(disc) < 1e-10) {
+    return { disc: 0, roots: [-b / (2 * a)], count: 1 };
+  }
+  return { disc, roots: [], count: 0 };
+}
+
+function vertexFromStandard(a, b, c) {
+  const h = -b / (2 * a);
+  const k = a * h * h + b * h + c;
+  return { h, k };
+}
+
+function fmt(n, decimals = 2) {
+  if (Number.isInteger(n)) return String(n);
+  return n.toFixed(decimals).replace(/\.?0+$/, '');
+}
+
+function generateFactorableProblem() {
+  const problems = [
+    { a: 1, b: -5, c: 6, factors: ['(x - 2)', '(x - 3)'], roots: [2, 3] },
+    { a: 1, b: -7, c: 12, factors: ['(x - 3)', '(x - 4)'], roots: [3, 4] },
+    { a: 1, b: 3, c: 2, factors: ['(x + 1)', '(x + 2)'], roots: [-1, -2] },
+    { a: 1, b: -1, c: -6, factors: ['(x - 3)', '(x + 2)'], roots: [-2, 3] },
+    { a: 1, b: 5, c: 6, factors: ['(x + 2)', '(x + 3)'], roots: [-3, -2] },
+    { a: 1, b: -8, c: 15, factors: ['(x - 3)', '(x - 5)'], roots: [3, 5] },
+    { a: 1, b: 1, c: -12, factors: ['(x + 4)', '(x - 3)'], roots: [-4, 3] },
+    { a: 1, b: -2, c: -8, factors: ['(x - 4)', '(x + 2)'], roots: [-2, 4] },
+  ];
+  return problems[Math.floor(Math.random() * problems.length)];
+}
+
+/* ═══════════════════════════════════════════
+   SHARED GRAPH COMPONENT (SVG Parabola)
+   ═══════════════════════════════════════════ */
+
+function ParabolaGraph({
+  a = 1, b = 0, c = 0,
+  width = 500, height = 380,
+  xRange: xRangeProp, yRange: yRangeProp,
+  showRoots = false, showVertex = false,
+  showAxisOfSymmetry = false,
+  showGrid = true, showLabels = true,
+  animate = false, animKey = 0,
+  secondCurve = null,
+  highlightDiscriminant = false,
+  interactive = false,
+  onVertexDrag = null,
+  style = {},
+}) {
+  const padding = { top: 20, right: 20, bottom: 30, left: 30 };
+  const gw = width - padding.left - padding.right;
+  const gh = height - padding.top - padding.bottom;
+
+  const vertex = vertexFromStandard(a, b, c);
+  const { disc, roots, count } = solveQuadratic(a, b, c);
+
+  const xRange = xRangeProp || [vertex.h - 6, vertex.h + 6];
+  const autoYMin = Math.min(vertex.k - 2, -2);
+  const autoYMax = Math.max(vertex.k + 8, 8);
+  const yRange = yRangeProp || [autoYMin, autoYMax];
+
+  function toSvgX(x) { return padding.left + ((x - xRange[0]) / (xRange[1] - xRange[0])) * gw; }
+  function toSvgY(y) { return padding.top + ((yRange[1] - y) / (yRange[1] - yRange[0])) * gh; }
+  function fromSvgX(sx) { return xRange[0] + ((sx - padding.left) / gw) * (xRange[1] - xRange[0]); }
+  function fromSvgY(sy) { return yRange[1] - ((sy - padding.top) / gh) * (yRange[1] - yRange[0]); }
+
+  function buildPath(aa, bb, cc) {
+    const steps = 200;
+    let d = '';
+    for (let i = 0; i <= steps; i++) {
+      const x = xRange[0] + (i / steps) * (xRange[1] - xRange[0]);
+      const y = aa * x * x + bb * x + cc;
+      const sx = toSvgX(x);
+      const sy = toSvgY(y);
+      if (sy < -100 || sy > height + 100) {
+        d += '';
+        continue;
+      }
+      d += (d === '' || d.endsWith(' ')) ? `M${sx},${clamp(sy, -50, height + 50)}` : ` L${sx},${clamp(sy, -50, height + 50)}`;
+    }
+    return d;
+  }
+
+  const mainPath = buildPath(a, b, c);
+  const secondPath = secondCurve ? buildPath(secondCurve.a, secondCurve.b, secondCurve.c) : null;
+
+  const gridLinesX = [];
+  const gridLinesY = [];
+  for (let x = Math.ceil(xRange[0]); x <= Math.floor(xRange[1]); x++) gridLinesX.push(x);
+  for (let y = Math.ceil(yRange[0]); y <= Math.floor(yRange[1]); y++) gridLinesY.push(y);
+
+  const [dragging, setDragging] = useState(false);
+  const svgRef = useRef(null);
+
+  function handlePointerDown(e) {
+    if (!interactive || !onVertexDrag) return;
+    setDragging(true);
+    e.target.setPointerCapture(e.pointerId);
+  }
+  function handlePointerMove(e) {
+    if (!dragging || !svgRef.current) return;
+    const rect = svgRef.current.getBoundingClientRect();
+    const sx = e.clientX - rect.left;
+    const sy = e.clientY - rect.top;
+    const mx = Math.round(fromSvgX(sx) * 2) / 2;
+    const my = Math.round(fromSvgY(sy) * 2) / 2;
+    onVertexDrag(mx, my);
+  }
+  function handlePointerUp() { setDragging(false); }
+
+  return (
+    <svg ref={svgRef} width={width} height={height} viewBox={`0 0 ${width} ${height}`}
+      style={{ overflow: 'visible', display: 'block', margin: '0 auto', maxWidth: '100%', ...style }}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerLeave={handlePointerUp}
+    >
+      <defs>
+        <clipPath id="graphClip"><rect x={padding.left} y={padding.top} width={gw} height={gh} /></clipPath>
+        <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+        <linearGradient id="parabolaGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#ec4899" />
+          <stop offset="50%" stopColor="#d946a8" />
+          <stop offset="100%" stopColor="#a855f7" />
+        </linearGradient>
+      </defs>
+
+      {/* Background */}
+      <rect x={padding.left} y={padding.top} width={gw} height={gh} fill="rgba(255,255,255,0.01)" rx="4" />
+
+      {/* Grid */}
+      {showGrid && (
+        <g clipPath="url(#graphClip)" opacity="0.2">
+          {gridLinesX.map(x => (
+            <line key={`gx${x}`} x1={toSvgX(x)} y1={padding.top} x2={toSvgX(x)} y2={padding.top + gh}
+              stroke="rgba(255,255,255,0.08)" strokeWidth={x === 0 ? 1 : 0.5} />
+          ))}
+          {gridLinesY.map(y => (
+            <line key={`gy${y}`} x1={padding.left} y1={toSvgY(y)} x2={padding.left + gw} y2={toSvgY(y)}
+              stroke="rgba(255,255,255,0.08)" strokeWidth={y === 0 ? 1 : 0.5} />
+          ))}
+        </g>
+      )}
+
+      {/* Axes */}
+      {toSvgY(0) >= padding.top && toSvgY(0) <= padding.top + gh && (
+        <line x1={padding.left} y1={toSvgY(0)} x2={padding.left + gw} y2={toSvgY(0)}
+          stroke="rgba(255,255,255,0.2)" strokeWidth="1" />
+      )}
+      {toSvgX(0) >= padding.left && toSvgX(0) <= padding.left + gw && (
+        <line x1={toSvgX(0)} y1={padding.top} x2={toSvgX(0)} y2={padding.top + gh}
+          stroke="rgba(255,255,255,0.2)" strokeWidth="1" />
+      )}
+
+      {/* Axis labels */}
+      {showLabels && (
+        <g fontFamily="var(--font-mono)" fontSize="9" fill="rgba(255,255,255,0.25)">
+          {gridLinesX.filter(x => x !== 0 && Math.abs(x) <= 10).map(x => (
+            <text key={`lx${x}`} x={toSvgX(x)} y={toSvgY(0) + 14} textAnchor="middle">{x}</text>
+          ))}
+          {gridLinesY.filter(y => y !== 0 && Math.abs(y) <= 20).map(y => (
+            <text key={`ly${y}`} x={toSvgX(0) - 8} y={toSvgY(y) + 3} textAnchor="end">{y}</text>
+          ))}
+        </g>
+      )}
+
+      {/* Axis of symmetry */}
+      {showAxisOfSymmetry && (
+        <line x1={toSvgX(vertex.h)} y1={padding.top} x2={toSvgX(vertex.h)} y2={padding.top + gh}
+          stroke="rgba(168,85,247,0.3)" strokeWidth="1" strokeDasharray="6 4" clipPath="url(#graphClip)" />
+      )}
+
+      {/* Second curve */}
+      {secondPath && (
+        <path d={secondPath} fill="none" stroke="rgba(74,222,128,0.5)" strokeWidth="2"
+          clipPath="url(#graphClip)" />
+      )}
+
+      {/* X axis highlight for discriminant */}
+      {highlightDiscriminant && (
+        <line x1={padding.left} y1={toSvgY(0)} x2={padding.left + gw} y2={toSvgY(0)}
+          stroke={count === 2 ? 'rgba(74,222,128,0.4)' : count === 1 ? 'rgba(251,191,36,0.4)' : 'rgba(248,113,113,0.4)'}
+          strokeWidth="2" clipPath="url(#graphClip)" />
+      )}
+
+      {/* Main parabola */}
+      <path d={mainPath} fill="none" stroke="url(#parabolaGrad)" strokeWidth="2.5"
+        clipPath="url(#graphClip)" filter="url(#glow)"
+        style={animate ? {
+          strokeDasharray: 2000,
+          strokeDashoffset: 2000,
+          animation: `drawParabola 2s var(--ease-out-expo) ${animKey}s forwards`,
+        } : {}} />
+
+      {/* Roots */}
+      {showRoots && roots.map((r, i) => {
+        const sx = toSvgX(r);
+        const sy = toSvgY(0);
+        if (sx < padding.left || sx > padding.left + gw) return null;
+        return (
+          <g key={`root${i}`}>
+            <circle cx={sx} cy={sy} r="5" fill="var(--accent3)" stroke="rgba(236,72,153,0.4)" strokeWidth="2" filter="url(#glow)" />
+            <text x={sx} y={sy + 18} textAnchor="middle" fontFamily="var(--font-mono)" fontSize="10" fill="var(--accent-bright)">
+              x={fmt(r)}
+            </text>
+          </g>
+        );
+      })}
+
+      {/* Vertex */}
+      {showVertex && (
+        <g style={{ cursor: interactive ? 'grab' : 'default' }}
+          onPointerDown={handlePointerDown}>
+          <circle cx={toSvgX(vertex.h)} cy={toSvgY(vertex.k)} r="5"
+            fill="var(--accent2)" stroke="rgba(168,85,247,0.5)" strokeWidth="2" filter="url(#glow)"
+            style={interactive ? {} : { animation: 'vertexPulse 2s ease-in-out infinite' }} />
+          <text x={toSvgX(vertex.h)} y={toSvgY(vertex.k) - 12}
+            textAnchor="middle" fontFamily="var(--font-mono)" fontSize="10" fill="var(--accent2)">
+            ({fmt(vertex.h)}, {fmt(vertex.k)})
+          </text>
+        </g>
+      )}
+    </svg>
+  );
+}
+
+
+/* ═══════════════════════════════════════════
+   PROGRESS BAR COMPONENT
+   ═══════════════════════════════════════════ */
+
+function ProgressBar({ currentStep, totalSteps }) {
+  const pct = ((currentStep) / (totalSteps - 1)) * 100;
+  return (
+    <div style={{
+      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
+      background: 'rgba(6,6,11,0.9)', backdropFilter: 'blur(12px)',
+      borderBottom: '1px solid var(--border-subtle)',
+      padding: '0 24px',
+    }}>
+      <div style={{ maxWidth: 900, margin: '0 auto' }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '10px 0 6px',
+        }}>
+          <a href="index.html" style={{
+            fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.06em',
+            textTransform: 'uppercase', color: 'var(--text-tertiary)',
+            textDecoration: 'none', transition: 'color 0.3s',
+          }}
+            onMouseEnter={e => e.target.style.color = 'var(--accent-bright)'}
+            onMouseLeave={e => e.target.style.color = 'var(--text-tertiary)'}
+          >
+            &larr; Back to Lessons
+          </a>
+          <span style={{
+            fontFamily: 'var(--font-mono)', fontSize: 11,
+            color: 'var(--text-tertiary)', letterSpacing: '0.06em',
+          }}>
+            {currentStep + 1} / {totalSteps}
+          </span>
+        </div>
+        <div style={{ height: 2, background: 'rgba(255,255,255,0.06)', borderRadius: 1, marginBottom: 2 }}>
+          <div style={{
+            height: '100%', width: `${pct}%`, borderRadius: 1,
+            background: 'linear-gradient(90deg, #ec4899, #d946a8, #a855f7)',
+            transition: 'width 0.6s var(--ease-out-expo)',
+          }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+/* ═══════════════════════════════════════════
+   NAVIGATION BUTTONS
+   ═══════════════════════════════════════════ */
+
+function NavButtons({ onPrev, onNext, prevLabel, nextLabel, nextDisabled = false }) {
+  const btnBase = {
+    fontFamily: 'var(--font-mono)', fontSize: 13, letterSpacing: '0.04em',
+    padding: '12px 28px', borderRadius: 10, cursor: 'pointer',
+    transition: 'all 0.3s var(--ease-out-expo)', border: 'none',
+    fontWeight: 500,
+  };
+
+  return (
+    <div style={{
+      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+      marginTop: 48, gap: 16, flexWrap: 'wrap',
+    }}>
+      {onPrev ? (
+        <button onClick={onPrev} style={{
+          ...btnBase,
+          background: 'rgba(255,255,255,0.04)',
+          color: 'var(--text-secondary)',
+          border: '1px solid var(--border-subtle)',
+        }}
+          onMouseEnter={e => { e.target.style.background = 'rgba(255,255,255,0.08)'; e.target.style.color = 'var(--text-primary)'; }}
+          onMouseLeave={e => { e.target.style.background = 'rgba(255,255,255,0.04)'; e.target.style.color = 'var(--text-secondary)'; }}
+        >
+          &larr; {prevLabel || 'Previous'}
+        </button>
+      ) : <div />}
+      {onNext && (
+        <button onClick={onNext} disabled={nextDisabled} style={{
+          ...btnBase,
+          background: nextDisabled ? 'rgba(255,255,255,0.04)' : 'linear-gradient(135deg, var(--accent), var(--accent2))',
+          color: nextDisabled ? 'var(--text-tertiary)' : '#fff',
+          opacity: nextDisabled ? 0.5 : 1,
+          cursor: nextDisabled ? 'not-allowed' : 'pointer',
+        }}
+          onMouseEnter={e => { if (!nextDisabled) e.target.style.transform = 'translateY(-1px)'; }}
+          onMouseLeave={e => { e.target.style.transform = 'translateY(0)'; }}
+        >
+          {nextLabel || 'Next'} &rarr;
+        </button>
+      )}
+    </div>
+  );
+}
+
+
+/* ═══════════════════════════════════════════
+   STEP 1: LANDING
+   ═══════════════════════════════════════════ */
+
+function StepLanding({ onNext }) {
+  const [animPhase, setAnimPhase] = useState(0);
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setAnimPhase(1), 300);
+    const t2 = setTimeout(() => setAnimPhase(2), 800);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
+
+  return (
+    <div style={{ textAlign: 'center', padding: '80px 0 40px' }}>
+      {/* Animated parabola hero */}
+      <div style={{
+        position: 'relative', width: 400, height: 300, margin: '0 auto 48px',
+        opacity: animPhase >= 1 ? 1 : 0, transition: 'opacity 0.8s ease',
+      }}>
+        <svg width="400" height="300" viewBox="0 0 400 300" style={{ display: 'block', margin: '0 auto' }}>
+          <defs>
+            <linearGradient id="heroParabGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#ec4899" stopOpacity="0.2" />
+              <stop offset="50%" stopColor="#d946a8" />
+              <stop offset="100%" stopColor="#a855f7" stopOpacity="0.2" />
+            </linearGradient>
+            <filter id="heroGlow">
+              <feGaussianBlur stdDeviation="6" result="blur" />
+              <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+            </filter>
+            <radialGradient id="dotGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="var(--accent-bright)" stopOpacity="0.6" />
+              <stop offset="100%" stopColor="var(--accent-bright)" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+
+          {/* Subtle grid */}
+          {Array.from({length: 9}, (_, i) => (
+            <line key={`hg${i}`} x1={44 * (i+1)} y1="0" x2={44 * (i+1)} y2="300"
+              stroke="rgba(255,255,255,0.02)" strokeWidth="0.5" />
+          ))}
+          {Array.from({length: 6}, (_, i) => (
+            <line key={`hgy${i}`} x1="0" y1={50 * (i+1)} x2="400" y2={50 * (i+1)}
+              stroke="rgba(255,255,255,0.02)" strokeWidth="0.5" />
+          ))}
+
+          {/* X axis */}
+          <line x1="20" y1="220" x2="380" y2="220" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+          {/* Y axis */}
+          <line x1="200" y1="20" x2="200" y2="280" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+
+          {/* Parabola path */}
+          <path
+            d="M 20,20 Q 110,380 200,220 Q 290,60 380,20"
+            fill="none" stroke="url(#heroParabGrad)" strokeWidth="3" strokeLinecap="round"
+            filter="url(#heroGlow)"
+            style={{
+              strokeDasharray: 600,
+              strokeDashoffset: 600,
+              animation: animPhase >= 1 ? 'drawParabola 2.5s var(--ease-out-expo) forwards' : 'none',
+            }}
+          />
+
+          {/* Vertex glow */}
+          <circle cx="200" cy="220" r="20" fill="url(#dotGlow)" style={{
+            opacity: animPhase >= 2 ? 1 : 0, transition: 'opacity 0.6s ease',
+          }} />
+          <circle cx="200" cy="220" r="4" fill="var(--accent-bright)" style={{
+            opacity: animPhase >= 2 ? 1 : 0, transition: 'opacity 0.6s ease 0.2s',
+          }} />
+        </svg>
+
+        {/* Floating equation fragments */}
+        {animPhase >= 2 && ['ax\u00b2', '+bx', '+c'].map((t, i) => (
+          <span key={i} style={{
+            position: 'absolute',
+            fontFamily: 'var(--font-display)', fontStyle: 'italic',
+            fontSize: 18, color: `rgba(217,70,168,${0.15 + i * 0.05})`,
+            top: `${20 + i * 25}%`, left: `${10 + i * 30}%`,
+            animation: `float ${3 + i}s ease-in-out infinite`,
+            animationDelay: `${i * 0.5}s`,
+            opacity: 0,
+            animationFillMode: 'forwards',
+          }}>
+            <span style={{ animation: 'fadeIn 0.8s ease forwards', animationDelay: `${i * 0.2}s` }}>{t}</span>
+          </span>
+        ))}
+      </div>
+
+      {/* Title */}
+      <div style={{
+        animation: 'fadeInUp 1s var(--ease-out-expo) 0.4s both',
+      }}>
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: 8,
+          padding: '5px 14px', borderRadius: 100,
+          border: '1px solid var(--border-subtle)',
+          background: 'rgba(255,255,255,0.02)',
+          fontFamily: 'var(--font-mono)', fontSize: 11,
+          letterSpacing: '0.08em', textTransform: 'uppercase',
+          color: 'var(--text-secondary)', marginBottom: 24,
+        }}>
+          <span style={{
+            width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)',
+            boxShadow: '0 0 8px var(--accent)', animation: 'pulseGlow 2s ease-in-out infinite',
+          }} />
+          Lesson 07
+        </div>
+
+        <h1 style={{
+          fontFamily: 'var(--font-display)', fontSize: 'clamp(42px, 7vw, 72px)',
+          fontWeight: 400, lineHeight: 1.05, letterSpacing: '-0.02em', marginBottom: 16,
+        }}>
+          <span style={{
+            background: 'linear-gradient(135deg, #e8e6f0 0%, rgba(232,230,240,0.6) 100%)',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+          }}>Quadratic</span>{' '}
+          <span style={{
+            fontStyle: 'italic',
+            background: 'linear-gradient(135deg, #ec4899, #d946a8, #a855f7)',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+          }}>Equations</span>
+        </h1>
+
+        <p style={{
+          fontFamily: 'var(--font-body)', fontSize: 'clamp(15px, 2vw, 18px)',
+          fontWeight: 300, color: 'var(--text-secondary)', maxWidth: 460,
+          margin: '0 auto 40px', lineHeight: 1.6,
+        }}>
+          Explore the parabola -- the most elegant curve in mathematics.
+          Learn to solve, graph, and understand quadratic functions.
+        </p>
+
+        <button onClick={onNext} style={{
+          fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 500,
+          letterSpacing: '0.04em', padding: '14px 40px', borderRadius: 12,
+          border: 'none', cursor: 'pointer', color: '#fff',
+          background: 'linear-gradient(135deg, var(--accent), var(--accent2))',
+          boxShadow: '0 0 30px var(--accent-glow)',
+          transition: 'all 0.3s var(--ease-out-expo)',
+          animation: 'glowPulse 3s ease-in-out infinite',
+        }}
+          onMouseEnter={e => { e.target.style.transform = 'translateY(-2px) scale(1.02)'; }}
+          onMouseLeave={e => { e.target.style.transform = 'translateY(0) scale(1)'; }}
+        >
+          Begin Lesson
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
+/* ═══════════════════════════════════════════
+   STEP 2: THE PARABOLA SHAPE
+   ═══════════════════════════════════════════ */
+
+function StepParabolaShape({ onPrev, onNext }) {
+  const [showQuadratic, setShowQuadratic] = useState(false);
+
+  return (
+    <div style={{ animation: 'fadeInUp 0.6s var(--ease-out-expo) both' }}>
+      <h2 style={{
+        fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 4vw, 40px)',
+        fontWeight: 400, marginBottom: 8,
+      }}>
+        The <span style={{ fontStyle: 'italic', color: 'var(--accent-bright)' }}>Parabola</span> Shape
+      </h2>
+      <p style={{
+        fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 300,
+        color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 32, maxWidth: 600,
+      }}>
+        A <strong style={{ color: 'var(--text-primary)', fontWeight: 500 }}>quadratic function</strong> is
+        any function with an <span style={{ color: 'var(--accent-bright)', fontFamily: 'var(--font-mono)' }}>x&sup2;</span> term.
+        This squared term is what creates the distinctive curved shape called a <em>parabola</em>.
+      </p>
+
+      {/* Toggle */}
+      <div style={{
+        display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 24,
+      }}>
+        <button onClick={() => setShowQuadratic(false)} style={{
+          fontFamily: 'var(--font-mono)', fontSize: 13, padding: '8px 20px',
+          borderRadius: 8, border: '1px solid',
+          borderColor: !showQuadratic ? 'rgba(74,222,128,0.4)' : 'var(--border-subtle)',
+          background: !showQuadratic ? 'rgba(74,222,128,0.1)' : 'transparent',
+          color: !showQuadratic ? '#4ade80' : 'var(--text-secondary)',
+          cursor: 'pointer', transition: 'all 0.3s',
+        }}>
+          y = x (linear)
+        </button>
+        <button onClick={() => setShowQuadratic(true)} style={{
+          fontFamily: 'var(--font-mono)', fontSize: 13, padding: '8px 20px',
+          borderRadius: 8, border: '1px solid',
+          borderColor: showQuadratic ? 'var(--accent-glow)' : 'var(--border-subtle)',
+          background: showQuadratic ? 'rgba(217,70,168,0.1)' : 'transparent',
+          color: showQuadratic ? 'var(--accent-bright)' : 'var(--text-secondary)',
+          cursor: 'pointer', transition: 'all 0.3s',
+        }}>
+          y = x&sup2; (quadratic)
+        </button>
+      </div>
+
+      {/* Graph showing both or toggle */}
+      <div style={{
+        background: 'rgba(255,255,255,0.02)', borderRadius: 16,
+        border: '1px solid var(--border-subtle)', padding: 20, marginBottom: 24,
+      }}>
+        <ParabolaGraph
+          a={showQuadratic ? 1 : 0} b={showQuadratic ? 0 : 1} c={0}
+          xRange={[-5, 5]} yRange={[-3, 10]}
+          secondCurve={showQuadratic ? { a: 0, b: 1, c: 0 } : null}
+          animate={true} animKey={showQuadratic ? 1 : 0}
+          width={500} height={350}
+        />
+        <p style={{
+          textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 12,
+          color: 'var(--text-tertiary)', marginTop: 12,
+        }}>
+          {showQuadratic
+            ? 'Pink: y = x\u00b2 (parabola) \u2022 Green: y = x (line)'
+            : 'Green: y = x (straight line)'}
+        </p>
+      </div>
+
+      {/* Real world examples */}
+      <div style={{
+        display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gap: 12, marginBottom: 8,
+      }}>
+        {[
+          { title: 'Projectile Motion', desc: 'A ball thrown in the air follows a parabolic path.' },
+          { title: 'Architecture', desc: 'Arches and suspension bridges use parabolic curves.' },
+          { title: 'Satellite Dishes', desc: 'Parabolas focus signals to a single point.' },
+        ].map((ex, i) => (
+          <div key={i} style={{
+            background: 'rgba(255,255,255,0.02)', borderRadius: 12,
+            border: '1px solid var(--border-subtle)', padding: '16px 18px',
+          }}>
+            <h4 style={{
+              fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 500,
+              color: 'var(--text-primary)', marginBottom: 4,
+            }}>{ex.title}</h4>
+            <p style={{
+              fontFamily: 'var(--font-body)', fontSize: 13, fontWeight: 300,
+              color: 'var(--text-secondary)', lineHeight: 1.5,
+            }}>{ex.desc}</p>
+          </div>
+        ))}
+      </div>
+
+      <NavButtons onPrev={onPrev} onNext={onNext} />
+    </div>
+  );
+}
+
+
+/* ═══════════════════════════════════════════
+   STEP 3: STANDARD FORM
+   ═══════════════════════════════════════════ */
+
+function StepStandardForm({ onPrev, onNext }) {
+  const [aVal, setAVal] = useState(1);
+  const [cVal, setCVal] = useState(0);
+
+  return (
+    <div style={{ animation: 'fadeInUp 0.6s var(--ease-out-expo) both' }}>
+      <h2 style={{
+        fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 4vw, 40px)',
+        fontWeight: 400, marginBottom: 8,
+      }}>
+        Standard <span style={{ fontStyle: 'italic', color: 'var(--accent-bright)' }}>Form</span>
+      </h2>
+      <p style={{
+        fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 300,
+        color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 24, maxWidth: 600,
+      }}>
+        Every quadratic can be written in <strong style={{ color: 'var(--text-primary)', fontWeight: 500 }}>standard form</strong>:
+      </p>
+
+      {/* Color-coded equation */}
+      <div style={{
+        textAlign: 'center', marginBottom: 32, padding: '28px 20px',
+        background: 'rgba(255,255,255,0.02)', borderRadius: 16,
+        border: '1px solid var(--border-subtle)',
+      }}>
+        <div style={{
+          fontFamily: 'var(--font-display)', fontStyle: 'italic',
+          fontSize: 'clamp(28px, 5vw, 44px)', marginBottom: 20,
+        }}>
+          <span style={{ color: 'var(--text-secondary)' }}>y = </span>
+          <span style={{ color: '#f472c4' }}>{aVal !== 1 ? aVal : ''}x&sup2;</span>
+          <span style={{ color: 'var(--text-secondary)' }}> + </span>
+          <span style={{ color: '#a78bfa' }}>bx</span>
+          <span style={{ color: 'var(--text-secondary)' }}> + </span>
+          <span style={{ color: '#38bdf8' }}>{cVal}</span>
+        </div>
+
+        <div style={{
+          display: 'flex', justifyContent: 'center', gap: 24, flexWrap: 'wrap',
+          fontFamily: 'var(--font-mono)', fontSize: 12,
+        }}>
+          <span style={{ color: '#f472c4' }}>a = {aVal} (shape)</span>
+          <span style={{ color: '#a78bfa' }}>b (position)</span>
+          <span style={{ color: '#38bdf8' }}>c = {cVal} (height)</span>
+        </div>
+      </div>
+
+      {/* Sliders for a and c */}
+      <div style={{
+        display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24,
+        maxWidth: 500, margin: '0 auto 24px',
+      }}>
+        <div>
+          <label style={{
+            display: 'block', fontFamily: 'var(--font-mono)', fontSize: 12,
+            color: '#f472c4', marginBottom: 6,
+          }}>
+            a = {aVal} ({aVal > 0 ? 'opens up' : 'opens down'}{Math.abs(aVal) > 1 ? ', narrow' : Math.abs(aVal) < 1 ? ', wide' : ''})
+          </label>
+          <input type="range" min="-3" max="3" step="0.5" value={aVal}
+            onChange={e => setAVal(parseFloat(e.target.value) || 0.5)}
+            style={{ width: '100%', accentColor: '#f472c4' }} />
+        </div>
+        <div>
+          <label style={{
+            display: 'block', fontFamily: 'var(--font-mono)', fontSize: 12,
+            color: '#38bdf8', marginBottom: 6,
+          }}>
+            c = {cVal} (y-intercept)
+          </label>
+          <input type="range" min="-5" max="5" step="1" value={cVal}
+            onChange={e => setCVal(parseInt(e.target.value))}
+            style={{ width: '100%', accentColor: '#38bdf8' }} />
+        </div>
+      </div>
+
+      <div style={{
+        background: 'rgba(255,255,255,0.02)', borderRadius: 16,
+        border: '1px solid var(--border-subtle)', padding: 20,
+      }}>
+        <ParabolaGraph
+          a={aVal || 0.5} b={0} c={cVal}
+          xRange={[-6, 6]} yRange={[-8, 10]}
+          showVertex={true}
+          width={500} height={350}
+        />
+      </div>
+
+      {/* Key insights */}
+      <div style={{
+        marginTop: 24, padding: '18px 20px',
+        background: 'rgba(217,70,168,0.05)', borderRadius: 12,
+        border: '1px solid rgba(217,70,168,0.15)',
+      }}>
+        <h4 style={{
+          fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.08em',
+          textTransform: 'uppercase', color: 'var(--accent-bright)', marginBottom: 10,
+        }}>Key insights</h4>
+        <ul style={{
+          fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 300,
+          color: 'var(--text-secondary)', lineHeight: 1.8, paddingLeft: 18,
+        }}>
+          <li><strong style={{ color: '#f472c4' }}>a {'>'} 0</strong>: parabola opens upward (U shape)</li>
+          <li><strong style={{ color: '#f472c4' }}>a {'<'} 0</strong>: parabola opens downward (inverted U)</li>
+          <li><strong style={{ color: '#f472c4' }}>|a| {'>'} 1</strong>: parabola is narrower</li>
+          <li><strong style={{ color: '#f472c4' }}>|a| {'<'} 1</strong>: parabola is wider</li>
+          <li><strong style={{ color: '#38bdf8' }}>c</strong>: shifts the entire parabola up or down</li>
+        </ul>
+      </div>
+
+      <NavButtons onPrev={onPrev} onNext={onNext} />
+    </div>
+  );
+}
+
+
+/* ═══════════════════════════════════════════
+   STEP 4: FACTORING METHOD
+   ═══════════════════════════════════════════ */
+
+function StepFactoring({ onPrev, onNext }) {
+  const [problem, setProblem] = useState(() => generateFactorableProblem());
+  const [userF1, setUserF1] = useState('');
+  const [userF2, setUserF2] = useState('');
+  const [solved, setSolved] = useState(false);
+  const [animStep, setAnimStep] = useState(0);
+  const [showHint, setShowHint] = useState(false);
+
+  function checkAnswer() {
+    const check = (a, b) => {
+      const normalize = s => s.replace(/\s/g, '').toLowerCase();
+      const na = normalize(a);
+      const nb = normalize(b);
+      const f1 = normalize(problem.factors[0]);
+      const f2 = normalize(problem.factors[1]);
+      return (na === f1 && nb === f2) || (na === f2 && nb === f1);
+    };
+    if (check(userF1, userF2)) {
+      setSolved(true);
+      setAnimStep(0);
+      const interval = setInterval(() => {
+        setAnimStep(prev => {
+          if (prev >= 4) { clearInterval(interval); return 4; }
+          return prev + 1;
+        });
+      }, 600);
+    }
+  }
+
+  function newProblem() {
+    setProblem(generateFactorableProblem());
+    setUserF1(''); setUserF2('');
+    setSolved(false); setAnimStep(0); setShowHint(false);
+  }
+
+  const { a, b, c, factors, roots } = problem;
+
+  return (
+    <div style={{ animation: 'fadeInUp 0.6s var(--ease-out-expo) both' }}>
+      <h2 style={{
+        fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 4vw, 40px)',
+        fontWeight: 400, marginBottom: 8,
+      }}>
+        Solving by <span style={{ fontStyle: 'italic', color: 'var(--accent-bright)' }}>Factoring</span>
+      </h2>
+      <p style={{
+        fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 300,
+        color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 32, maxWidth: 600,
+      }}>
+        If we can write ax&sup2; + bx + c as a product of two factors, we can find the roots
+        by setting each factor equal to zero.
+      </p>
+
+      {/* Animated solution steps */}
+      <div style={{
+        background: 'rgba(255,255,255,0.02)', borderRadius: 16,
+        border: '1px solid var(--border-subtle)', padding: '24px', marginBottom: 24,
+      }}>
+        <h4 style={{
+          fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.08em',
+          textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 16,
+        }}>Factor this quadratic</h4>
+
+        {/* Problem display */}
+        <div style={{
+          textAlign: 'center', marginBottom: 24,
+          fontFamily: 'var(--font-display)', fontStyle: 'italic',
+          fontSize: 'clamp(24px, 4vw, 36px)',
+        }}>
+          <span style={{ color: 'var(--accent-bright)' }}>
+            x&sup2; {b >= 0 ? '+' : '\u2212'} {Math.abs(b)}x {c >= 0 ? '+' : '\u2212'} {Math.abs(c)} = 0
+          </span>
+        </div>
+
+        {/* User input */}
+        {!solved && (
+          <div style={{ textAlign: 'center', marginBottom: 20 }}>
+            <p style={{
+              fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-secondary)',
+              marginBottom: 12,
+            }}>
+              Factor into two binomials:
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <input value={userF1} onChange={e => setUserF1(e.target.value)}
+                placeholder="(x + ?)" style={{
+                  fontFamily: 'var(--font-mono)', fontSize: 16, width: 130,
+                  padding: '10px 14px', borderRadius: 8,
+                  border: '1px solid var(--border-subtle)',
+                  background: 'rgba(255,255,255,0.04)', color: 'var(--text-primary)',
+                  textAlign: 'center', outline: 'none',
+                }}
+                onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+                onBlur={e => e.target.style.borderColor = 'var(--border-subtle)'}
+              />
+              <span style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--text-tertiary)' }}>&times;</span>
+              <input value={userF2} onChange={e => setUserF2(e.target.value)}
+                placeholder="(x + ?)" style={{
+                  fontFamily: 'var(--font-mono)', fontSize: 16, width: 130,
+                  padding: '10px 14px', borderRadius: 8,
+                  border: '1px solid var(--border-subtle)',
+                  background: 'rgba(255,255,255,0.04)', color: 'var(--text-primary)',
+                  textAlign: 'center', outline: 'none',
+                }}
+                onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+                onBlur={e => e.target.style.borderColor = 'var(--border-subtle)'}
+              />
+              <button onClick={checkAnswer} style={{
+                fontFamily: 'var(--font-mono)', fontSize: 13, padding: '10px 20px',
+                borderRadius: 8, border: 'none', cursor: 'pointer',
+                background: 'linear-gradient(135deg, var(--accent), var(--accent2))', color: '#fff',
+              }}>Check</button>
+            </div>
+            <button onClick={() => setShowHint(!showHint)} style={{
+              fontFamily: 'var(--font-mono)', fontSize: 11, marginTop: 12,
+              background: 'none', border: 'none', color: 'var(--text-tertiary)',
+              cursor: 'pointer', textDecoration: 'underline',
+            }}>
+              {showHint ? 'Hide hint' : 'Show hint'}
+            </button>
+            {showHint && (
+              <p style={{
+                fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-secondary)',
+                marginTop: 8, fontStyle: 'italic',
+              }}>
+                Find two numbers that multiply to {c} and add to {b}.
+                The roots are x = {roots.join(' and x = ')}.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Animated solution reveal */}
+        {solved && (
+          <div style={{ textAlign: 'center' }}>
+            {[
+              { text: `Factor: ${factors[0]} \u00d7 ${factors[1]} = 0`, color: 'var(--success)' },
+              { text: `Set each factor = 0:`, color: 'var(--text-secondary)' },
+              { text: `${factors[0]} = 0  \u2192  x = ${roots[0]}`, color: 'var(--accent-bright)' },
+              { text: `${factors[1]} = 0  \u2192  x = ${roots[1]}`, color: 'var(--accent2)' },
+            ].map((step, i) => (
+              <div key={i} style={{
+                fontFamily: 'var(--font-mono)', fontSize: 15, color: step.color,
+                marginBottom: 8, opacity: animStep > i ? 1 : 0,
+                transform: animStep > i ? 'translateY(0)' : 'translateY(10px)',
+                transition: 'all 0.5s var(--ease-out-expo)',
+              }}>
+                {step.text}
+              </div>
+            ))}
+            <button onClick={newProblem} style={{
+              fontFamily: 'var(--font-mono)', fontSize: 12, marginTop: 16,
+              padding: '8px 20px', borderRadius: 8, cursor: 'pointer',
+              border: '1px solid var(--border-subtle)',
+              background: 'rgba(255,255,255,0.04)', color: 'var(--text-secondary)',
+              opacity: animStep >= 4 ? 1 : 0, transition: 'opacity 0.5s',
+            }}>
+              Try another
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Graph showing roots */}
+      <div style={{
+        background: 'rgba(255,255,255,0.02)', borderRadius: 16,
+        border: '1px solid var(--border-subtle)', padding: 20,
+      }}>
+        <p style={{
+          fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.08em',
+          textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 12, textAlign: 'center',
+        }}>Roots as X-Intercepts</p>
+        <ParabolaGraph
+          a={a} b={b} c={c}
+          xRange={[Math.min(...roots) - 3, Math.max(...roots) + 3]}
+          yRange={[-4, Math.max(10, Math.abs(c) + 4)]}
+          showRoots={true} showVertex={true}
+          width={500} height={320}
+        />
+      </div>
+
+      <NavButtons onPrev={onPrev} onNext={onNext} />
+    </div>
+  );
+}
+
+
+/* ═══════════════════════════════════════════
+   STEP 5: THE QUADRATIC FORMULA (KEY)
+   ═══════════════════════════════════════════ */
+
+function StepQuadraticFormula({ onPrev, onNext }) {
+  const [revealed, setRevealed] = useState(false);
+  const [calcA, setCalcA] = useState('1');
+  const [calcB, setCalcB] = useState('-5');
+  const [calcC, setCalcC] = useState('6');
+  const [calcStep, setCalcStep] = useState(0);
+
+  const a = parseFloat(calcA) || 1;
+  const b = parseFloat(calcB) || 0;
+  const c = parseFloat(calcC) || 0;
+  const disc = b * b - 4 * a * c;
+  const sqrtDisc = disc >= 0 ? Math.sqrt(disc) : NaN;
+  const r1 = disc >= 0 ? (-b + sqrtDisc) / (2 * a) : NaN;
+  const r2 = disc >= 0 ? (-b - sqrtDisc) / (2 * a) : NaN;
+
+  useEffect(() => {
+    setCalcStep(0);
+  }, [calcA, calcB, calcC]);
+
+  function animateCalc() {
+    setCalcStep(0);
+    let step = 0;
+    const interval = setInterval(() => {
+      step++;
+      setCalcStep(step);
+      if (step >= 5) clearInterval(interval);
+    }, 700);
+  }
+
+  return (
+    <div style={{ animation: 'fadeInUp 0.6s var(--ease-out-expo) both' }}>
+      <h2 style={{
+        fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 4vw, 40px)',
+        fontWeight: 400, marginBottom: 8,
+      }}>
+        The <span style={{ fontStyle: 'italic', color: 'var(--accent-bright)' }}>Quadratic Formula</span>
+      </h2>
+      <p style={{
+        fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 300,
+        color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 32, maxWidth: 600,
+      }}>
+        Not every quadratic can be factored easily. The quadratic formula works for <em>every</em> quadratic equation.
+      </p>
+
+      {/* Dramatic formula reveal */}
+      {!revealed ? (
+        <div style={{ textAlign: 'center', marginBottom: 40 }}>
+          <button onClick={() => setRevealed(true)} style={{
+            fontFamily: 'var(--font-mono)', fontSize: 15, fontWeight: 500,
+            padding: '16px 48px', borderRadius: 12,
+            border: 'none', cursor: 'pointer', color: '#fff',
+            background: 'linear-gradient(135deg, var(--accent), var(--accent2))',
+            boxShadow: '0 0 40px var(--accent-glow), 0 0 80px rgba(168,85,247,0.15)',
+            animation: 'glowPulse 2s ease-in-out infinite',
+            transition: 'all 0.3s var(--ease-out-expo)',
+          }}
+            onMouseEnter={e => e.target.style.transform = 'scale(1.05)'}
+            onMouseLeave={e => e.target.style.transform = 'scale(1)'}
+          >
+            Reveal the Formula
+          </button>
+        </div>
+      ) : (
+        <div style={{
+          textAlign: 'center', marginBottom: 40, padding: '40px 20px',
+          background: 'rgba(255,255,255,0.02)', borderRadius: 20,
+          border: '1px solid rgba(217,70,168,0.2)',
+          boxShadow: '0 0 60px rgba(217,70,168,0.08), inset 0 0 60px rgba(217,70,168,0.03)',
+          animation: 'revealFormula 1.2s var(--ease-out-expo) both',
+        }}>
+          {/* The formula rendered with styled spans */}
+          <div style={{ position: 'relative', display: 'inline-block' }}>
+            {/* x = */}
+            <div style={{
+              fontFamily: 'var(--font-display)', fontStyle: 'italic',
+              fontSize: 'clamp(20px, 4vw, 30px)', color: 'var(--text-primary)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            }}>
+              <span>x</span>
+              <span style={{ color: 'var(--text-tertiary)' }}>=</span>
+              {/* Fraction container */}
+              <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                {/* Numerator */}
+                <span style={{ display: 'flex', alignItems: 'center', gap: 4, paddingBottom: 6 }}>
+                  <span style={{ color: '#f472c4' }}>&minus;b</span>
+                  <span style={{ color: 'var(--accent2)' }}>&plusmn;</span>
+                  <span style={{ color: '#fbbf24', display: 'inline-flex', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.7em', marginRight: 2 }}>&radic;</span>
+                    <span style={{
+                      borderTop: '2px solid #fbbf24', paddingTop: 2,
+                      display: 'inline-flex', alignItems: 'center', gap: 2,
+                    }}>
+                      <span>b&sup2;</span>
+                      <span style={{ color: 'var(--text-tertiary)', fontSize: '0.9em' }}>&minus;</span>
+                      <span>4ac</span>
+                    </span>
+                  </span>
+                </span>
+                {/* Fraction bar */}
+                <span style={{
+                  width: '100%', height: 2,
+                  background: 'linear-gradient(90deg, var(--accent), var(--accent2))',
+                  borderRadius: 1,
+                }} />
+                {/* Denominator */}
+                <span style={{ color: '#38bdf8', paddingTop: 4 }}>2a</span>
+              </span>
+            </div>
+          </div>
+
+          <p style={{
+            fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-tertiary)',
+            marginTop: 20, fontStyle: 'italic',
+          }}>
+            The universal key to every quadratic equation.
+          </p>
+        </div>
+      )}
+
+      {/* Step-by-step calculator */}
+      {revealed && (
+        <div style={{
+          background: 'rgba(255,255,255,0.02)', borderRadius: 16,
+          border: '1px solid var(--border-subtle)', padding: '24px',
+        }}>
+          <h4 style={{
+            fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.08em',
+            textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 16,
+          }}>Step-by-step calculator</h4>
+
+          <div style={{
+            display: 'flex', gap: 12, justifyContent: 'center', marginBottom: 20, flexWrap: 'wrap',
+          }}>
+            {[
+              { label: 'a', value: calcA, setter: setCalcA, color: '#f472c4' },
+              { label: 'b', value: calcB, setter: setCalcB, color: '#a78bfa' },
+              { label: 'c', value: calcC, setter: setCalcC, color: '#38bdf8' },
+            ].map(({ label, value, setter, color }) => (
+              <div key={label} style={{ textAlign: 'center' }}>
+                <label style={{
+                  display: 'block', fontFamily: 'var(--font-mono)', fontSize: 12,
+                  color, marginBottom: 4,
+                }}>{label}</label>
+                <input type="number" value={value} onChange={e => setter(e.target.value)}
+                  style={{
+                    fontFamily: 'var(--font-mono)', fontSize: 18, width: 80,
+                    padding: '8px 12px', borderRadius: 8, textAlign: 'center',
+                    border: `1px solid ${color}40`, background: 'rgba(255,255,255,0.04)',
+                    color: 'var(--text-primary)', outline: 'none',
+                  }} />
+              </div>
+            ))}
+            <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+              <button onClick={animateCalc} style={{
+                fontFamily: 'var(--font-mono)', fontSize: 13, padding: '10px 22px',
+                borderRadius: 8, border: 'none', cursor: 'pointer',
+                background: 'linear-gradient(135deg, var(--accent), var(--accent2))',
+                color: '#fff',
+              }}>Solve</button>
+            </div>
+          </div>
+
+          {/* Animated steps */}
+          <div style={{
+            fontFamily: 'var(--font-mono)', fontSize: 14, lineHeight: 2.2,
+            textAlign: 'center',
+          }}>
+            {[
+              { text: `Discriminant: b\u00b2 \u2212 4ac = (${fmt(b)})\u00b2 \u2212 4(${fmt(a)})(${fmt(c)}) = ${fmt(disc)}`, color: '#fbbf24' },
+              { text: disc >= 0 ? `\u221a(${fmt(disc)}) = ${fmt(sqrtDisc)}` : `\u221a(${fmt(disc)}) = not real`, color: disc >= 0 ? '#4ade80' : '#f87171' },
+              { text: disc >= 0 ? `x = (${fmt(-b)} \u00b1 ${fmt(sqrtDisc)}) / ${fmt(2*a)}` : 'No real solutions', color: 'var(--accent-bright)' },
+              { text: disc > 0 ? `x\u2081 = ${fmt(r1)},  x\u2082 = ${fmt(r2)}` : disc === 0 ? `x = ${fmt(r1)}` : '', color: 'var(--success)' },
+            ].map((step, i) => (
+              <div key={i} style={{
+                opacity: calcStep > i ? 1 : 0,
+                transform: calcStep > i ? 'translateY(0)' : 'translateY(10px)',
+                transition: 'all 0.5s var(--ease-out-expo)',
+                color: step.color,
+              }}>
+                {step.text}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <NavButtons onPrev={onPrev} onNext={onNext} />
+    </div>
+  );
+}
+
+
+/* ═══════════════════════════════════════════
+   STEP 6: THE DISCRIMINANT (KEY VIZ)
+   ═══════════════════════════════════════════ */
+
+function StepDiscriminant({ onPrev, onNext }) {
+  const [discValue, setDiscValue] = useState(4);
+
+  // Build a, b, c from discriminant value with a=1, b=0
+  // disc = b^2 - 4ac => with a=1, b=0: disc = -4c => c = -disc/4
+  const a = 1;
+  const b = 0;
+  const c = -discValue / 4;
+  const { roots, count } = solveQuadratic(a, b, c);
+
+  const caseLabel = count === 2 ? 'Two Real Solutions' : count === 1 ? 'One Real Solution' : 'No Real Solutions';
+  const caseColor = count === 2 ? '#4ade80' : count === 1 ? '#fbbf24' : '#f87171';
+  const caseBg = count === 2 ? 'rgba(74,222,128,0.08)' : count === 1 ? 'rgba(251,191,36,0.08)' : 'rgba(248,113,113,0.08)';
+  const caseBorder = count === 2 ? 'rgba(74,222,128,0.25)' : count === 1 ? 'rgba(251,191,36,0.25)' : 'rgba(248,113,113,0.25)';
+
+  return (
+    <div style={{ animation: 'fadeInUp 0.6s var(--ease-out-expo) both' }}>
+      <h2 style={{
+        fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 4vw, 40px)',
+        fontWeight: 400, marginBottom: 8,
+      }}>
+        The <span style={{ fontStyle: 'italic', color: 'var(--accent-bright)' }}>Discriminant</span>
+      </h2>
+      <p style={{
+        fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 300,
+        color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 16, maxWidth: 600,
+      }}>
+        The expression under the square root, <span style={{
+          fontFamily: 'var(--font-mono)', color: '#fbbf24',
+        }}>b&sup2; &minus; 4ac</span>, is called the <strong style={{ color: 'var(--text-primary)' }}>discriminant</strong>.
+        It tells us how many solutions the equation has.
+      </p>
+
+      {/* Three cases summary */}
+      <div style={{
+        display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8,
+        marginBottom: 24,
+      }}>
+        {[
+          { label: '\u0394 > 0', desc: '2 solutions', color: '#4ade80', icon: '\u2022\u2022' },
+          { label: '\u0394 = 0', desc: '1 solution', color: '#fbbf24', icon: '\u2022' },
+          { label: '\u0394 < 0', desc: '0 solutions', color: '#f87171', icon: '\u00d8' },
+        ].map((item, i) => (
+          <div key={i} style={{
+            textAlign: 'center', padding: '14px 10px', borderRadius: 10,
+            background: `${item.color}08`, border: `1px solid ${item.color}20`,
+          }}>
+            <div style={{
+              fontFamily: 'var(--font-mono)', fontSize: 18, color: item.color, marginBottom: 4,
+            }}>{item.icon}</div>
+            <div style={{
+              fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 500, color: item.color,
+            }}>{item.label}</div>
+            <div style={{
+              fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--text-secondary)', marginTop: 2,
+            }}>{item.desc}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Discriminant slider */}
+      <div style={{
+        background: 'rgba(255,255,255,0.02)', borderRadius: 16,
+        border: '1px solid var(--border-subtle)', padding: '24px',
+      }}>
+        {/* Current state badge */}
+        <div style={{
+          textAlign: 'center', marginBottom: 16,
+        }}>
+          <span style={{
+            display: 'inline-block', padding: '6px 18px', borderRadius: 100,
+            fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 500,
+            color: caseColor, background: caseBg, border: `1px solid ${caseBorder}`,
+            transition: 'all 0.3s ease',
+          }}>
+            {caseLabel} &mdash; {'\u0394'} = {fmt(discValue)}
+          </span>
+        </div>
+
+        {/* Slider */}
+        <div style={{ maxWidth: 400, margin: '0 auto 20px', textAlign: 'center' }}>
+          <input type="range" min="-8" max="16" step="0.5" value={discValue}
+            onChange={e => setDiscValue(parseFloat(e.target.value))}
+            style={{ width: '100%', accentColor: caseColor }} />
+          <div style={{
+            display: 'flex', justifyContent: 'space-between',
+            fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-tertiary)',
+            marginTop: 4,
+          }}>
+            <span>Negative</span>
+            <span style={{ color: '#fbbf24' }}>{'\u2190'} Zero {'\u2192'}</span>
+            <span>Positive</span>
+          </div>
+        </div>
+
+        <ParabolaGraph
+          a={a} b={b} c={c}
+          xRange={[-5, 5]} yRange={[-3, 8]}
+          showRoots={count > 0} showVertex={true}
+          highlightDiscriminant={true}
+          width={500} height={340}
+        />
+
+        <p style={{
+          textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: 13,
+          color: 'var(--text-secondary)', marginTop: 12,
+        }}>
+          {count === 2 && `The parabola crosses the x-axis at x = ${roots.map(r => fmt(r)).join(' and x = ')}.`}
+          {count === 1 && `The parabola touches the x-axis at exactly one point: x = ${fmt(roots[0])}.`}
+          {count === 0 && 'The parabola does not cross the x-axis. There are no real solutions.'}
+        </p>
+      </div>
+
+      <NavButtons onPrev={onPrev} onNext={onNext} />
+    </div>
+  );
+}
+
+
+/* ═══════════════════════════════════════════
+   STEP 7: VERTEX FORM
+   ═══════════════════════════════════════════ */
+
+function StepVertexForm({ onPrev, onNext }) {
+  const [h, setH] = useState(2);
+  const [k, setK] = useState(-3);
+  const [aVal, setAVal] = useState(1);
+
+  // vertex form: y = a(x - h)^2 + k
+  // standard form: y = a*x^2 - 2ah*x + (ah^2 + k)
+  const stdB = -2 * aVal * h;
+  const stdC = aVal * h * h + k;
+
+  return (
+    <div style={{ animation: 'fadeInUp 0.6s var(--ease-out-expo) both' }}>
+      <h2 style={{
+        fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 4vw, 40px)',
+        fontWeight: 400, marginBottom: 8,
+      }}>
+        <span style={{ fontStyle: 'italic', color: 'var(--accent-bright)' }}>Vertex</span> Form
+      </h2>
+      <p style={{
+        fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 300,
+        color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 24, maxWidth: 600,
+      }}>
+        Vertex form makes it easy to read the vertex (highest or lowest point) directly from the equation.
+      </p>
+
+      {/* Equation display */}
+      <div style={{
+        textAlign: 'center', marginBottom: 24, padding: '24px 20px',
+        background: 'rgba(255,255,255,0.02)', borderRadius: 16,
+        border: '1px solid var(--border-subtle)',
+      }}>
+        <div style={{
+          fontFamily: 'var(--font-display)', fontStyle: 'italic',
+          fontSize: 'clamp(22px, 4vw, 34px)', marginBottom: 12,
+        }}>
+          <span style={{ color: 'var(--text-secondary)' }}>y = </span>
+          <span style={{ color: '#f472c4' }}>{aVal !== 1 ? (aVal === -1 ? '\u2212' : fmt(aVal)) : ''}</span>
+          <span style={{ color: 'var(--text-secondary)' }}>(x </span>
+          <span style={{ color: '#a78bfa' }}>{h >= 0 ? `\u2212 ${fmt(h)}` : `+ ${fmt(-h)}`}</span>
+          <span style={{ color: 'var(--text-secondary)' }}>)&sup2; </span>
+          <span style={{ color: '#38bdf8' }}>{k >= 0 ? `+ ${fmt(k)}` : `\u2212 ${fmt(-k)}`}</span>
+        </div>
+        <div style={{
+          fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text-tertiary)',
+        }}>
+          Vertex at (<span style={{ color: '#a78bfa' }}>{fmt(h)}</span>, <span style={{ color: '#38bdf8' }}>{fmt(k)}</span>)
+        </div>
+        <div style={{
+          fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-tertiary)', marginTop: 8,
+        }}>
+          Standard form: y = {fmt(aVal)}x&sup2; {stdB >= 0 ? '+' : '\u2212'} {fmt(Math.abs(stdB))}x {stdC >= 0 ? '+' : '\u2212'} {fmt(Math.abs(stdC))}
+        </div>
+      </div>
+
+      {/* Controls */}
+      <div style={{
+        display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16,
+        maxWidth: 500, margin: '0 auto 24px',
+      }}>
+        <div>
+          <label style={{
+            display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11,
+            color: '#f472c4', marginBottom: 4,
+          }}>a = {fmt(aVal)}</label>
+          <input type="range" min="-3" max="3" step="0.5" value={aVal}
+            onChange={e => setAVal(parseFloat(e.target.value) || 0.5)}
+            style={{ width: '100%', accentColor: '#f472c4' }} />
+        </div>
+        <div>
+          <label style={{
+            display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11,
+            color: '#a78bfa', marginBottom: 4,
+          }}>h = {fmt(h)}</label>
+          <input type="range" min="-5" max="5" step="0.5" value={h}
+            onChange={e => setH(parseFloat(e.target.value))}
+            style={{ width: '100%', accentColor: '#a78bfa' }} />
+        </div>
+        <div>
+          <label style={{
+            display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11,
+            color: '#38bdf8', marginBottom: 4,
+          }}>k = {fmt(k)}</label>
+          <input type="range" min="-8" max="8" step="0.5" value={k}
+            onChange={e => setK(parseFloat(e.target.value))}
+            style={{ width: '100%', accentColor: '#38bdf8' }} />
+        </div>
+      </div>
+
+      {/* Graph with draggable vertex */}
+      <div style={{
+        background: 'rgba(255,255,255,0.02)', borderRadius: 16,
+        border: '1px solid var(--border-subtle)', padding: 20,
+      }}>
+        <p style={{
+          fontFamily: 'var(--font-mono)', fontSize: 11, textAlign: 'center',
+          color: 'var(--text-tertiary)', marginBottom: 8, letterSpacing: '0.06em',
+        }}>
+          Drag the vertex point or use sliders
+        </p>
+        <ParabolaGraph
+          a={aVal || 0.5} b={stdB} c={stdC}
+          xRange={[h - 6, h + 6]} yRange={[k - 4, k + 8]}
+          showVertex={true} showAxisOfSymmetry={true}
+          interactive={true}
+          onVertexDrag={(newH, newK) => { setH(newH); setK(newK); }}
+          width={500} height={360}
+        />
+      </div>
+
+      <NavButtons onPrev={onPrev} onNext={onNext} />
+    </div>
+  );
+}
+
+
+/* ═══════════════════════════════════════════
+   STEP 8: PRACTICE SANDBOX (CAPSTONE)
+   ═══════════════════════════════════════════ */
+
+function StepSandbox({ onPrev, onFinish }) {
+  const [a, setA] = useState(1);
+  const [b, setB] = useState(-2);
+  const [c, setC] = useState(-3);
+
+  const vertex = vertexFromStandard(a, b, c);
+  const { disc, roots, count } = solveQuadratic(a, b, c);
+  const axisOfSym = vertex.h;
+
+  // Random problem generator
+  const [problem, setProblem] = useState(null);
+  const [showSolution, setShowSolution] = useState(false);
+
+  function generateProblem() {
+    const pA = [1, 1, 1, 2, -1][Math.floor(Math.random() * 5)];
+    const pB = Math.floor(Math.random() * 13) - 6;
+    const pC = Math.floor(Math.random() * 13) - 6;
+    setProblem({ a: pA, b: pB, c: pC });
+    setShowSolution(false);
+  }
+
+  const caseColor = count === 2 ? '#4ade80' : count === 1 ? '#fbbf24' : '#f87171';
+  const caseLabel = count === 2 ? 'Two roots' : count === 1 ? 'One root' : 'No real roots';
+
+  return (
+    <div style={{ animation: 'fadeInUp 0.6s var(--ease-out-expo) both' }}>
+      <h2 style={{
+        fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 4vw, 40px)',
+        fontWeight: 400, marginBottom: 8,
+      }}>
+        Practice <span style={{ fontStyle: 'italic', color: 'var(--accent-bright)' }}>Sandbox</span>
+      </h2>
+      <p style={{
+        fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 300,
+        color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 24, maxWidth: 600,
+      }}>
+        Explore freely. Adjust the coefficients and watch everything update in real time.
+      </p>
+
+      {/* Equation display */}
+      <div style={{
+        textAlign: 'center', marginBottom: 20, padding: '20px',
+        background: 'rgba(255,255,255,0.02)', borderRadius: 16,
+        border: '1px solid var(--border-subtle)',
+      }}>
+        <div style={{
+          fontFamily: 'var(--font-display)', fontStyle: 'italic',
+          fontSize: 'clamp(22px, 4vw, 34px)',
+        }}>
+          <span style={{ color: 'var(--text-secondary)' }}>y = </span>
+          <span style={{ color: '#f472c4' }}>{a !== 1 ? (a === -1 ? '\u2212' : fmt(a)) : ''}x&sup2;</span>
+          {b !== 0 && (
+            <span>
+              <span style={{ color: 'var(--text-tertiary)' }}> {b > 0 ? '+' : '\u2212'} </span>
+              <span style={{ color: '#a78bfa' }}>{Math.abs(b) !== 1 ? fmt(Math.abs(b)) : ''}x</span>
+            </span>
+          )}
+          {c !== 0 && (
+            <span>
+              <span style={{ color: 'var(--text-tertiary)' }}> {c > 0 ? '+' : '\u2212'} </span>
+              <span style={{ color: '#38bdf8' }}>{fmt(Math.abs(c))}</span>
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Sliders */}
+      <div style={{
+        display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16,
+        maxWidth: 560, margin: '0 auto 20px',
+      }}>
+        {[
+          { label: 'a', value: a, setter: setA, min: -4, max: 4, step: 0.25, color: '#f472c4' },
+          { label: 'b', value: b, setter: setB, min: -10, max: 10, step: 0.5, color: '#a78bfa' },
+          { label: 'c', value: c, setter: setC, min: -10, max: 10, step: 0.5, color: '#38bdf8' },
+        ].map(s => (
+          <div key={s.label}>
+            <label style={{
+              display: 'block', fontFamily: 'var(--font-mono)', fontSize: 12,
+              color: s.color, marginBottom: 4,
+            }}>{s.label} = {fmt(s.value)}</label>
+            <input type="range" min={s.min} max={s.max} step={s.step} value={s.value}
+              onChange={e => {
+                const v = parseFloat(e.target.value);
+                if (s.label === 'a' && v === 0) return;
+                s.setter(v);
+              }}
+              style={{ width: '100%', accentColor: s.color }} />
+          </div>
+        ))}
+      </div>
+
+      {/* Graph */}
+      <div style={{
+        background: 'rgba(255,255,255,0.02)', borderRadius: 16,
+        border: '1px solid var(--border-subtle)', padding: 20, marginBottom: 20,
+      }}>
+        <ParabolaGraph
+          a={a} b={b} c={c}
+          showRoots={true} showVertex={true} showAxisOfSymmetry={true}
+          width={540} height={380}
+        />
+      </div>
+
+      {/* Info panel */}
+      <div style={{
+        display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+        gap: 10, marginBottom: 28,
+      }}>
+        {[
+          { label: 'Vertex', value: `(${fmt(vertex.h)}, ${fmt(vertex.k)})`, color: 'var(--accent2)' },
+          { label: 'Axis of Symmetry', value: `x = ${fmt(axisOfSym)}`, color: 'var(--accent2)' },
+          { label: 'Discriminant', value: fmt(disc), color: '#fbbf24' },
+          { label: 'Solutions', value: caseLabel, color: caseColor },
+          ...(count > 0 ? [{ label: 'Roots', value: roots.map(r => fmt(r)).join(', '), color: 'var(--accent3)' }] : []),
+        ].map((item, i) => (
+          <div key={i} style={{
+            padding: '12px 14px', borderRadius: 10,
+            background: 'rgba(255,255,255,0.02)',
+            border: '1px solid var(--border-subtle)',
+          }}>
+            <div style={{
+              fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em',
+              textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 4,
+            }}>{item.label}</div>
+            <div style={{
+              fontFamily: 'var(--font-mono)', fontSize: 15, fontWeight: 500, color: item.color,
+            }}>{item.value}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Random problem generator */}
+      <div style={{
+        background: 'rgba(255,255,255,0.02)', borderRadius: 16,
+        border: '1px solid var(--border-subtle)', padding: '24px',
+      }}>
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          marginBottom: 16, flexWrap: 'wrap', gap: 8,
+        }}>
+          <h4 style={{
+            fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.08em',
+            textTransform: 'uppercase', color: 'var(--text-tertiary)',
+          }}>Random Problem Generator</h4>
+          <button onClick={generateProblem} style={{
+            fontFamily: 'var(--font-mono)', fontSize: 12, padding: '8px 18px',
+            borderRadius: 8, border: 'none', cursor: 'pointer',
+            background: 'linear-gradient(135deg, var(--accent), var(--accent2))',
+            color: '#fff',
+          }}>Generate</button>
+        </div>
+
+        {problem && (
+          <div>
+            <p style={{
+              fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 22,
+              textAlign: 'center', color: 'var(--accent-bright)', marginBottom: 12,
+            }}>
+              Solve: {fmt(problem.a)}x&sup2; {problem.b >= 0 ? '+' : '\u2212'} {fmt(Math.abs(problem.b))}x {problem.c >= 0 ? '+' : '\u2212'} {fmt(Math.abs(problem.c))} = 0
+            </p>
+            {!showSolution ? (
+              <div style={{ textAlign: 'center' }}>
+                <button onClick={() => setShowSolution(true)} style={{
+                  fontFamily: 'var(--font-mono)', fontSize: 12, padding: '8px 18px',
+                  borderRadius: 8, cursor: 'pointer',
+                  border: '1px solid var(--border-subtle)',
+                  background: 'rgba(255,255,255,0.04)', color: 'var(--text-secondary)',
+                }}>Show Solution</button>
+              </div>
+            ) : (
+              <div style={{
+                fontFamily: 'var(--font-mono)', fontSize: 13, textAlign: 'center',
+                lineHeight: 2,
+              }}>
+                {(() => {
+                  const pa = problem.a, pb = problem.b, pc = problem.c;
+                  const pd = pb * pb - 4 * pa * pc;
+                  const steps = [
+                    { text: `a=${fmt(pa)}, b=${fmt(pb)}, c=${fmt(pc)}`, color: 'var(--text-secondary)' },
+                    { text: `\u0394 = (${fmt(pb)})\u00b2 \u2212 4(${fmt(pa)})(${fmt(pc)}) = ${fmt(pd)}`, color: '#fbbf24' },
+                  ];
+                  if (pd >= 0) {
+                    const sr = Math.sqrt(pd);
+                    const x1 = (-pb + sr) / (2 * pa);
+                    const x2 = (-pb - sr) / (2 * pa);
+                    steps.push({ text: `\u221a\u0394 = ${fmt(sr)}`, color: '#4ade80' });
+                    if (pd > 0) {
+                      steps.push({ text: `x = (${fmt(-pb)} \u00b1 ${fmt(sr)}) / ${fmt(2*pa)}`, color: 'var(--accent-bright)' });
+                      steps.push({ text: `x\u2081 = ${fmt(x1)}, x\u2082 = ${fmt(x2)}`, color: 'var(--success)' });
+                    } else {
+                      steps.push({ text: `x = ${fmt(x1)}`, color: 'var(--success)' });
+                    }
+                  } else {
+                    steps.push({ text: 'No real solutions (\u0394 < 0)', color: '#f87171' });
+                  }
+                  return steps.map((s, i) => (
+                    <div key={i} style={{ color: s.color }}>{s.text}</div>
+                  ));
+                })()}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Completion */}
+      <div style={{ textAlign: 'center', marginTop: 48 }}>
+        <button onClick={onFinish} style={{
+          fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 500,
+          padding: '14px 40px', borderRadius: 12,
+          border: 'none', cursor: 'pointer', color: '#fff',
+          background: 'linear-gradient(135deg, var(--success), #22d3ee)',
+          boxShadow: '0 0 30px rgba(74,222,128,0.2)',
+          transition: 'all 0.3s var(--ease-out-expo)',
+        }}
+          onMouseEnter={e => e.target.style.transform = 'translateY(-2px)'}
+          onMouseLeave={e => e.target.style.transform = 'translateY(0)'}
+        >
+          Complete Lesson
+        </button>
+      </div>
+
+      <NavButtons onPrev={onPrev} prevLabel="Back" />
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:32,padding:'16px 0',borderTop:'1px solid var(--border-subtle)'}}>
+        <a href="06-polynomials.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent-bright)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>&larr; Previous Lesson: Polynomials &amp; Factoring</a>
+        <a href="08-functions.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent-bright)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>Next Lesson: Functions &amp; Transformations &rarr;</a>
+      </div>
+    </div>
+  );
+}
+
+
+/* ═══════════════════════════════════════════
+   MAIN APP
+   ═══════════════════════════════════════════ */
+
+const TOTAL_STEPS = 8;
+const STEP_NAMES = [
+  'Landing', 'Parabola Shape', 'Standard Form', 'Factoring',
+  'Quadratic Formula', 'Discriminant', 'Vertex Form', 'Sandbox',
+];
+
+function App() {
+  const [step, setStep] = useState(0);
+
+  function goTo(s) {
+    setStep(s);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function handleFinish() {
+    try {
+      const visited = JSON.parse(localStorage.getItem('math-progress') || '[]');
+      if (!visited.includes(7)) {
+        visited.push(7);
+        localStorage.setItem('math-progress', JSON.stringify(visited));
+      }
+    } catch {}
+    window.location.href = 'index.html';
+  }
+
+  return (
+    <div style={{ position: 'relative', zIndex: 1 }}>
+      {step > 0 && <ProgressBar currentStep={step} totalSteps={TOTAL_STEPS} />}
+
+      <div style={{
+        maxWidth: 700, margin: '0 auto',
+        padding: step > 0 ? '72px 20px 60px' : '0 20px 60px',
+      }}>
+        {step === 0 && <StepLanding onNext={() => goTo(1)} />}
+        {step === 1 && <StepParabolaShape onPrev={() => goTo(0)} onNext={() => goTo(2)} />}
+        {step === 2 && <StepStandardForm onPrev={() => goTo(1)} onNext={() => goTo(3)} />}
+        {step === 3 && <StepFactoring onPrev={() => goTo(2)} onNext={() => goTo(4)} />}
+        {step === 4 && <StepQuadraticFormula onPrev={() => goTo(3)} onNext={() => goTo(5)} />}
+        {step === 5 && <StepDiscriminant onPrev={() => goTo(4)} onNext={() => goTo(6)} />}
+        {step === 6 && <StepVertexForm onPrev={() => goTo(5)} onNext={() => goTo(7)} />}
+        {step === 7 && <StepSandbox onPrev={() => goTo(6)} onFinish={handleFinish} />}
+      </div>
+
+      {/* Footer */}
+      <footer style={{
+        textAlign: 'center', padding: '40px 24px 32px',
+        borderTop: '1px solid var(--border-subtle)',
+      }}>
+        <p style={{
+          fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-tertiary)',
+          fontWeight: 300,
+        }}>
+          Lesson 7 of 10 &mdash; Quadratic Equations
+        </p>
+      </footer>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>

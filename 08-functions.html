@@ -1,0 +1,1897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Functions & Transformations — Math Foundations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-deep: #06060b;
+    --bg-primary: #0a0a12;
+    --bg-card: rgba(255,255,255,0.03);
+    --bg-card-hover: rgba(255,255,255,0.06);
+    --border-subtle: rgba(255,255,255,0.06);
+    --border-hover: rgba(255,255,255,0.12);
+    --text-primary: #e8e6f0;
+    --text-secondary: rgba(232,230,240,0.55);
+    --text-tertiary: rgba(232,230,240,0.3);
+    --font-display: 'Instrument Serif', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --accent: #2dd4bf;
+    --accent-bright: #5eead4;
+    --accent-dim: #0d9488;
+    --accent-glow: rgba(45,212,191,0.15);
+    --accent-bg: rgba(45,212,191,0.06);
+    --cyan: #22d3ee;
+    --teal: #2dd4bf;
+    --emerald: #34d399;
+    --rose: #fb7185;
+    --amber: #fbbf24;
+    --violet: #a78bfa;
+    --ease-out-expo: cubic-bezier(0.16,1,0.3,1);
+    --ease-out-quart: cubic-bezier(0.25,1,0.5,1);
+    --ease-spring: cubic-bezier(0.34,1.56,0.64,1);
+  }
+
+  html {
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    min-height: 100vh;
+    overflow-x: hidden;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% -10%, rgba(45,212,191,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 50%, rgba(34,211,238,0.04) 0%, transparent 50%),
+      radial-gradient(ellipse 50% 50% at 20% 80%, rgba(45,212,191,0.03) 0%, transparent 50%),
+      var(--bg-deep);
+  }
+
+  #root { min-height: 100vh; }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.3;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 256px;
+  }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.14); }
+
+  ::selection { background: rgba(45,212,191,0.3); color: #fff; }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulseGlow {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  @keyframes machineHum {
+    0%, 100% { transform: scaleX(1); }
+    50% { transform: scaleX(1.02); }
+  }
+  @keyframes gearSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  @keyframes gearSpinReverse {
+    from { transform: rotate(360deg); }
+    to { transform: rotate(0deg); }
+  }
+  @keyframes conveyorMove {
+    from { stroke-dashoffset: 0; }
+    to { stroke-dashoffset: -24; }
+  }
+  @keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-40px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes slideInRight {
+    from { opacity: 0; transform: translateX(40px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes breathe {
+    0%, 100% { box-shadow: 0 0 20px rgba(45,212,191,0.1); }
+    50% { box-shadow: 0 0 30px rgba(45,212,191,0.25); }
+  }
+
+  /* Slider styling */
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.08);
+    outline: none;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--bg-deep);
+    box-shadow: 0 0 10px rgba(45,212,191,0.4);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 16px rgba(45,212,191,0.6);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--bg-deep);
+    box-shadow: 0 0 10px rgba(45,212,191,0.4);
+    cursor: pointer;
+  }
+
+  button { cursor: pointer; }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback, useMemo, memo } = React;
+
+/* ================================================================
+   CONSTANTS & HELPERS
+   ================================================================ */
+const TOTAL_STEPS = 8;
+const STEP_TITLES = [
+  'Landing',
+  'What\'s a Function?',
+  'Domain & Range',
+  'Shifts',
+  'Stretch & Compress',
+  'Reflections',
+  'Composition',
+  'Sandbox'
+];
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+/* Evaluate base functions */
+function evalBase(type, x) {
+  switch(type) {
+    case 'linear': return x;
+    case 'quadratic': return x * x;
+    case 'abs': return Math.abs(x);
+    case 'sqrt': return x >= 0 ? Math.sqrt(x) : NaN;
+    case 'cubic': return x * x * x;
+    case 'sine': return Math.sin(x);
+    default: return x;
+  }
+}
+
+function baseFnLabel(type) {
+  switch(type) {
+    case 'linear': return 'x';
+    case 'quadratic': return 'x\u00b2';
+    case 'abs': return '|x|';
+    case 'sqrt': return '\u221ax';
+    case 'cubic': return 'x\u00b3';
+    case 'sine': return 'sin(x)';
+    default: return 'x';
+  }
+}
+
+function transformedFn(type, x, h, k, a, b, reflX, reflY) {
+  let xInner = reflY ? -(x - h) : (x - h);
+  xInner *= b;
+  let y = evalBase(type, xInner);
+  if (isNaN(y)) return NaN;
+  y *= a;
+  if (reflX) y = -y;
+  y += k;
+  return y;
+}
+
+/* Graph coordinate system helpers */
+function graphToCanvas(gx, gy, cx, cy, scale, w, h) {
+  return [cx + gx * scale, cy - gy * scale];
+}
+
+/* ================================================================
+   GRID BACKGROUND (same as index)
+   ================================================================ */
+function GridBackground() {
+  return (
+    <div style={{ position:'fixed', inset:0, zIndex:0, pointerEvents:'none', opacity:0.35 }}>
+      <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+            <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(255,255,255,0.015)" strokeWidth="1"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#grid)" />
+      </svg>
+    </div>
+  );
+}
+
+/* ================================================================
+   PROGRESS BAR
+   ================================================================ */
+function ProgressBar({ step, total }) {
+  return (
+    <div style={{
+      position:'sticky', top:0, zIndex:100,
+      background:'rgba(6,6,11,0.85)', backdropFilter:'blur(16px)',
+      borderBottom:'1px solid var(--border-subtle)',
+      padding:'12px 24px',
+    }}>
+      <div style={{
+        maxWidth:900, margin:'0 auto',
+        display:'flex', alignItems:'center', gap:12,
+      }}>
+        <a href="index.html" style={{
+          fontFamily:'var(--font-mono)', fontSize:11, letterSpacing:'0.06em',
+          textTransform:'uppercase', color:'var(--text-tertiary)',
+          textDecoration:'none', whiteSpace:'nowrap',
+          transition:'color 0.3s ease',
+        }}
+        onMouseEnter={e => e.target.style.color='var(--accent)'}
+        onMouseLeave={e => e.target.style.color='var(--text-tertiary)'}
+        >
+          &larr; Lessons
+        </a>
+        <div style={{ flex:1, display:'flex', alignItems:'center', gap:4 }}>
+          {Array.from({length:total}, (_,i) => (
+            <div key={i} style={{
+              flex:1, height:3, borderRadius:2,
+              background: i < step ? 'var(--accent)' : i === step ? 'var(--accent-dim)' : 'rgba(255,255,255,0.06)',
+              transition:'background 0.5s var(--ease-out-expo)',
+              position:'relative',
+              overflow:'hidden',
+            }}>
+              {i === step && (
+                <div style={{
+                  position:'absolute', inset:0, borderRadius:2,
+                  background:'linear-gradient(90deg, var(--accent), var(--accent-bright))',
+                  animation:'machineHum 2s ease-in-out infinite',
+                  transformOrigin:'left',
+                }}/>
+              )}
+            </div>
+          ))}
+        </div>
+        <span style={{
+          fontFamily:'var(--font-mono)', fontSize:11, color:'var(--text-tertiary)',
+          letterSpacing:'0.04em', whiteSpace:'nowrap',
+        }}>
+          {step + 1} / {total}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   NAVIGATION BUTTONS
+   ================================================================ */
+function NavButtons({ step, setStep, total }) {
+  return (
+    <div style={{
+      display:'flex', justifyContent:'space-between', alignItems:'center',
+      marginTop:48, gap:16,
+    }}>
+      {step > 0 ? (
+        <button onClick={() => setStep(step - 1)} style={{
+          display:'flex', alignItems:'center', gap:8,
+          fontFamily:'var(--font-body)', fontSize:15, fontWeight:400,
+          color:'var(--text-secondary)', background:'none',
+          border:'1px solid var(--border-subtle)', borderRadius:12,
+          padding:'12px 24px', transition:'all 0.3s var(--ease-out-expo)',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor='var(--accent-dim)'; e.currentTarget.style.color='var(--text-primary)'; }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor='var(--border-subtle)'; e.currentTarget.style.color='var(--text-secondary)'; }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          Previous
+        </button>
+      ) : <div />}
+      {step < total - 1 ? (
+        <button onClick={() => setStep(step + 1)} style={{
+          display:'flex', alignItems:'center', gap:8,
+          fontFamily:'var(--font-body)', fontSize:15, fontWeight:500,
+          color:'#fff', background:'linear-gradient(135deg, var(--accent-dim), var(--accent))',
+          border:'none', borderRadius:12,
+          padding:'12px 28px', transition:'all 0.3s var(--ease-out-expo)',
+          boxShadow:'0 4px 20px rgba(45,212,191,0.2)',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.boxShadow='0 6px 28px rgba(45,212,191,0.35)'; e.currentTarget.style.transform='translateY(-1px)'; }}
+        onMouseLeave={e => { e.currentTarget.style.boxShadow='0 4px 20px rgba(45,212,191,0.2)'; e.currentTarget.style.transform='translateY(0)'; }}
+        >
+          Next
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      ) : (
+        <button onClick={() => {
+          try {
+            const progress = JSON.parse(localStorage.getItem('math-progress') || '[]');
+            if (!progress.includes(8)) {
+              progress.push(8);
+              localStorage.setItem('math-progress', JSON.stringify(progress));
+            }
+          } catch(e) {}
+          window.location.href = 'index.html';
+        }} style={{
+          display:'flex', alignItems:'center', gap:8,
+          fontFamily:'var(--font-body)', fontSize:15, fontWeight:500,
+          color:'#fff', background:'linear-gradient(135deg, var(--emerald), var(--accent))',
+          border:'none', borderRadius:12,
+          padding:'12px 28px', transition:'all 0.3s var(--ease-out-expo)',
+          boxShadow:'0 4px 20px rgba(52,211,153,0.2)',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.boxShadow='0 6px 28px rgba(52,211,153,0.35)'; e.currentTarget.style.transform='translateY(-1px)'; }}
+        onMouseLeave={e => { e.currentTarget.style.boxShadow='0 4px 20px rgba(52,211,153,0.2)'; e.currentTarget.style.transform='translateY(0)'; }}
+        >
+          Complete Lesson
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </button>
+      )}
+    </div>
+  );
+}
+
+/* ================================================================
+   SECTION HEADER
+   ================================================================ */
+function SectionHeader({ title, subtitle }) {
+  return (
+    <div style={{ marginBottom:32, animation:'fadeInUp 0.7s var(--ease-out-expo) both' }}>
+      <h2 style={{
+        fontFamily:'var(--font-display)', fontSize:'clamp(32px, 5vw, 48px)',
+        fontWeight:400, lineHeight:1.1, letterSpacing:'-0.01em',
+        marginBottom:12,
+        background:'linear-gradient(135deg, var(--text-primary) 0%, var(--accent-bright) 100%)',
+        WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent',
+      }}>
+        {title}
+      </h2>
+      {subtitle && (
+        <p style={{
+          fontFamily:'var(--font-body)', fontSize:'clamp(15px, 1.8vw, 18px)',
+          fontWeight:300, color:'var(--text-secondary)', lineHeight:1.6,
+          maxWidth:580,
+        }}>
+          {subtitle}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/* ================================================================
+   CARD WRAPPER
+   ================================================================ */
+function Card({ children, style }) {
+  return (
+    <div style={{
+      background:'var(--bg-card)', border:'1px solid var(--border-subtle)',
+      borderRadius:16, padding:'clamp(20px, 3vw, 32px)',
+      backdropFilter:'blur(8px)', position:'relative', overflow:'hidden',
+      ...style,
+    }}>
+      {children}
+    </div>
+  );
+}
+
+/* ================================================================
+   CONCEPT BOX
+   ================================================================ */
+function ConceptBox({ children, color }) {
+  const c = color || 'var(--accent)';
+  return (
+    <div style={{
+      background:`${c}08`, border:`1px solid ${c}20`, borderRadius:12,
+      padding:'16px 20px', marginBottom:16, position:'relative',
+      borderLeft:`3px solid ${c}60`,
+    }}>
+      {children}
+    </div>
+  );
+}
+
+/* ================================================================
+   EQUATION DISPLAY
+   ================================================================ */
+function Equation({ children, glow }) {
+  return (
+    <div style={{
+      fontFamily:'var(--font-mono)', fontSize:'clamp(16px, 2vw, 22px)',
+      color:'var(--accent-bright)', textAlign:'center',
+      padding:'16px 24px', borderRadius:12,
+      background: glow ? 'var(--accent-bg)' : 'rgba(255,255,255,0.02)',
+      border: glow ? '1px solid rgba(45,212,191,0.15)' : '1px solid var(--border-subtle)',
+      letterSpacing:'0.02em', lineHeight:1.6,
+      animation: glow ? 'breathe 3s ease-in-out infinite' : 'none',
+    }}>
+      {children}
+    </div>
+  );
+}
+
+/* ================================================================
+   INTERACTIVE GRAPH COMPONENT (Canvas-based)
+   ================================================================ */
+const InteractiveGraph = memo(function InteractiveGraph({
+  width = 500, height = 400,
+  xRange = [-6, 6], yRange = [-4, 6],
+  functions = [], /* [{fn, color, dash?, label?, lineWidth?}] */
+  showGrid = true,
+  showAxes = true,
+  style,
+}) {
+  const canvasRef = useRef(null);
+  const containerRef = useRef(null);
+  const [dims, setDims] = useState({w: width, h: height});
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const obs = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const w = entry.contentRect.width;
+        const aspect = height / width;
+        setDims({w, h: Math.round(w * aspect)});
+      }
+    });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [width, height]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const W = dims.w;
+    const H = dims.h;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.scale(dpr, dpr);
+
+    const [xMin, xMax] = xRange;
+    const [yMin, yMax] = yRange;
+    const scaleX = W / (xMax - xMin);
+    const scaleY = H / (yMax - yMin);
+    const cx = -xMin * scaleX;
+    const cy = yMax * scaleY;
+
+    ctx.clearRect(0, 0, W, H);
+
+    // Grid
+    if (showGrid) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+      ctx.lineWidth = 1;
+      for (let x = Math.ceil(xMin); x <= Math.floor(xMax); x++) {
+        const px = cx + x * scaleX;
+        ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, H); ctx.stroke();
+      }
+      for (let y = Math.ceil(yMin); y <= Math.floor(yMax); y++) {
+        const py = cy - y * scaleY;
+        ctx.beginPath(); ctx.moveTo(0, py); ctx.lineTo(W, py); ctx.stroke();
+      }
+    }
+
+    // Axes
+    if (showAxes) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+      ctx.lineWidth = 1.5;
+      // x-axis
+      ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(W, cy); ctx.stroke();
+      // y-axis
+      ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, H); ctx.stroke();
+
+      // Tick marks
+      ctx.fillStyle = 'rgba(255,255,255,0.25)';
+      ctx.font = '10px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      for (let x = Math.ceil(xMin); x <= Math.floor(xMax); x++) {
+        if (x === 0) continue;
+        const px = cx + x * scaleX;
+        ctx.beginPath(); ctx.moveTo(px, cy - 4); ctx.lineTo(px, cy + 4); ctx.stroke();
+        ctx.fillText(x, px, cy + 16);
+      }
+      ctx.textAlign = 'right';
+      for (let y = Math.ceil(yMin); y <= Math.floor(yMax); y++) {
+        if (y === 0) continue;
+        const py = cy - y * scaleY;
+        ctx.beginPath(); ctx.moveTo(cx - 4, py); ctx.lineTo(cx + 4, py); ctx.stroke();
+        ctx.fillText(y, cx - 8, py + 4);
+      }
+    }
+
+    // Functions
+    functions.forEach(({fn, color, dash, lineWidth: lw, label}) => {
+      ctx.strokeStyle = color || 'var(--accent)';
+      ctx.lineWidth = lw || 2.5;
+      ctx.setLineDash(dash || []);
+      ctx.beginPath();
+      let started = false;
+      const step = (xMax - xMin) / (W * 2);
+      for (let x = xMin; x <= xMax; x += step) {
+        const y = fn(x);
+        if (isNaN(y) || !isFinite(y) || y < yMin - 2 || y > yMax + 2) {
+          started = false;
+          continue;
+        }
+        const px = cx + x * scaleX;
+        const py = cy - y * scaleY;
+        if (!started) { ctx.moveTo(px, py); started = true; }
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+    });
+
+  }, [dims, xRange, yRange, functions, showGrid, showAxes]);
+
+  return (
+    <div ref={containerRef} style={{ width:'100%', maxWidth:width, ...style }}>
+      <canvas ref={canvasRef} style={{ width:'100%', borderRadius:12, display:'block' }} />
+    </div>
+  );
+});
+
+
+/* ================================================================
+   FUNCTION MACHINE ANIMATION (SVG)
+   ================================================================ */
+function FunctionMachine({ inputVal, rule, outputVal, running, label, compact }) {
+  const h = compact ? 140 : 180;
+  const w = compact ? 340 : 420;
+
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} width="100%" style={{ maxWidth:w, display:'block', margin:'0 auto' }}>
+      <defs>
+        <linearGradient id="machineGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#1a3a3a" />
+          <stop offset="100%" stopColor="#0f2424" />
+        </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3" result="blur" />
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+
+      {/* Conveyor left */}
+      <line x1="10" y1={h/2} x2={w*0.25} y2={h/2}
+        stroke="rgba(45,212,191,0.3)" strokeWidth="2" strokeDasharray="6 6"
+        style={{ animation: running ? 'conveyorMove 0.8s linear infinite' : 'none' }}
+      />
+      {/* Conveyor right */}
+      <line x1={w*0.75} y1={h/2} x2={w-10} y2={h/2}
+        stroke="rgba(45,212,191,0.3)" strokeWidth="2" strokeDasharray="6 6"
+        style={{ animation: running ? 'conveyorMove 0.8s linear infinite' : 'none' }}
+      />
+
+      {/* Machine body */}
+      <rect x={w*0.25} y={h*0.15} width={w*0.5} height={h*0.7}
+        rx="12" fill="url(#machineGrad)"
+        stroke="rgba(45,212,191,0.3)" strokeWidth="1.5"
+        style={{ animation: running ? 'machineHum 0.5s ease-in-out infinite' : 'none' }}
+      />
+
+      {/* Gears */}
+      <g style={{ transformOrigin:`${w*0.4}px ${h*0.35}px`, animation: running ? 'gearSpin 2s linear infinite' : 'none' }}>
+        <circle cx={w*0.4} cy={h*0.35} r="10" fill="none" stroke="rgba(45,212,191,0.4)" strokeWidth="1.5"/>
+        {[0,60,120,180,240,300].map(a => (
+          <line key={a} x1={w*0.4} y1={h*0.35-10} x2={w*0.4} y2={h*0.35-14}
+            stroke="rgba(45,212,191,0.4)" strokeWidth="2"
+            transform={`rotate(${a} ${w*0.4} ${h*0.35})`}
+          />
+        ))}
+      </g>
+      <g style={{ transformOrigin:`${w*0.6}px ${h*0.35}px`, animation: running ? 'gearSpinReverse 1.5s linear infinite' : 'none' }}>
+        <circle cx={w*0.6} cy={h*0.35} r="8" fill="none" stroke="rgba(45,212,191,0.3)" strokeWidth="1.5"/>
+        {[0,72,144,216,288].map(a => (
+          <line key={a} x1={w*0.6} y1={h*0.35-8} x2={w*0.6} y2={h*0.35-11}
+            stroke="rgba(45,212,191,0.3)" strokeWidth="2"
+            transform={`rotate(${a} ${w*0.6} ${h*0.35})`}
+          />
+        ))}
+      </g>
+
+      {/* Label inside machine */}
+      <text x={w/2} y={h*0.65} textAnchor="middle" fill="var(--accent-bright)"
+        fontFamily="'JetBrains Mono', monospace" fontSize={compact ? 13 : 15} fontWeight="500" filter="url(#glow)">
+        {label || rule || 'f(x)'}
+      </text>
+
+      {/* Input funnel arrow */}
+      <polygon points={`${w*0.25},${h/2-6} ${w*0.25+8},${h/2} ${w*0.25},${h/2+6}`}
+        fill="rgba(45,212,191,0.5)"
+      />
+      {/* Output arrow */}
+      <polygon points={`${w*0.75},${h/2-6} ${w*0.75+8},${h/2} ${w*0.75},${h/2+6}`}
+        fill="rgba(45,212,191,0.5)"
+      />
+
+      {/* Input value */}
+      <g style={{
+        opacity: inputVal !== null ? 1 : 0.3,
+        transition: 'opacity 0.3s ease',
+      }}>
+        <rect x="2" y={h/2-16} width="56" height="32" rx="8"
+          fill="rgba(34,211,238,0.12)" stroke="rgba(34,211,238,0.3)" strokeWidth="1"
+        />
+        <text x="30" y={h/2+5} textAnchor="middle" fill="var(--cyan)"
+          fontFamily="'JetBrains Mono', monospace" fontSize={compact ? 14 : 16} fontWeight="500">
+          {inputVal !== null ? inputVal : '?'}
+        </text>
+      </g>
+
+      {/* Output value */}
+      <g style={{
+        opacity: outputVal !== null ? 1 : 0.3,
+        transition: 'opacity 0.4s ease 0.3s',
+      }}>
+        <rect x={w-58} y={h/2-16} width="56" height="32" rx="8"
+          fill="rgba(52,211,153,0.12)" stroke="rgba(52,211,153,0.3)" strokeWidth="1"
+        />
+        <text x={w-30} y={h/2+5} textAnchor="middle" fill="var(--emerald)"
+          fontFamily="'JetBrains Mono', monospace" fontSize={compact ? 14 : 16} fontWeight="500">
+          {outputVal !== null ? outputVal : '?'}
+        </text>
+      </g>
+    </svg>
+  );
+}
+
+
+/* ================================================================
+   STEP 1: LANDING
+   ================================================================ */
+function Step1Landing({ onStart }) {
+  const [anim, setAnim] = useState(false);
+  useEffect(() => { setAnim(true); }, []);
+
+  return (
+    <div style={{ textAlign:'center', padding:'clamp(40px, 8vh, 80px) 0' }}>
+      {/* Floating symbols */}
+      <div style={{ position:'relative', height:0 }}>
+        {['\u0192','T','\u2218','\u0394','x\u00b2','|x|'].map((s,i) => (
+          <span key={i} style={{
+            position:'absolute', fontFamily:'var(--font-display)',
+            fontSize:`${16 + Math.random()*14}px`,
+            color:`rgba(45,212,191,${0.04 + Math.random()*0.06})`,
+            left:`${10 + (i*15)%80}%`, top:`${-30 + (i*23)%60}px`,
+            animation:`float ${3.5 + i*0.6}s ease-in-out infinite`,
+            animationDelay:`${i*0.3}s`, pointerEvents:'none',
+          }}>{s}</span>
+        ))}
+      </div>
+
+      <div style={{
+        display:'inline-flex', alignItems:'center', gap:8,
+        padding:'6px 16px', borderRadius:100,
+        border:'1px solid var(--border-subtle)',
+        background:'rgba(255,255,255,0.02)',
+        fontFamily:'var(--font-mono)', fontSize:12,
+        letterSpacing:'0.08em', textTransform:'uppercase',
+        color:'var(--text-secondary)', marginBottom:36,
+        animation:'slideDown 0.8s var(--ease-out-expo) both',
+      }}>
+        <span style={{
+          width:6, height:6, borderRadius:'50%', background:'var(--accent)',
+          boxShadow:'0 0 8px var(--accent)',
+          animation:'pulseGlow 2s ease-in-out infinite',
+        }} />
+        Lesson 8
+      </div>
+
+      <h1 style={{
+        fontFamily:'var(--font-display)',
+        fontSize:'clamp(44px, 7vw, 80px)',
+        fontWeight:400, lineHeight:1.05,
+        letterSpacing:'-0.02em', marginBottom:24,
+        animation:'fadeInUp 1s var(--ease-out-expo) 0.1s both',
+      }}>
+        <span style={{
+          background:'linear-gradient(135deg, #e8e6f0 0%, rgba(232,230,240,0.6) 100%)',
+          WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent',
+        }}>Functions</span>
+        <br/>
+        <span style={{
+          fontStyle:'italic',
+          background:'linear-gradient(135deg, var(--teal), var(--cyan))',
+          WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent',
+        }}>&amp; Transformations</span>
+      </h1>
+
+      <p style={{
+        fontFamily:'var(--font-body)', fontSize:'clamp(15px, 2vw, 19px)',
+        fontWeight:300, color:'var(--text-secondary)',
+        maxWidth:480, margin:'0 auto 40px', lineHeight:1.65,
+        animation:'fadeInUp 1s var(--ease-out-expo) 0.25s both',
+      }}>
+        Every function is a machine. Feed it an input, apply a rule,
+        get an output. Learn to stretch, shift, and reflect these machines at will.
+      </p>
+
+      {/* Function machine animation */}
+      <div style={{
+        maxWidth:420, margin:'0 auto 48px',
+        animation:'fadeInUp 1s var(--ease-out-expo) 0.4s both',
+      }}>
+        <FunctionMachine inputVal="x" rule="f(x)" outputVal="y" running={anim} />
+      </div>
+
+      <button onClick={onStart} style={{
+        fontFamily:'var(--font-body)', fontSize:17, fontWeight:500,
+        color:'#fff', background:'linear-gradient(135deg, var(--accent-dim), var(--accent))',
+        border:'none', borderRadius:14, padding:'16px 44px',
+        boxShadow:'0 4px 24px rgba(45,212,191,0.25)',
+        transition:'all 0.3s var(--ease-out-expo)',
+        animation:'fadeInUp 1s var(--ease-out-expo) 0.55s both',
+      }}
+      onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 8px 32px rgba(45,212,191,0.35)'; }}
+      onMouseLeave={e => { e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='0 4px 24px rgba(45,212,191,0.25)'; }}
+      >
+        Begin Lesson
+      </button>
+    </div>
+  );
+}
+
+
+/* ================================================================
+   STEP 2: WHAT'S A FUNCTION?
+   ================================================================ */
+function Step2Function() {
+  const [inputVal, setInputVal] = useState(null);
+  const [outputVal, setOutputVal] = useState(null);
+  const [running, setRunning] = useState(false);
+  const [rule, setRule] = useState('2x + 1');
+  const [showVLT, setShowVLT] = useState(false);
+  const [vltX, setVltX] = useState(0);
+
+  const rules = {
+    '2x + 1': x => 2*x + 1,
+    'x\u00b2': x => x*x,
+    'x + 3': x => x + 3,
+    '3x - 2': x => 3*x - 2,
+  };
+  const inputs = [-3, -2, -1, 0, 1, 2, 3, 4];
+
+  function feedMachine(x) {
+    setInputVal(x);
+    setRunning(true);
+    setOutputVal(null);
+    setTimeout(() => {
+      setOutputVal(rules[rule](x));
+      setTimeout(() => setRunning(false), 600);
+    }, 700);
+  }
+
+  const graphFns = useMemo(() => [{
+    fn: rules[rule],
+    color: 'var(--accent)',
+    lineWidth: 2.5,
+  }], [rule]);
+
+  const vltFns = useMemo(() => [
+    { fn: x => Math.sqrt(Math.max(0, 4 - x*x)), color: 'var(--accent)', lineWidth: 2.5 },
+    { fn: x => -Math.sqrt(Math.max(0, 4 - x*x)), color: 'var(--accent)', lineWidth: 2.5 },
+  ], []);
+
+  return (
+    <div style={{ animation:'fadeIn 0.5s ease both' }}>
+      <SectionHeader
+        title="What's a Function?"
+        subtitle="A function takes one input and produces exactly one output. Think of it as a reliable machine: same input always gives the same output."
+      />
+
+      <ConceptBox>
+        <p style={{ fontFamily:'var(--font-body)', fontSize:15, color:'var(--text-primary)', lineHeight:1.7, fontWeight:300 }}>
+          A <strong style={{ color:'var(--accent-bright)' }}>function</strong> is a rule that assigns each input to <em>exactly one</em> output.
+          We write <span style={{ fontFamily:'var(--font-mono)', color:'var(--accent)' }}>f(x) = </span> followed by the rule.
+          The input <span style={{ fontFamily:'var(--font-mono)', color:'var(--cyan)' }}>x</span> goes in, the output <span style={{ fontFamily:'var(--font-mono)', color:'var(--emerald)' }}>f(x)</span> comes out.
+        </p>
+      </ConceptBox>
+
+      <Card style={{ marginBottom:24 }}>
+        <div style={{ marginBottom:16 }}>
+          <span style={{ fontFamily:'var(--font-mono)', fontSize:12, color:'var(--text-tertiary)', textTransform:'uppercase', letterSpacing:'0.08em' }}>
+            Choose a rule
+          </span>
+          <div style={{ display:'flex', gap:8, marginTop:8, flexWrap:'wrap' }}>
+            {Object.keys(rules).map(r => (
+              <button key={r} onClick={() => { setRule(r); setInputVal(null); setOutputVal(null); }} style={{
+                fontFamily:'var(--font-mono)', fontSize:14, padding:'8px 16px',
+                borderRadius:8, border:'1px solid',
+                borderColor: rule === r ? 'var(--accent)' : 'var(--border-subtle)',
+                background: rule === r ? 'var(--accent-bg)' : 'transparent',
+                color: rule === r ? 'var(--accent-bright)' : 'var(--text-secondary)',
+                transition:'all 0.2s ease',
+              }}>
+                f(x) = {r}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <FunctionMachine inputVal={inputVal} rule={`f(x) = ${rule}`} outputVal={outputVal} running={running} label={`f(x) = ${rule}`} />
+
+        <div style={{ marginTop:16 }}>
+          <span style={{ fontFamily:'var(--font-mono)', fontSize:12, color:'var(--text-tertiary)', textTransform:'uppercase', letterSpacing:'0.08em' }}>
+            Pick an input
+          </span>
+          <div style={{ display:'flex', gap:8, marginTop:8, flexWrap:'wrap', justifyContent:'center' }}>
+            {inputs.map(x => (
+              <button key={x} onClick={() => feedMachine(x)} disabled={running} style={{
+                fontFamily:'var(--font-mono)', fontSize:16, width:44, height:44,
+                borderRadius:10, border:'1px solid',
+                borderColor: inputVal === x ? 'var(--cyan)' : 'var(--border-subtle)',
+                background: inputVal === x ? 'rgba(34,211,238,0.1)' : 'transparent',
+                color: inputVal === x ? 'var(--cyan)' : 'var(--text-secondary)',
+                transition:'all 0.2s ease',
+                opacity: running ? 0.5 : 1,
+              }}>
+                {x}
+              </button>
+            ))}
+          </div>
+        </div>
+      </Card>
+
+      {/* Vertical Line Test */}
+      <Card>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
+          <h3 style={{ fontFamily:'var(--font-display)', fontSize:22, fontWeight:400, color:'var(--text-primary)' }}>
+            The Vertical Line Test
+          </h3>
+          <button onClick={() => setShowVLT(!showVLT)} style={{
+            fontFamily:'var(--font-mono)', fontSize:12, padding:'6px 14px',
+            borderRadius:8, border:'1px solid var(--border-subtle)',
+            background: showVLT ? 'var(--accent-bg)' : 'transparent',
+            color: showVLT ? 'var(--accent)' : 'var(--text-secondary)',
+            transition:'all 0.2s ease', textTransform:'uppercase', letterSpacing:'0.06em',
+          }}>
+            {showVLT ? 'Hide' : 'Show'} Demo
+          </button>
+        </div>
+        <p style={{ fontFamily:'var(--font-body)', fontSize:15, color:'var(--text-secondary)', lineHeight:1.7, marginBottom:16, fontWeight:300 }}>
+          If any vertical line crosses the graph more than once, it is <strong style={{ color:'var(--rose)' }}>not a function</strong>.
+          Each x-value can map to only one y-value.
+        </p>
+        {showVLT && (
+          <div style={{ animation:'fadeInUp 0.4s var(--ease-out-expo) both' }}>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:16 }}>
+              <div>
+                <p style={{ fontFamily:'var(--font-mono)', fontSize:12, color:'var(--emerald)', marginBottom:8, textAlign:'center' }}>
+                  IS a function (parabola)
+                </p>
+                <InteractiveGraph width={260} height={200} xRange={[-4,4]} yRange={[-1,5]}
+                  functions={[{fn: x => x*x, color:'var(--accent)', lineWidth:2.5}]}
+                />
+              </div>
+              <div>
+                <p style={{ fontFamily:'var(--font-mono)', fontSize:12, color:'var(--rose)', marginBottom:8, textAlign:'center' }}>
+                  NOT a function (circle)
+                </p>
+                <InteractiveGraph width={260} height={200} xRange={[-4,4]} yRange={[-3,3]}
+                  functions={vltFns}
+                />
+              </div>
+            </div>
+            <div style={{
+              fontFamily:'var(--font-body)', fontSize:14, color:'var(--text-secondary)',
+              textAlign:'center', fontWeight:300,
+              background:'rgba(255,255,255,0.02)', borderRadius:8, padding:'10px 16px',
+            }}>
+              The circle fails: at x=0, there are two y-values (top and bottom).
+            </div>
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+
+/* ================================================================
+   STEP 3: DOMAIN & RANGE
+   ================================================================ */
+function Step3Domain() {
+  const [selectedFn, setSelectedFn] = useState('quadratic');
+  const fnOptions = {
+    quadratic: { label:'f(x) = x\u00b2', fn: x => x*x, domain:'All real numbers (\u2212\u221e, \u221e)', range:'[0, \u221e)', domColor:'var(--cyan)', ranColor:'var(--emerald)', yRange:[-2,8] },
+    sqrt: { label:'f(x) = \u221ax', fn: x => x >= 0 ? Math.sqrt(x) : NaN, domain:'[0, \u221e)', range:'[0, \u221e)', domColor:'var(--cyan)', ranColor:'var(--emerald)', yRange:[-1,5] },
+    rational: { label:'f(x) = 1/x', fn: x => Math.abs(x) < 0.05 ? NaN : 1/x, domain:'x \u2260 0', range:'y \u2260 0', domColor:'var(--cyan)', ranColor:'var(--emerald)', yRange:[-5,5] },
+    abs: { label:'f(x) = |x|', fn: x => Math.abs(x), domain:'All real numbers (\u2212\u221e, \u221e)', range:'[0, \u221e)', domColor:'var(--cyan)', ranColor:'var(--emerald)', yRange:[-1,6] },
+  };
+  const sel = fnOptions[selectedFn];
+
+  const fns = useMemo(() => [{fn: sel.fn, color:'var(--accent)', lineWidth:2.5}], [selectedFn]);
+
+  return (
+    <div style={{ animation:'fadeIn 0.5s ease both' }}>
+      <SectionHeader
+        title="Domain & Range"
+        subtitle="Every function has boundaries: what can go in (domain) and what comes out (range)."
+      />
+
+      <ConceptBox color="var(--cyan)">
+        <p style={{ fontFamily:'var(--font-body)', fontSize:15, color:'var(--text-primary)', lineHeight:1.7, fontWeight:300 }}>
+          <strong style={{ color:'var(--cyan)' }}>Domain</strong> = the set of all valid inputs (x-values).
+          <br/>
+          <strong style={{ color:'var(--emerald)' }}>Range</strong> = the set of all possible outputs (y-values).
+        </p>
+      </ConceptBox>
+
+      <Card style={{ marginBottom:24 }}>
+        <div style={{ marginBottom:16 }}>
+          <span style={{ fontFamily:'var(--font-mono)', fontSize:12, color:'var(--text-tertiary)', textTransform:'uppercase', letterSpacing:'0.08em' }}>
+            Explore functions
+          </span>
+          <div style={{ display:'flex', gap:8, marginTop:8, flexWrap:'wrap' }}>
+            {Object.entries(fnOptions).map(([key, opt]) => (
+              <button key={key} onClick={() => setSelectedFn(key)} style={{
+                fontFamily:'var(--font-mono)', fontSize:13, padding:'8px 16px',
+                borderRadius:8, border:'1px solid',
+                borderColor: selectedFn === key ? 'var(--accent)' : 'var(--border-subtle)',
+                background: selectedFn === key ? 'var(--accent-bg)' : 'transparent',
+                color: selectedFn === key ? 'var(--accent-bright)' : 'var(--text-secondary)',
+                transition:'all 0.2s ease',
+              }}>
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ display:'flex', justifyContent:'center', marginBottom:20 }}>
+          <InteractiveGraph width={500} height={340} xRange={[-6,6]} yRange={sel.yRange} functions={fns} />
+        </div>
+
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+          <div style={{
+            background:'rgba(34,211,238,0.06)', border:'1px solid rgba(34,211,238,0.15)',
+            borderRadius:10, padding:'14px 18px',
+          }}>
+            <div style={{ fontFamily:'var(--font-mono)', fontSize:11, color:'var(--cyan)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6 }}>
+              Domain (inputs)
+            </div>
+            <div style={{ fontFamily:'var(--font-mono)', fontSize:15, color:'var(--text-primary)' }}>
+              {sel.domain}
+            </div>
+          </div>
+          <div style={{
+            background:'rgba(52,211,153,0.06)', border:'1px solid rgba(52,211,153,0.15)',
+            borderRadius:10, padding:'14px 18px',
+          }}>
+            <div style={{ fontFamily:'var(--font-mono)', fontSize:11, color:'var(--emerald)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6 }}>
+              Range (outputs)
+            </div>
+            <div style={{ fontFamily:'var(--font-mono)', fontSize:15, color:'var(--text-primary)' }}>
+              {sel.range}
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      <ConceptBox color="var(--amber)">
+        <p style={{ fontFamily:'var(--font-body)', fontSize:14, color:'var(--text-secondary)', lineHeight:1.7, fontWeight:300 }}>
+          <strong style={{ color:'var(--amber)' }}>Watch out for restrictions:</strong> You cannot divide by zero (makes 1/x undefined at x=0),
+          and you cannot take the square root of a negative number (in the reals), so {'\u221a'}x has domain x {'\u2265'} 0.
+        </p>
+      </ConceptBox>
+    </div>
+  );
+}
+
+/* ================================================================
+   STEP 4: VERTICAL & HORIZONTAL SHIFTS
+   ================================================================ */
+function Step4Shifts() {
+  const [h, setH] = useState(0);
+  const [k, setK] = useState(0);
+  const [base, setBase] = useState('quadratic');
+
+  const fns = useMemo(() => [
+    { fn: x => evalBase(base, x), color:'rgba(45,212,191,0.25)', dash:[6,4], lineWidth:2, label:'original' },
+    { fn: x => { const y = evalBase(base, x - h); return isNaN(y) ? NaN : y + k; }, color:'var(--accent-bright)', lineWidth:2.5, label:'shifted' },
+  ], [h, k, base]);
+
+  const eqStr = useMemo(() => {
+    const bLabel = baseFnLabel(base);
+    let inner = 'x';
+    if (h > 0) inner = `x \u2212 ${h}`;
+    else if (h < 0) inner = `x + ${Math.abs(h)}`;
+    let eq = `f(${inner})`;
+    if (base === 'abs') eq = `|${inner}|`;
+    else if (base === 'quadratic') eq = `(${inner})\u00b2`;
+    else if (base === 'sqrt') eq = `\u221a(${inner})`;
+    else eq = inner;
+    if (k > 0) eq += ` + ${k}`;
+    else if (k < 0) eq += ` \u2212 ${Math.abs(k)}`;
+    return eq;
+  }, [h, k, base]);
+
+  return (
+    <div style={{ animation:'fadeIn 0.5s ease both' }}>
+      <SectionHeader
+        title="Shifts"
+        subtitle="Move functions around the coordinate plane without changing their shape."
+      />
+
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:24 }}>
+        <ConceptBox color="var(--cyan)">
+          <p style={{ fontFamily:'var(--font-body)', fontSize:14, color:'var(--text-primary)', lineHeight:1.7, fontWeight:300 }}>
+            <strong style={{ color:'var(--cyan)' }}>Vertical shift:</strong><br/>
+            <span style={{ fontFamily:'var(--font-mono)', fontSize:13 }}>f(x) + k</span> shifts <strong>up</strong> by k<br/>
+            <span style={{ fontFamily:'var(--font-mono)', fontSize:13 }}>f(x) - k</span> shifts <strong>down</strong> by k
+          </p>
+        </ConceptBox>
+        <ConceptBox color="var(--emerald)">
+          <p style={{ fontFamily:'var(--font-body)', fontSize:14, color:'var(--text-primary)', lineHeight:1.7, fontWeight:300 }}>
+            <strong style={{ color:'var(--emerald)' }}>Horizontal shift:</strong><br/>
+            <span style={{ fontFamily:'var(--font-mono)', fontSize:13 }}>f(x - h)</span> shifts <strong>right</strong> by h<br/>
+            <span style={{ fontFamily:'var(--font-mono)', fontSize:13 }}>f(x + h)</span> shifts <strong>left</strong> by h
+          </p>
+        </ConceptBox>
+      </div>
+
+      <Card>
+        <div style={{ display:'flex', gap:8, marginBottom:20, flexWrap:'wrap' }}>
+          {['quadratic','abs','sqrt','linear'].map(b => (
+            <button key={b} onClick={() => { setBase(b); setH(0); setK(0); }} style={{
+              fontFamily:'var(--font-mono)', fontSize:12, padding:'6px 14px',
+              borderRadius:8, border:'1px solid',
+              borderColor: base === b ? 'var(--accent)' : 'var(--border-subtle)',
+              background: base === b ? 'var(--accent-bg)' : 'transparent',
+              color: base === b ? 'var(--accent-bright)' : 'var(--text-secondary)',
+              transition:'all 0.2s ease',
+            }}>
+              {baseFnLabel(b)}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ display:'flex', justifyContent:'center', marginBottom:20 }}>
+          <InteractiveGraph width={520} height={360} xRange={[-8,8]} yRange={[-6,8]} functions={fns} />
+        </div>
+
+        <Equation glow>y = {eqStr}</Equation>
+
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20, marginTop:20 }}>
+          <div>
+            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+              <span style={{ fontFamily:'var(--font-mono)', fontSize:12, color:'var(--emerald)' }}>
+                Horizontal (h)
+              </span>
+              <span style={{ fontFamily:'var(--font-mono)', fontSize:14, color:'var(--text-primary)' }}>
+                {h}
+              </span>
+            </div>
+            <input type="range" min="-5" max="5" step="1" value={h}
+              onChange={e => setH(Number(e.target.value))}
+            />
+          </div>
+          <div>
+            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+              <span style={{ fontFamily:'var(--font-mono)', fontSize:12, color:'var(--cyan)' }}>
+                Vertical (k)
+              </span>
+              <span style={{ fontFamily:'var(--font-mono)', fontSize:14, color:'var(--text-primary)' }}>
+                {k}
+              </span>
+            </div>
+            <input type="range" min="-5" max="5" step="1" value={k}
+              onChange={e => setK(Number(e.target.value))}
+            />
+          </div>
+        </div>
+
+        <div style={{
+          marginTop:16, textAlign:'center', fontFamily:'var(--font-body)',
+          fontSize:13, color:'var(--text-tertiary)', fontWeight:300,
+        }}>
+          <span style={{ color:'rgba(45,212,191,0.3)' }}>{'\u2504\u2504\u2504'}</span> original (dotted) &nbsp;&nbsp;
+          <span style={{ color:'var(--accent-bright)' }}>{'\u2501\u2501\u2501'}</span> transformed (solid)
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+
+/* ================================================================
+   STEP 5: STRETCH & COMPRESS
+   ================================================================ */
+function Step5Stretch() {
+  const [a, setA] = useState(1);
+  const [b, setB] = useState(1);
+  const [base, setBase] = useState('quadratic');
+
+  const fns = useMemo(() => [
+    { fn: x => evalBase(base, x), color:'rgba(45,212,191,0.25)', dash:[6,4], lineWidth:2 },
+    { fn: x => { const y = evalBase(base, b * x); return isNaN(y) ? NaN : a * y; }, color:'var(--accent-bright)', lineWidth:2.5 },
+  ], [a, b, base]);
+
+  const desc = useMemo(() => {
+    let parts = [];
+    if (Math.abs(a) > 1) parts.push('Vertical stretch');
+    else if (Math.abs(a) < 1 && Math.abs(a) > 0) parts.push('Vertical compress');
+    if (Math.abs(b) > 1) parts.push('Horizontal compress');
+    else if (Math.abs(b) < 1 && Math.abs(b) > 0) parts.push('Horizontal stretch');
+    if (parts.length === 0) return 'No stretch/compress applied';
+    return parts.join(' + ');
+  }, [a, b]);
+
+  return (
+    <div style={{ animation:'fadeIn 0.5s ease both' }}>
+      <SectionHeader
+        title="Stretch & Compress"
+        subtitle="Scale functions vertically and horizontally to make them taller, shorter, wider, or narrower."
+      />
+
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:24 }}>
+        <ConceptBox color="var(--violet)">
+          <p style={{ fontFamily:'var(--font-body)', fontSize:14, color:'var(--text-primary)', lineHeight:1.7, fontWeight:300 }}>
+            <strong style={{ color:'var(--violet)' }}>Vertical:</strong> <span style={{ fontFamily:'var(--font-mono)', fontSize:13 }}>a {'\u00b7'} f(x)</span><br/>
+            a &gt; 1: stretch (taller)<br/>
+            0 &lt; a &lt; 1: compress (shorter)
+          </p>
+        </ConceptBox>
+        <ConceptBox color="var(--amber)">
+          <p style={{ fontFamily:'var(--font-body)', fontSize:14, color:'var(--text-primary)', lineHeight:1.7, fontWeight:300 }}>
+            <strong style={{ color:'var(--amber)' }}>Horizontal:</strong> <span style={{ fontFamily:'var(--font-mono)', fontSize:13 }}>f(b {'\u00b7'} x)</span><br/>
+            b &gt; 1: compress (narrower)<br/>
+            0 &lt; b &lt; 1: stretch (wider)
+          </p>
+        </ConceptBox>
+      </div>
+
+      <Card>
+        <div style={{ display:'flex', gap:8, marginBottom:20, flexWrap:'wrap' }}>
+          {['quadratic','abs','sine','cubic'].map(bf => (
+            <button key={bf} onClick={() => { setBase(bf); setA(1); setB(1); }} style={{
+              fontFamily:'var(--font-mono)', fontSize:12, padding:'6px 14px',
+              borderRadius:8, border:'1px solid',
+              borderColor: base === bf ? 'var(--accent)' : 'var(--border-subtle)',
+              background: base === bf ? 'var(--accent-bg)' : 'transparent',
+              color: base === bf ? 'var(--accent-bright)' : 'var(--text-secondary)',
+              transition:'all 0.2s ease',
+            }}>
+              {baseFnLabel(bf)}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ display:'flex', justifyContent:'center', marginBottom:20 }}>
+          <InteractiveGraph width={520} height={360} xRange={[-8,8]} yRange={[-6,8]} functions={fns} />
+        </div>
+
+        <Equation glow>
+          y = {a !== 1 ? `${a.toFixed(1)} \u00b7 ` : ''}
+          {baseFnLabel(base).replace('x', b !== 1 ? `${b.toFixed(1)}x` : 'x')}
+        </Equation>
+
+        <div style={{
+          display:'inline-block', margin:'12px auto 0', padding:'6px 14px',
+          borderRadius:8, background:'rgba(255,255,255,0.03)',
+          fontFamily:'var(--font-mono)', fontSize:12, color:'var(--text-secondary)',
+          textAlign:'center', width:'100%',
+        }}>
+          {desc}
+        </div>
+
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20, marginTop:20 }}>
+          <div>
+            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+              <span style={{ fontFamily:'var(--font-mono)', fontSize:12, color:'var(--violet)' }}>
+                Vertical (a)
+              </span>
+              <span style={{ fontFamily:'var(--font-mono)', fontSize:14, color:'var(--text-primary)' }}>
+                {a.toFixed(1)}
+              </span>
+            </div>
+            <input type="range" min="0.2" max="3" step="0.1" value={a}
+              onChange={e => setA(Number(e.target.value))}
+            />
+          </div>
+          <div>
+            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+              <span style={{ fontFamily:'var(--font-mono)', fontSize:12, color:'var(--amber)' }}>
+                Horizontal (b)
+              </span>
+              <span style={{ fontFamily:'var(--font-mono)', fontSize:14, color:'var(--text-primary)' }}>
+                {b.toFixed(1)}
+              </span>
+            </div>
+            <input type="range" min="0.2" max="3" step="0.1" value={b}
+              onChange={e => setB(Number(e.target.value))}
+            />
+          </div>
+        </div>
+
+        <div style={{
+          marginTop:16, textAlign:'center', fontFamily:'var(--font-body)',
+          fontSize:13, color:'var(--text-tertiary)', fontWeight:300,
+        }}>
+          <span style={{ color:'rgba(45,212,191,0.3)' }}>{'\u2504\u2504\u2504'}</span> original &nbsp;&nbsp;
+          <span style={{ color:'var(--accent-bright)' }}>{'\u2501\u2501\u2501'}</span> transformed
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+
+/* ================================================================
+   STEP 6: REFLECTIONS
+   ================================================================ */
+function Step6Reflections() {
+  const [reflX, setReflX] = useState(false);
+  const [reflY, setReflY] = useState(false);
+  const [base, setBase] = useState('quadratic');
+
+  // Use a non-symmetric function for clearer reflections
+  const effectiveBase = base === 'quadratic' ? 'cubic' : base;
+  const displayBase = base;
+
+  // Use cubic for demo since quadratic is symmetric
+  const baseFn = useCallback((x) => {
+    switch(displayBase) {
+      case 'quadratic': return x*x + x; // asymmetric quadratic
+      case 'sqrt': return x >= 0 ? Math.sqrt(x) : NaN;
+      case 'cubic': return 0.3*x*x*x;
+      case 'abs': return Math.abs(x) + 0.5*x;
+      default: return x;
+    }
+  }, [displayBase]);
+
+  const fns = useMemo(() => [
+    { fn: baseFn, color:'rgba(45,212,191,0.25)', dash:[6,4], lineWidth:2 },
+    { fn: x => {
+        let xIn = reflY ? -x : x;
+        let y = baseFn(xIn);
+        if (isNaN(y)) return NaN;
+        return reflX ? -y : y;
+      }, color:'var(--accent-bright)', lineWidth:2.5
+    },
+  ], [baseFn, reflX, reflY]);
+
+  // Mirror axis indicators
+  const axisHighlightFns = useMemo(() => {
+    const extra = [];
+    if (reflX) extra.push({ fn: () => 0, color:'rgba(251,113,133,0.3)', lineWidth:1.5, dash:[4,4] });
+    if (reflY) extra.push({ fn: x => x * 999, color:'rgba(251,113,133,0.0)', lineWidth:0 });
+    return [...fns, ...extra];
+  }, [fns, reflX, reflY]);
+
+  const baseLabels = {
+    quadratic: 'x\u00b2 + x',
+    sqrt: '\u221ax',
+    cubic: '0.3x\u00b3',
+    abs: '|x| + 0.5x',
+  };
+
+  return (
+    <div style={{ animation:'fadeIn 0.5s ease both' }}>
+      <SectionHeader
+        title="Reflections"
+        subtitle="Mirror a function across the x-axis or y-axis, flipping its shape."
+      />
+
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:24 }}>
+        <ConceptBox color="var(--rose)">
+          <p style={{ fontFamily:'var(--font-body)', fontSize:14, color:'var(--text-primary)', lineHeight:1.7, fontWeight:300 }}>
+            <strong style={{ color:'var(--rose)' }}>{'\u2212'}f(x)</strong><br/>
+            Reflect over <strong>x-axis</strong><br/>
+            Flips the graph upside-down
+          </p>
+        </ConceptBox>
+        <ConceptBox color="var(--violet)">
+          <p style={{ fontFamily:'var(--font-body)', fontSize:14, color:'var(--text-primary)', lineHeight:1.7, fontWeight:300 }}>
+            <strong style={{ color:'var(--violet)' }}>f({'\u2212'}x)</strong><br/>
+            Reflect over <strong>y-axis</strong><br/>
+            Mirrors the graph left-right
+          </p>
+        </ConceptBox>
+      </div>
+
+      <Card>
+        <div style={{ display:'flex', gap:8, marginBottom:20, flexWrap:'wrap' }}>
+          {['quadratic','sqrt','cubic','abs'].map(bf => (
+            <button key={bf} onClick={() => { setBase(bf); setReflX(false); setReflY(false); }} style={{
+              fontFamily:'var(--font-mono)', fontSize:12, padding:'6px 14px',
+              borderRadius:8, border:'1px solid',
+              borderColor: displayBase === bf ? 'var(--accent)' : 'var(--border-subtle)',
+              background: displayBase === bf ? 'var(--accent-bg)' : 'transparent',
+              color: displayBase === bf ? 'var(--accent-bright)' : 'var(--text-secondary)',
+              transition:'all 0.2s ease',
+            }}>
+              {baseLabels[bf]}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ display:'flex', justifyContent:'center', marginBottom:20 }}>
+          <InteractiveGraph width={520} height={360} xRange={[-6,6]} yRange={[-6,6]} functions={axisHighlightFns} />
+        </div>
+
+        <Equation glow>
+          y = {reflX ? '\u2212' : ''}{baseLabels[displayBase].replace(/x/g, reflY ? '(\u2212x)' : 'x')}
+        </Equation>
+
+        <div style={{ display:'flex', gap:12, marginTop:20, justifyContent:'center' }}>
+          <button onClick={() => setReflX(!reflX)} style={{
+            fontFamily:'var(--font-mono)', fontSize:13, padding:'10px 20px',
+            borderRadius:10, border:'1px solid',
+            borderColor: reflX ? 'var(--rose)' : 'var(--border-subtle)',
+            background: reflX ? 'rgba(251,113,133,0.1)' : 'transparent',
+            color: reflX ? 'var(--rose)' : 'var(--text-secondary)',
+            transition:'all 0.25s var(--ease-spring)',
+            transform: reflX ? 'scale(1.05)' : 'scale(1)',
+          }}>
+            {reflX ? '\u2713' : '\u25cb'} Reflect x-axis ({'\u2212'}f(x))
+          </button>
+          <button onClick={() => setReflY(!reflY)} style={{
+            fontFamily:'var(--font-mono)', fontSize:13, padding:'10px 20px',
+            borderRadius:10, border:'1px solid',
+            borderColor: reflY ? 'var(--violet)' : 'var(--border-subtle)',
+            background: reflY ? 'rgba(167,139,250,0.1)' : 'transparent',
+            color: reflY ? 'var(--violet)' : 'var(--text-secondary)',
+            transition:'all 0.25s var(--ease-spring)',
+            transform: reflY ? 'scale(1.05)' : 'scale(1)',
+          }}>
+            {reflY ? '\u2713' : '\u25cb'} Reflect y-axis (f({'\u2212'}x))
+          </button>
+        </div>
+
+        <div style={{
+          marginTop:16, textAlign:'center', fontFamily:'var(--font-body)',
+          fontSize:13, color:'var(--text-tertiary)', fontWeight:300,
+        }}>
+          <span style={{ color:'rgba(45,212,191,0.3)' }}>{'\u2504\u2504\u2504'}</span> original &nbsp;&nbsp;
+          <span style={{ color:'var(--accent-bright)' }}>{'\u2501\u2501\u2501'}</span> reflected
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+/* ================================================================
+   STEP 7: COMPOSITION
+   ================================================================ */
+function Step7Composition() {
+  const [fChoice, setFChoice] = useState('2x');
+  const [gChoice, setGChoice] = useState('x+1');
+  const [inputVal, setInputVal] = useState(null);
+  const [midVal, setMidVal] = useState(null);
+  const [outputVal, setOutputVal] = useState(null);
+  const [running, setRunning] = useState(false);
+
+  const fRules = {
+    '2x': x => 2*x,
+    'x\u00b2': x => x*x,
+    'x+3': x => x+3,
+    '|x|': x => Math.abs(x),
+  };
+  const gRules = {
+    'x+1': x => x+1,
+    'x-2': x => x-2,
+    '3x': x => 3*x,
+    'x\u00b2': x => x*x,
+  };
+
+  function runComposition(x) {
+    setInputVal(x);
+    setMidVal(null);
+    setOutputVal(null);
+    setRunning(true);
+    const gResult = gRules[gChoice](x);
+    setTimeout(() => {
+      setMidVal(gResult);
+      setTimeout(() => {
+        setOutputVal(fRules[fChoice](gResult));
+        setTimeout(() => setRunning(false), 400);
+      }, 700);
+    }, 700);
+  }
+
+  const composedFn = useMemo(() => [{
+    fn: x => fRules[fChoice](gRules[gChoice](x)),
+    color: 'var(--accent-bright)', lineWidth: 2.5,
+  }], [fChoice, gChoice]);
+
+  return (
+    <div style={{ animation:'fadeIn 0.5s ease both' }}>
+      <SectionHeader
+        title="Composition"
+        subtitle="Chain two functions together: the output of one becomes the input of the next."
+      />
+
+      <ConceptBox>
+        <p style={{ fontFamily:'var(--font-body)', fontSize:15, color:'var(--text-primary)', lineHeight:1.7, fontWeight:300 }}>
+          <strong style={{ color:'var(--accent-bright)' }}>(f {'\u2218'} g)(x) = f(g(x))</strong> means: first apply g to x, then apply f to the result.
+          The inner function runs first.
+        </p>
+      </ConceptBox>
+
+      <Card style={{ marginBottom:24 }}>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:20 }}>
+          <div>
+            <span style={{ fontFamily:'var(--font-mono)', fontSize:11, color:'var(--emerald)', textTransform:'uppercase', letterSpacing:'0.08em' }}>
+              Inner: g(x) =
+            </span>
+            <div style={{ display:'flex', gap:6, marginTop:8, flexWrap:'wrap' }}>
+              {Object.keys(gRules).map(r => (
+                <button key={r} onClick={() => setGChoice(r)} style={{
+                  fontFamily:'var(--font-mono)', fontSize:12, padding:'6px 12px',
+                  borderRadius:6, border:'1px solid',
+                  borderColor: gChoice === r ? 'var(--emerald)' : 'var(--border-subtle)',
+                  background: gChoice === r ? 'rgba(52,211,153,0.1)' : 'transparent',
+                  color: gChoice === r ? 'var(--emerald)' : 'var(--text-secondary)',
+                  transition:'all 0.2s ease',
+                }}>
+                  {r}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <span style={{ fontFamily:'var(--font-mono)', fontSize:11, color:'var(--cyan)', textTransform:'uppercase', letterSpacing:'0.08em' }}>
+              Outer: f(x) =
+            </span>
+            <div style={{ display:'flex', gap:6, marginTop:8, flexWrap:'wrap' }}>
+              {Object.keys(fRules).map(r => (
+                <button key={r} onClick={() => setFChoice(r)} style={{
+                  fontFamily:'var(--font-mono)', fontSize:12, padding:'6px 12px',
+                  borderRadius:6, border:'1px solid',
+                  borderColor: fChoice === r ? 'var(--cyan)' : 'var(--border-subtle)',
+                  background: fChoice === r ? 'rgba(34,211,238,0.1)' : 'transparent',
+                  color: fChoice === r ? 'var(--cyan)' : 'var(--text-secondary)',
+                  transition:'all 0.2s ease',
+                }}>
+                  {r}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Chained machines */}
+        <div style={{ position:'relative', marginBottom:16 }}>
+          <svg viewBox="0 0 600 120" width="100%" style={{ maxWidth:600, display:'block', margin:'0 auto' }}>
+            <defs>
+              <linearGradient id="mg1" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#1a2a3a"/>
+                <stop offset="100%" stopColor="#0f1c28"/>
+              </linearGradient>
+              <linearGradient id="mg2" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#1a3a2a"/>
+                <stop offset="100%" stopColor="#0f2820"/>
+              </linearGradient>
+              <filter id="glow2">
+                <feGaussianBlur stdDeviation="2" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+
+            {/* Left conveyor */}
+            <line x1="10" y1="60" x2="100" y2="60" stroke="rgba(34,211,238,0.3)" strokeWidth="2" strokeDasharray="6 6"
+              style={{ animation: running ? 'conveyorMove 0.8s linear infinite' : 'none' }}
+            />
+            {/* Machine 1: g */}
+            <rect x="100" y="15" width="170" height="90" rx="10" fill="url(#mg2)" stroke="rgba(52,211,153,0.3)" strokeWidth="1.5"
+              style={{ animation: running ? 'machineHum 0.5s ease-in-out infinite' : 'none' }}
+            />
+            <text x="185" y="50" textAnchor="middle" fill="var(--emerald)" fontFamily="'JetBrains Mono', monospace" fontSize="11" fontWeight="500">g(x)</text>
+            <text x="185" y="75" textAnchor="middle" fill="rgba(52,211,153,0.7)" fontFamily="'JetBrains Mono', monospace" fontSize="14" fontWeight="500" filter="url(#glow2)">
+              {gChoice}
+            </text>
+
+            {/* Middle conveyor */}
+            <line x1="270" y1="60" x2="330" y2="60" stroke="rgba(45,212,191,0.3)" strokeWidth="2" strokeDasharray="6 6"
+              style={{ animation: running ? 'conveyorMove 0.8s linear infinite' : 'none' }}
+            />
+
+            {/* Machine 2: f */}
+            <rect x="330" y="15" width="170" height="90" rx="10" fill="url(#mg1)" stroke="rgba(34,211,238,0.3)" strokeWidth="1.5"
+              style={{ animation: running ? 'machineHum 0.5s ease-in-out infinite 0.25s' : 'none' }}
+            />
+            <text x="415" y="50" textAnchor="middle" fill="var(--cyan)" fontFamily="'JetBrains Mono', monospace" fontSize="11" fontWeight="500">f(x)</text>
+            <text x="415" y="75" textAnchor="middle" fill="rgba(34,211,238,0.7)" fontFamily="'JetBrains Mono', monospace" fontSize="14" fontWeight="500" filter="url(#glow2)">
+              {fChoice}
+            </text>
+
+            {/* Right conveyor */}
+            <line x1="500" y1="60" x2="590" y2="60" stroke="rgba(34,211,238,0.3)" strokeWidth="2" strokeDasharray="6 6"
+              style={{ animation: running ? 'conveyorMove 0.8s linear infinite' : 'none' }}
+            />
+
+            {/* Input box */}
+            <rect x="14" y="44" width="46" height="32" rx="6" fill="rgba(167,139,250,0.1)" stroke="rgba(167,139,250,0.3)" strokeWidth="1"/>
+            <text x="37" y="65" textAnchor="middle" fill="var(--violet)" fontFamily="'JetBrains Mono', monospace" fontSize="14" fontWeight="500">
+              {inputVal !== null ? inputVal : '?'}
+            </text>
+
+            {/* Mid value */}
+            <text x="300" y="55" textAnchor="middle" fill="var(--emerald)" fontFamily="'JetBrains Mono', monospace" fontSize="13" fontWeight="500"
+              style={{ opacity: midVal !== null ? 1 : 0, transition:'opacity 0.3s ease' }}>
+              {midVal !== null ? midVal : ''}
+            </text>
+
+            {/* Output box */}
+            <rect x="540" y="44" width="46" height="32" rx="6" fill="rgba(45,212,191,0.1)" stroke="rgba(45,212,191,0.3)" strokeWidth="1"/>
+            <text x="563" y="65" textAnchor="middle" fill="var(--accent-bright)" fontFamily="'JetBrains Mono', monospace" fontSize="14" fontWeight="500"
+              style={{ opacity: outputVal !== null ? 1 : 0, transition:'opacity 0.3s ease 0.3s' }}>
+              {outputVal !== null ? outputVal : ''}
+            </text>
+          </svg>
+        </div>
+
+        <div style={{ display:'flex', gap:8, justifyContent:'center', flexWrap:'wrap' }}>
+          {[-3,-2,-1,0,1,2,3,4].map(x => (
+            <button key={x} onClick={() => runComposition(x)} disabled={running} style={{
+              fontFamily:'var(--font-mono)', fontSize:15, width:42, height:42,
+              borderRadius:10, border:'1px solid',
+              borderColor: inputVal === x ? 'var(--violet)' : 'var(--border-subtle)',
+              background: inputVal === x ? 'rgba(167,139,250,0.1)' : 'transparent',
+              color: inputVal === x ? 'var(--violet)' : 'var(--text-secondary)',
+              transition:'all 0.2s ease', opacity: running ? 0.5 : 1,
+            }}>
+              {x}
+            </button>
+          ))}
+        </div>
+
+        {inputVal !== null && outputVal !== null && (
+          <div style={{
+            marginTop:16, textAlign:'center', fontFamily:'var(--font-mono)',
+            fontSize:14, color:'var(--text-secondary)', lineHeight:2,
+            animation:'fadeIn 0.3s ease both',
+          }}>
+            g({inputVal}) = <span style={{ color:'var(--emerald)' }}>{midVal}</span>
+            &nbsp;&nbsp;{'\u2192'}&nbsp;&nbsp;
+            f(<span style={{ color:'var(--emerald)' }}>{midVal}</span>) = <span style={{ color:'var(--accent-bright)' }}>{outputVal}</span>
+          </div>
+        )}
+      </Card>
+
+      <Card style={{ marginTop:16 }}>
+        <h3 style={{ fontFamily:'var(--font-display)', fontSize:20, fontWeight:400, marginBottom:12, color:'var(--text-primary)' }}>
+          Composed Graph: f(g(x))
+        </h3>
+        <div style={{ display:'flex', justifyContent:'center' }}>
+          <InteractiveGraph width={500} height={300} xRange={[-6,6]} yRange={[-4,10]} functions={composedFn} />
+        </div>
+        <div style={{
+          marginTop:12, textAlign:'center', fontFamily:'var(--font-mono)',
+          fontSize:13, color:'var(--accent)', background:'var(--accent-bg)',
+          padding:'8px 16px', borderRadius:8,
+        }}>
+          (f \u2218 g)(x) = f(g(x)) = {fChoice.replace(/x/g, `(${gChoice})`)}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+
+/* ================================================================
+   STEP 8: TRANSFORMATION SANDBOX
+   ================================================================ */
+function Step8Sandbox() {
+  const [base, setBase] = useState('quadratic');
+  const [h, setH] = useState(0);
+  const [k, setK] = useState(0);
+  const [a, setA] = useState(1);
+  const [b, setB] = useState(1);
+  const [reflX, setReflX] = useState(false);
+  const [reflY, setReflY] = useState(false);
+
+  function reset() {
+    setH(0); setK(0); setA(1); setB(1); setReflX(false); setReflY(false);
+  }
+
+  const fns = useMemo(() => [
+    { fn: x => evalBase(base, x), color:'rgba(45,212,191,0.2)', dash:[6,4], lineWidth:1.5 },
+    { fn: x => transformedFn(base, x, h, k, a, b, reflX, reflY), color:'var(--accent-bright)', lineWidth:2.5 },
+  ], [base, h, k, a, b, reflX, reflY]);
+
+  const eqStr = useMemo(() => {
+    const bLabel = baseFnLabel(base);
+    let aStr = '';
+    if (reflX && a !== 1) aStr = `\u2212${Math.abs(a).toFixed(1)}`;
+    else if (reflX) aStr = '\u2212';
+    else if (a !== 1) aStr = a.toFixed(1);
+
+    let inner = '';
+    let bPart = b !== 1 ? `${b.toFixed(1)}` : '';
+    let xPart = reflY ? '(\u2212x' : '(x';
+    if (h > 0) xPart += ` \u2212 ${h}`;
+    else if (h < 0) xPart += ` + ${Math.abs(h)}`;
+    xPart += ')';
+    inner = bPart + xPart;
+
+    let fnStr = '';
+    if (base === 'quadratic') fnStr = `${inner}\u00b2`;
+    else if (base === 'abs') fnStr = `|${inner.slice(0,-1).replace(/^\(/,'')}|`;
+    else if (base === 'sqrt') fnStr = `\u221a${inner}`;
+    else if (base === 'sine') fnStr = `sin${inner}`;
+    else fnStr = inner;
+
+    let result = `y = ${aStr}${aStr && !(aStr==='\u2212') ? '\u00b7' : ''}${fnStr}`;
+    if (k > 0) result += ` + ${k}`;
+    else if (k < 0) result += ` \u2212 ${Math.abs(k)}`;
+    return result;
+  }, [base, h, k, a, b, reflX, reflY]);
+
+  const baseOptions = ['linear','quadratic','abs','sqrt','sine','cubic'];
+
+  return (
+    <div style={{ animation:'fadeIn 0.5s ease both' }}>
+      <SectionHeader
+        title="Transformation Sandbox"
+        subtitle="Combine every transformation. Pick a base function and experiment freely."
+      />
+
+      <Card>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20, flexWrap:'wrap', gap:8 }}>
+          <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+            {baseOptions.map(bf => (
+              <button key={bf} onClick={() => { setBase(bf); reset(); }} style={{
+                fontFamily:'var(--font-mono)', fontSize:12, padding:'6px 14px',
+                borderRadius:8, border:'1px solid',
+                borderColor: base === bf ? 'var(--accent)' : 'var(--border-subtle)',
+                background: base === bf ? 'var(--accent-bg)' : 'transparent',
+                color: base === bf ? 'var(--accent-bright)' : 'var(--text-secondary)',
+                transition:'all 0.2s ease',
+              }}>
+                {baseFnLabel(bf)}
+              </button>
+            ))}
+          </div>
+          <button onClick={reset} style={{
+            fontFamily:'var(--font-mono)', fontSize:11, padding:'6px 14px',
+            borderRadius:8, border:'1px solid var(--border-subtle)',
+            background:'transparent', color:'var(--text-tertiary)',
+            transition:'all 0.2s ease', textTransform:'uppercase', letterSpacing:'0.06em',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor='var(--rose)'; e.currentTarget.style.color='var(--rose)'; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor='var(--border-subtle)'; e.currentTarget.style.color='var(--text-tertiary)'; }}
+          >
+            Reset
+          </button>
+        </div>
+
+        <div style={{ display:'flex', justifyContent:'center', marginBottom:20 }}>
+          <InteractiveGraph width={560} height={400} xRange={[-10,10]} yRange={[-8,10]} functions={fns} />
+        </div>
+
+        <Equation glow>{eqStr}</Equation>
+
+        {/* Sliders */}
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginTop:24 }}>
+          <div>
+            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
+              <span style={{ fontFamily:'var(--font-mono)', fontSize:11, color:'var(--emerald)' }}>h-shift</span>
+              <span style={{ fontFamily:'var(--font-mono)', fontSize:13, color:'var(--text-primary)' }}>{h}</span>
+            </div>
+            <input type="range" min="-6" max="6" step="1" value={h} onChange={e => setH(Number(e.target.value))} />
+          </div>
+          <div>
+            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
+              <span style={{ fontFamily:'var(--font-mono)', fontSize:11, color:'var(--cyan)' }}>v-shift (k)</span>
+              <span style={{ fontFamily:'var(--font-mono)', fontSize:13, color:'var(--text-primary)' }}>{k}</span>
+            </div>
+            <input type="range" min="-6" max="6" step="1" value={k} onChange={e => setK(Number(e.target.value))} />
+          </div>
+          <div>
+            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
+              <span style={{ fontFamily:'var(--font-mono)', fontSize:11, color:'var(--violet)' }}>v-stretch (a)</span>
+              <span style={{ fontFamily:'var(--font-mono)', fontSize:13, color:'var(--text-primary)' }}>{a.toFixed(1)}</span>
+            </div>
+            <input type="range" min="0.2" max="3" step="0.1" value={a} onChange={e => setA(Number(e.target.value))} />
+          </div>
+          <div>
+            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
+              <span style={{ fontFamily:'var(--font-mono)', fontSize:11, color:'var(--amber)' }}>h-stretch (b)</span>
+              <span style={{ fontFamily:'var(--font-mono)', fontSize:13, color:'var(--text-primary)' }}>{b.toFixed(1)}</span>
+            </div>
+            <input type="range" min="0.2" max="3" step="0.1" value={b} onChange={e => setB(Number(e.target.value))} />
+          </div>
+        </div>
+
+        {/* Reflection toggles */}
+        <div style={{ display:'flex', gap:12, marginTop:20, justifyContent:'center' }}>
+          <button onClick={() => setReflX(!reflX)} style={{
+            fontFamily:'var(--font-mono)', fontSize:12, padding:'8px 18px',
+            borderRadius:8, border:'1px solid',
+            borderColor: reflX ? 'var(--rose)' : 'var(--border-subtle)',
+            background: reflX ? 'rgba(251,113,133,0.1)' : 'transparent',
+            color: reflX ? 'var(--rose)' : 'var(--text-secondary)',
+            transition:'all 0.25s var(--ease-spring)',
+          }}>
+            {reflX ? '\u2713' : '\u25cb'} Reflect x-axis
+          </button>
+          <button onClick={() => setReflY(!reflY)} style={{
+            fontFamily:'var(--font-mono)', fontSize:12, padding:'8px 18px',
+            borderRadius:8, border:'1px solid',
+            borderColor: reflY ? 'var(--violet)' : 'var(--border-subtle)',
+            background: reflY ? 'rgba(167,139,250,0.1)' : 'transparent',
+            color: reflY ? 'var(--violet)' : 'var(--text-secondary)',
+            transition:'all 0.25s var(--ease-spring)',
+          }}>
+            {reflY ? '\u2713' : '\u25cb'} Reflect y-axis
+          </button>
+        </div>
+
+        <div style={{
+          marginTop:20, textAlign:'center', fontFamily:'var(--font-body)',
+          fontSize:13, color:'var(--text-tertiary)', fontWeight:300,
+        }}>
+          <span style={{ color:'rgba(45,212,191,0.3)' }}>{'\u2504\u2504\u2504'}</span> original &nbsp;&nbsp;
+          <span style={{ color:'var(--accent-bright)' }}>{'\u2501\u2501\u2501'}</span> transformed
+        </div>
+
+        {/* Transformation summary */}
+        <div style={{
+          marginTop:20, display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(120px, 1fr))',
+          gap:8,
+        }}>
+          {[
+            { label:'H-Shift', val:h, active:h!==0, color:'var(--emerald)' },
+            { label:'V-Shift', val:k, active:k!==0, color:'var(--cyan)' },
+            { label:'V-Scale', val:a.toFixed(1), active:a!==1, color:'var(--violet)' },
+            { label:'H-Scale', val:b.toFixed(1), active:b!==1, color:'var(--amber)' },
+            { label:'X-Reflect', val:reflX?'ON':'OFF', active:reflX, color:'var(--rose)' },
+            { label:'Y-Reflect', val:reflY?'ON':'OFF', active:reflY, color:'var(--violet)' },
+          ].map(({label, val, active, color}) => (
+            <div key={label} style={{
+              textAlign:'center', padding:'8px 12px', borderRadius:8,
+              background: active ? `${color}10` : 'rgba(255,255,255,0.02)',
+              border: `1px solid ${active ? `${color}25` : 'var(--border-subtle)'}`,
+              transition:'all 0.3s ease',
+            }}>
+              <div style={{ fontFamily:'var(--font-mono)', fontSize:10, color: active ? color : 'var(--text-tertiary)', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:2 }}>
+                {label}
+              </div>
+              <div style={{ fontFamily:'var(--font-mono)', fontSize:14, color: active ? 'var(--text-primary)' : 'var(--text-tertiary)' }}>
+                {val}
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+
+/* ================================================================
+   MAIN APP
+   ================================================================ */
+function App() {
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [step]);
+
+  // Save progress when reaching last step
+  useEffect(() => {
+    if (step === TOTAL_STEPS - 1) {
+      try {
+        const progress = JSON.parse(localStorage.getItem('math-progress') || '[]');
+        if (!progress.includes(8)) {
+          progress.push(8);
+          localStorage.setItem('math-progress', JSON.stringify(progress));
+        }
+      } catch(e) {}
+    }
+  }, [step]);
+
+  function renderStep() {
+    switch(step) {
+      case 0: return <Step1Landing onStart={() => setStep(1)} />;
+      case 1: return <Step2Function />;
+      case 2: return <Step3Domain />;
+      case 3: return <Step4Shifts />;
+      case 4: return <Step5Stretch />;
+      case 5: return <Step6Reflections />;
+      case 6: return <Step7Composition />;
+      case 7: return <Step8Sandbox />;
+      default: return <Step1Landing onStart={() => setStep(1)} />;
+    }
+  }
+
+  return (
+    <div style={{ position:'relative', zIndex:1 }}>
+      <GridBackground />
+      <ProgressBar step={step} total={TOTAL_STEPS} />
+
+      <div style={{
+        maxWidth:780, margin:'0 auto',
+        padding:'clamp(24px, 4vh, 48px) 20px 60px',
+      }}>
+        <div key={step}>
+          {renderStep()}
+        </div>
+
+        {step > 0 && (
+          <NavButtons step={step} setStep={setStep} total={TOTAL_STEPS} />
+        )}
+        {step === TOTAL_STEPS - 1 && (
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:32,padding:'16px 0',borderTop:'1px solid var(--border-subtle)'}}>
+            <a href="07-quadratics.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>&larr; Previous Lesson: Quadratic Equations</a>
+            <a href="09-coordinate-geometry.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>Next Lesson: Coordinate Geometry &rarr;</a>
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <footer style={{
+        textAlign:'center', padding:'40px 24px 32px',
+        borderTop:'1px solid var(--border-subtle)', marginTop:20,
+      }}>
+        <p style={{
+          fontFamily:'var(--font-body)', fontSize:13, color:'var(--text-tertiary)', fontWeight:300,
+        }}>
+          Lesson 8 of 10 &mdash; Functions &amp; Transformations
+        </p>
+      </footer>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>

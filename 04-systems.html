@@ -1,0 +1,1626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Systems of Equations — Interactive Lesson</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg-deep: #07070c;
+  --bg-primary: #0a0a12;
+  --bg-surface: #111119;
+  --bg-elevated: #18182a;
+  --bg-card: #1a1a2e;
+  --border-subtle: rgba(255,255,255,0.06);
+  --border-medium: rgba(255,255,255,0.1);
+  --text-primary: #e8e6f0;
+  --text-secondary: #9896a8;
+  --text-muted: #5f5d6e;
+  --accent: #e8913a;
+  --accent-light: #f0a85c;
+  --accent-glow: rgba(232, 145, 58, 0.15);
+  --accent-deep: #c47020;
+  --line-a: #5eaaff;
+  --line-a-glow: rgba(94,170,255,0.2);
+  --line-b: #ff6b8a;
+  --line-b-glow: rgba(255,107,138,0.2);
+  --success: #4ade80;
+  --error: #f87171;
+  --warning: #fbbf24;
+  --font-display: 'Crimson Pro', Georgia, serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --shadow-glow: 0 0 40px rgba(232, 145, 58, 0.08);
+  --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html { font-size: 16px; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(232,145,58,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(94,170,255,0.03) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+#root { position: relative; z-index: 1; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-medium); border-radius: 3px; }
+
+/* Animations */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 20px rgba(232,145,58,0.15); }
+  50% { box-shadow: 0 0 35px rgba(232,145,58,0.3); }
+}
+@keyframes drawLine {
+  from { stroke-dashoffset: 2000; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes dotPulse {
+  0%, 100% { r: 5; opacity: 1; }
+  50% { r: 8; opacity: 0.7; }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.anim-fade-in { animation: fadeIn 0.5s var(--transition-smooth) forwards; }
+.anim-fade-up { animation: fadeInUp 0.6s var(--transition-smooth) forwards; }
+.anim-slide-left { animation: slideInLeft 0.5s var(--transition-smooth) forwards; }
+.anim-slide-right { animation: slideInRight 0.5s var(--transition-smooth) forwards; }
+
+/* Layout */
+.lesson-container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 24px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.lesson-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.back-link {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.2s;
+  letter-spacing: 0.02em;
+}
+.back-link:hover { color: var(--text-secondary); }
+.back-link svg { width: 14px; height: 14px; }
+
+/* Progress */
+.progress-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  max-width: 380px;
+  margin: 0 24px;
+}
+
+.progress-step {
+  flex: 1;
+  height: 3px;
+  background: var(--border-subtle);
+  border-radius: 2px;
+  transition: background 0.4s var(--transition-smooth);
+  position: relative;
+}
+.progress-step.active {
+  background: var(--accent);
+  box-shadow: 0 0 8px rgba(232,145,58,0.3);
+}
+.progress-step.completed { background: var(--accent-deep); }
+
+.step-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+/* Content Area */
+.step-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 40px 0 100px;
+}
+
+/* Navigation Footer */
+.nav-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, var(--bg-deep) 60%, transparent);
+  padding: 20px 24px 24px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  z-index: 100;
+}
+
+.nav-btn {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 12px 28px;
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s var(--transition-smooth);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.01em;
+}
+.nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.nav-btn.secondary {
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+}
+.nav-btn.secondary:not(:disabled):hover {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border-color: var(--border-medium);
+}
+.nav-btn.primary {
+  background: var(--accent);
+  color: #fff;
+}
+.nav-btn.primary:not(:disabled):hover {
+  background: var(--accent-light);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(232,145,58,0.3);
+}
+.nav-btn svg { width: 16px; height: 16px; }
+
+/* Typography */
+.section-title {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  font-weight: 300;
+  line-height: 1.2;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  letter-spacing: -0.01em;
+}
+.section-title em {
+  font-style: italic;
+  color: var(--accent-light);
+}
+
+.section-subtitle {
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  max-width: 600px;
+  margin-bottom: 32px;
+}
+
+/* Cards */
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  margin-bottom: 20px;
+}
+.card-title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+/* Equation display */
+.equation-block {
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 20px 24px;
+  text-align: center;
+  line-height: 2;
+  letter-spacing: 0.02em;
+  margin: 16px 0;
+}
+.eq-var-x { color: var(--line-a); }
+.eq-var-y { color: var(--line-b); }
+.eq-op { color: var(--text-muted); }
+.eq-num { color: var(--text-primary); }
+.eq-result { color: var(--accent-light); }
+.eq-highlight {
+  background: var(--accent-glow);
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+/* Graph area */
+.graph-container {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin: 20px 0;
+  position: relative;
+}
+
+.graph-svg {
+  width: 100%;
+  display: block;
+}
+
+/* Sliders */
+.slider-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 16px 0;
+}
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.slider-label {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  min-width: 80px;
+  letter-spacing: 0.03em;
+}
+.slider-value {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  min-width: 36px;
+  text-align: right;
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--bg-elevated);
+  outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid var(--bg-deep);
+  transition: transform 0.15s;
+}
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+input[type="range"].line-a::-webkit-slider-thumb { background: var(--line-a); }
+input[type="range"].line-b::-webkit-slider-thumb { background: var(--line-b); }
+
+/* Buttons */
+.btn {
+  font-family: var(--font-body);
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s var(--transition-smooth);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-accent {
+  background: var(--accent);
+  color: #fff;
+  padding: 14px 32px;
+  font-size: 1rem;
+}
+.btn-accent:hover {
+  background: var(--accent-light);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(232,145,58,0.3);
+}
+.btn-outline {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-medium);
+  padding: 10px 20px;
+  font-size: 0.85rem;
+}
+.btn-outline:hover {
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+}
+.btn-outline.active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-glow);
+}
+.btn-sm {
+  padding: 8px 16px;
+  font-size: 0.8rem;
+  border-radius: var(--radius-sm);
+}
+
+/* Feedback */
+.feedback {
+  padding: 14px 20px;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  margin: 12px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  line-height: 1.5;
+}
+.feedback.correct {
+  background: rgba(74,222,128,0.08);
+  border: 1px solid rgba(74,222,128,0.2);
+  color: var(--success);
+}
+.feedback.incorrect {
+  background: rgba(248,113,113,0.08);
+  border: 1px solid rgba(248,113,113,0.2);
+  color: var(--error);
+}
+.feedback.info {
+  background: rgba(94,170,255,0.08);
+  border: 1px solid rgba(94,170,255,0.2);
+  color: var(--line-a);
+}
+
+/* Inputs */
+.input-field {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  padding: 10px 14px;
+  outline: none;
+  transition: border-color 0.2s;
+  width: 70px;
+  text-align: center;
+}
+.input-field:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+/* Step animation container */
+.step-anim-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 16px 0;
+}
+.step-anim-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--border-subtle);
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.4s var(--transition-smooth);
+}
+.step-anim-row.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+.step-anim-row.active {
+  border-left-color: var(--accent);
+  background: rgba(232,145,58,0.05);
+}
+.step-anim-row.completed {
+  border-left-color: var(--success);
+}
+.step-num {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  min-width: 24px;
+}
+.step-eq {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  flex: 1;
+}
+.step-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Tags / Chips */
+.tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  padding: 4px 10px;
+  border-radius: 100px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.tag-blue { background: var(--line-a-glow); color: var(--line-a); }
+.tag-pink { background: var(--line-b-glow); color: var(--line-b); }
+.tag-amber { background: var(--accent-glow); color: var(--accent); }
+
+/* Landing hero */
+.hero-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 24px;
+  padding: 40px 0;
+}
+.hero-title {
+  font-family: var(--font-display);
+  font-size: 3.5rem;
+  font-weight: 300;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+.hero-subtitle {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 300;
+  font-style: italic;
+  color: var(--text-muted);
+  margin-top: -8px;
+}
+.hero-graph {
+  width: 320px;
+  height: 240px;
+  margin: 20px 0;
+}
+
+/* Two-column layout */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin: 20px 0;
+}
+@media (max-width: 700px) {
+  .two-col { grid-template-columns: 1fr; }
+  .hero-title { font-size: 2.5rem; }
+}
+
+/* Method selector */
+.method-selector {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+
+/* Difficulty selector */
+.difficulty-selector {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0;
+}
+.diff-btn {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  padding: 6px 14px;
+  border-radius: 100px;
+  border: 1px solid var(--border-medium);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.diff-btn:hover { border-color: var(--text-muted); }
+.diff-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* Completion card */
+.completion-card {
+  text-align: center;
+  padding: 60px 40px;
+  background: linear-gradient(135deg, var(--bg-surface), var(--bg-elevated));
+  border: 1px solid var(--accent-deep);
+  border-radius: var(--radius-xl);
+  margin: 40px 0;
+}
+.completion-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+// ─── Utility Helpers ───────────────────────────────────────────
+function roundTo(n, d = 2) { return Math.round(n * 10**d) / 10**d; }
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+function solveSystem(m1, b1, m2, b2) {
+  if (Math.abs(m1 - m2) < 1e-9) {
+    if (Math.abs(b1 - b2) < 1e-9) return { type: 'infinite' };
+    return { type: 'none' };
+  }
+  const x = (b2 - b1) / (m1 - m2);
+  const y = m1 * x + b1;
+  return { type: 'unique', x: roundTo(x), y: roundTo(y) };
+}
+
+function formatEq(m, b, label = '') {
+  const ms = m === 1 ? '' : m === -1 ? '-' : m.toString();
+  const bs = b === 0 ? '' : b > 0 ? ` + ${b}` : ` - ${Math.abs(b)}`;
+  return `y = ${ms}x${bs}`;
+}
+
+// ─── SVG Graph Component ──────────────────────────────────────
+function CoordinateGraph({ width = 500, height = 400, xRange = [-8, 8], yRange = [-6, 6],
+  lines = [], points = [], showGrid = true, interactive = false, children, id }) {
+  const [xMin, xMax] = xRange;
+  const [yMin, yMax] = yRange;
+  const pad = 40;
+  const gw = width - 2 * pad;
+  const gh = height - 2 * pad;
+
+  const toSvgX = useCallback(x => pad + ((x - xMin) / (xMax - xMin)) * gw, [xMin, xMax, gw]);
+  const toSvgY = useCallback(y => pad + ((yMax - y) / (yMax - yMin)) * gh, [yMin, yMax, gh]);
+
+  const gridLines = useMemo(() => {
+    if (!showGrid) return null;
+    const g = [];
+    for (let x = Math.ceil(xMin); x <= Math.floor(xMax); x++) {
+      g.push(<line key={`vg${x}`} x1={toSvgX(x)} y1={pad} x2={toSvgX(x)} y2={pad + gh}
+        stroke={x === 0 ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.04)'}
+        strokeWidth={x === 0 ? 1.5 : 0.5} />);
+      if (x !== 0 && x % 2 === 0) {
+        g.push(<text key={`vl${x}`} x={toSvgX(x)} y={toSvgY(0) + 16}
+          fill="rgba(255,255,255,0.25)" fontSize="10" textAnchor="middle"
+          fontFamily="var(--font-mono)">{x}</text>);
+      }
+    }
+    for (let y = Math.ceil(yMin); y <= Math.floor(yMax); y++) {
+      g.push(<line key={`hg${y}`} x1={pad} y1={toSvgY(y)} x2={pad + gw} y2={toSvgY(y)}
+        stroke={y === 0 ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.04)'}
+        strokeWidth={y === 0 ? 1.5 : 0.5} />);
+      if (y !== 0 && y % 2 === 0) {
+        g.push(<text key={`hl${y}`} x={toSvgX(0) - 10} y={toSvgY(y) + 4}
+          fill="rgba(255,255,255,0.25)" fontSize="10" textAnchor="end"
+          fontFamily="var(--font-mono)">{y}</text>);
+      }
+    }
+    return g;
+  }, [xMin, xMax, yMin, yMax, toSvgX, toSvgY, showGrid, gw, gh]);
+
+  const renderedLines = lines.map((l, i) => {
+    const x1 = xMin - 1, x2 = xMax + 1;
+    const y1 = l.m * x1 + l.b, y2 = l.m * x2 + l.b;
+    return (
+      <line key={`line${i}`}
+        x1={toSvgX(x1)} y1={toSvgY(y1)} x2={toSvgX(x2)} y2={toSvgY(y2)}
+        stroke={l.color || '#fff'} strokeWidth={2.5} strokeLinecap="round"
+        style={{ filter: `drop-shadow(0 0 6px ${l.color || '#fff'}40)` }}
+        strokeDasharray={l.dash ? '8 4' : 'none'}
+      />
+    );
+  });
+
+  const renderedPoints = points.map((p, i) => (
+    <g key={`pt${i}`}>
+      <circle cx={toSvgX(p.x)} cy={toSvgY(p.y)} r={6}
+        fill={p.color || 'var(--accent)'} stroke="var(--bg-deep)" strokeWidth={2}
+        style={{ filter: `drop-shadow(0 0 8px ${p.color || 'var(--accent)'}80)` }} />
+      {p.label && (
+        <text x={toSvgX(p.x) + 12} y={toSvgY(p.y) - 10}
+          fill={p.color || 'var(--accent)'} fontSize="12" fontFamily="var(--font-mono)"
+          fontWeight="600">{p.label}</text>
+      )}
+    </g>
+  ));
+
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} className="graph-svg" id={id}
+      style={{ background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)' }}>
+      <defs>
+        <clipPath id={`clip-${id || 'g'}`}>
+          <rect x={pad} y={pad} width={gw} height={gh} />
+        </clipPath>
+      </defs>
+      {gridLines}
+      <g clipPath={`url(#clip-${id || 'g'})`}>
+        {renderedLines}
+        {renderedPoints}
+        {children && children({ toSvgX, toSvgY, pad, gw, gh })}
+      </g>
+    </svg>
+  );
+}
+
+// ─── Hero Animation ───────────────────────────────────────────
+function HeroAnimation() {
+  const [t, setT] = useState(0);
+  useEffect(() => {
+    let raf;
+    const start = Date.now();
+    const tick = () => {
+      setT((Date.now() - start) / 1000);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  const m1 = 0.6, b1 = -1;
+  const m2Off = Math.sin(t * 0.5) * 0.3;
+  const m2 = -0.8 + m2Off, b2 = 2 + Math.sin(t * 0.3) * 0.5;
+  const sol = solveSystem(m1, b1, m2, b2);
+
+  return (
+    <CoordinateGraph width={320} height={240} xRange={[-6, 6]} yRange={[-5, 5]} id="hero-graph"
+      lines={[
+        { m: m1, b: b1, color: 'var(--line-a)' },
+        { m: m2, b: b2, color: 'var(--line-b)' },
+      ]}
+      points={sol.type === 'unique' ? [{ x: sol.x, y: sol.y, color: 'var(--accent)' }] : []}
+    />
+  );
+}
+
+// ─── Step 1: Landing ──────────────────────────────────────────
+function StepLanding({ onStart }) {
+  return (
+    <div className="hero-container anim-fade-up">
+      <div className="hero-graph" style={{ animation: 'float 4s ease-in-out infinite' }}>
+        <HeroAnimation />
+      </div>
+      <h1 className="hero-title">
+        Systems of <em style={{ color: 'var(--accent-light)' }}>Equations</em>
+      </h1>
+      <p className="hero-subtitle">"When one equation isn't enough..."</p>
+      <button className="btn btn-accent" onClick={onStart}
+        style={{ marginTop: 16, animation: 'pulseGlow 2s infinite' }}>
+        Begin Lesson
+        <svg viewBox="0 0 20 20" fill="currentColor" width="18" height="18">
+          <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
+// ─── Step 2: What's a System? ─────────────────────────────────
+function StepWhatIsSystem() {
+  const [showNarrow, setShowNarrow] = useState(false);
+
+  return (
+    <div className="anim-fade-up">
+      <h2 className="section-title">What's a <em>System</em>?</h2>
+      <p className="section-subtitle">
+        A system of equations is a set of two or more equations that share the same variables.
+        We look for values that satisfy <strong>all</strong> equations simultaneously.
+      </p>
+
+      <div className="two-col">
+        <div className="card">
+          <div className="card-title">Real-World Example</div>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.7 }}>
+            A theater sells adult tickets for $8 and child tickets for $5.
+            They sold 200 tickets total and collected $1,300.
+          </p>
+          <div className="equation-block" style={{ marginTop: 16, fontSize: '1rem' }}>
+            <span className="eq-var-x">a</span> <span className="eq-op">+</span> <span className="eq-var-y">c</span> <span className="eq-op">=</span> <span className="eq-num">200</span><br/>
+            <span className="eq-num">8</span><span className="eq-var-x">a</span> <span className="eq-op">+</span> <span className="eq-num">5</span><span className="eq-var-y">c</span> <span className="eq-op">=</span> <span className="eq-num">1300</span>
+          </div>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: 8 }}>
+            <span className="eq-var-x">a</span> = adult tickets, <span className="eq-var-y">c</span> = child tickets
+          </p>
+        </div>
+
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div>
+            <div className="card-title">Why Two Equations?</div>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.7, marginBottom: 12 }}>
+              A single equation like <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--line-a)' }}>x + y = 10</span> has
+              infinitely many solutions: (1,9), (2,8), (3,7), ...
+            </p>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.7 }}>
+              Adding a second equation constrains the solution — typically to a single point.
+            </p>
+          </div>
+          <button className="btn btn-outline btn-sm" style={{ alignSelf: 'flex-start', marginTop: 16 }}
+            onClick={() => setShowNarrow(!showNarrow)}>
+            {showNarrow ? 'Hide' : 'See'} visualization
+          </button>
+        </div>
+      </div>
+
+      {showNarrow && (
+        <div className="graph-container anim-fade-up">
+          <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+            <span className="tag tag-blue">y = -x + 10 (infinite solutions)</span>
+            <span className="tag tag-pink">y = 2x + 1 (narrows it down)</span>
+          </div>
+          <CoordinateGraph width={600} height={360} id="narrow-graph"
+            lines={[
+              { m: -1, b: 10, color: 'var(--line-a)' },
+              { m: 2, b: 1, color: 'var(--line-b)' },
+            ]}
+            points={[{ x: 3, y: 7, color: 'var(--accent)', label: '(3, 7)' }]}
+          />
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: 12, textAlign: 'center' }}>
+            The intersection point <span style={{ color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>(3, 7)</span> is the only solution satisfying both equations.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Step 3: Graphing Method ──────────────────────────────────
+function StepGraphing() {
+  const [m1, setM1] = useState(1);
+  const [b1, setB1] = useState(-2);
+  const [m2, setM2] = useState(-0.5);
+  const [b2, setB2] = useState(3);
+
+  const sol = solveSystem(m1, b1, m2, b2);
+
+  return (
+    <div className="anim-fade-up">
+      <h2 className="section-title">The <em>Graphing</em> Method</h2>
+      <p className="section-subtitle">
+        Each linear equation is a line. The solution to the system is where the lines intersect.
+        Drag the sliders to see how changing slopes and intercepts moves the intersection.
+      </p>
+
+      <div className="graph-container">
+        <div style={{ display: 'flex', gap: 16, marginBottom: 12, flexWrap: 'wrap' }}>
+          <span className="tag tag-blue">Line 1: {formatEq(m1, b1)}</span>
+          <span className="tag tag-pink">Line 2: {formatEq(m2, b2)}</span>
+          {sol.type === 'unique' && (
+            <span className="tag tag-amber">Solution: ({sol.x}, {sol.y})</span>
+          )}
+          {sol.type === 'none' && (
+            <span className="tag" style={{ background: 'rgba(248,113,113,0.12)', color: 'var(--error)' }}>
+              No solution (parallel)
+            </span>
+          )}
+          {sol.type === 'infinite' && (
+            <span className="tag" style={{ background: 'rgba(251,191,36,0.12)', color: 'var(--warning)' }}>
+              Infinite solutions (same line)
+            </span>
+          )}
+        </div>
+
+        <CoordinateGraph width={600} height={400} id="graphing"
+          lines={[
+            { m: m1, b: b1, color: 'var(--line-a)' },
+            { m: m2, b: b2, color: 'var(--line-b)' },
+          ]}
+          points={sol.type === 'unique' ?
+            [{ x: sol.x, y: sol.y, color: 'var(--accent)', label: `(${sol.x}, ${sol.y})` }] : []}
+        />
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginTop: 16 }}>
+          <div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--line-a)', fontFamily: 'var(--font-mono)', marginBottom: 8, fontWeight: 600 }}>
+              LINE 1
+            </div>
+            <div className="slider-group">
+              <div className="slider-row">
+                <span className="slider-label">slope</span>
+                <input type="range" className="line-a" min={-3} max={3} step={0.5} value={m1}
+                  onChange={e => setM1(Number(e.target.value))} />
+                <span className="slider-value">{m1}</span>
+              </div>
+              <div className="slider-row">
+                <span className="slider-label">intercept</span>
+                <input type="range" className="line-a" min={-5} max={5} step={1} value={b1}
+                  onChange={e => setB1(Number(e.target.value))} />
+                <span className="slider-value">{b1}</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--line-b)', fontFamily: 'var(--font-mono)', marginBottom: 8, fontWeight: 600 }}>
+              LINE 2
+            </div>
+            <div className="slider-group">
+              <div className="slider-row">
+                <span className="slider-label">slope</span>
+                <input type="range" className="line-b" min={-3} max={3} step={0.5} value={m2}
+                  onChange={e => setM2(Number(e.target.value))} />
+                <span className="slider-value">{m2}</span>
+              </div>
+              <div className="slider-row">
+                <span className="slider-label">intercept</span>
+                <input type="range" className="line-b" min={-5} max={5} step={1} value={b2}
+                  onChange={e => setB2(Number(e.target.value))} />
+                <span className="slider-value">{b2}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="feedback info">
+        <span style={{ fontSize: '1.1rem' }}>i</span>
+        <span>Try making the slopes equal to see what happens! Then try making both slopes AND intercepts equal.</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Step 4: Substitution Method ──────────────────────────────
+function StepSubstitution() {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [userAnswer, setUserAnswer] = useState({ x: '', y: '' });
+  const [feedback, setFeedback] = useState(null);
+  const totalSteps = 6;
+
+  // Example system: y = 2x + 1, 3x + y = 11
+  const steps = [
+    {
+      eq: <><span className="eq-var-y">y</span> <span className="eq-op">=</span> <span className="eq-num">2</span><span className="eq-var-x">x</span> <span className="eq-op">+</span> <span className="eq-num">1</span></>,
+      eq2: <><span className="eq-num">3</span><span className="eq-var-x">x</span> <span className="eq-op">+</span> <span className="eq-var-y">y</span> <span className="eq-op">=</span> <span className="eq-num">11</span></>,
+      desc: 'Start with the system',
+    },
+    {
+      eq: <><span className="eq-var-y">y</span> <span className="eq-op">=</span> <span className="eq-highlight"><span className="eq-num">2</span><span className="eq-var-x">x</span> <span className="eq-op">+</span> <span className="eq-num">1</span></span></>,
+      desc: 'Equation 1 is already solved for y',
+    },
+    {
+      eq: <><span className="eq-num">3</span><span className="eq-var-x">x</span> <span className="eq-op">+</span> <span className="eq-highlight">(<span className="eq-num">2</span><span className="eq-var-x">x</span> <span className="eq-op">+</span> <span className="eq-num">1</span>)</span> <span className="eq-op">=</span> <span className="eq-num">11</span></>,
+      desc: 'Substitute into Equation 2',
+    },
+    {
+      eq: <><span className="eq-num">5</span><span className="eq-var-x">x</span> <span className="eq-op">+</span> <span className="eq-num">1</span> <span className="eq-op">=</span> <span className="eq-num">11</span></>,
+      desc: 'Combine like terms: 3x + 2x = 5x',
+    },
+    {
+      eq: <><span className="eq-num">5</span><span className="eq-var-x">x</span> <span className="eq-op">=</span> <span className="eq-num">10</span> &nbsp;&nbsp;→&nbsp;&nbsp; <span className="eq-var-x">x</span> <span className="eq-op">=</span> <span className="eq-result">2</span></>,
+      desc: 'Solve for x',
+    },
+    {
+      eq: <><span className="eq-var-y">y</span> <span className="eq-op">=</span> <span className="eq-num">2</span>(<span className="eq-result">2</span>) <span className="eq-op">+</span> <span className="eq-num">1</span> <span className="eq-op">=</span> <span className="eq-result">5</span></>,
+      desc: 'Substitute x = 2 back to find y',
+    },
+  ];
+
+  function checkAnswer() {
+    const xv = parseFloat(userAnswer.x), yv = parseFloat(userAnswer.y);
+    if (xv === 2 && yv === 5) {
+      setFeedback({ correct: true, msg: 'Correct! The solution is (2, 5).' });
+    } else {
+      setFeedback({ correct: false, msg: 'Not quite. Review the steps above and try again.' });
+    }
+  }
+
+  return (
+    <div className="anim-fade-up">
+      <h2 className="section-title">The <em>Substitution</em> Method</h2>
+      <p className="section-subtitle">
+        Solve one equation for a variable, then substitute that expression into the other equation.
+        Watch each step below.
+      </p>
+
+      <div className="equation-block">
+        <span className="eq-var-y">y</span> <span className="eq-op">=</span> <span className="eq-num">2</span><span className="eq-var-x">x</span> <span className="eq-op">+</span> <span className="eq-num">1</span>
+        <br/>
+        <span className="eq-num">3</span><span className="eq-var-x">x</span> <span className="eq-op">+</span> <span className="eq-var-y">y</span> <span className="eq-op">=</span> <span className="eq-num">11</span>
+      </div>
+
+      <div style={{ display: 'flex', gap: 8, margin: '16px 0' }}>
+        <button className="btn btn-outline btn-sm"
+          disabled={currentStep <= 0}
+          onClick={() => setCurrentStep(s => s - 1)}>
+          Previous Step
+        </button>
+        <button className="btn btn-outline btn-sm"
+          disabled={currentStep >= totalSteps - 1}
+          onClick={() => setCurrentStep(s => s + 1)}
+          style={currentStep < totalSteps - 1 ? { borderColor: 'var(--accent)', color: 'var(--accent)' } : {}}>
+          Next Step
+        </button>
+        <button className="btn btn-outline btn-sm"
+          onClick={() => { setCurrentStep(0); setFeedback(null); setUserAnswer({ x: '', y: '' }); }}>
+          Reset
+        </button>
+      </div>
+
+      <div className="step-anim-container">
+        {steps.map((s, i) => (
+          <div key={i}
+            className={`step-anim-row ${i <= currentStep ? 'visible' : ''} ${i === currentStep ? 'active' : ''} ${i < currentStep ? 'completed' : ''}`}
+            style={{ transitionDelay: `${i * 0.05}s` }}>
+            <span className="step-num">{i + 1}</span>
+            <span className="step-eq">{s.eq}</span>
+            <span className="step-desc">{s.desc}</span>
+          </div>
+        ))}
+      </div>
+
+      {currentStep >= totalSteps - 1 && (
+        <div className="card anim-fade-up" style={{ marginTop: 20 }}>
+          <div className="card-title">Your Turn</div>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: 16 }}>
+            What is the solution? Enter the values of x and y:
+          </p>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--line-a)' }}>x =</span>
+              <input className="input-field" value={userAnswer.x}
+                onChange={e => setUserAnswer(prev => ({ ...prev, x: e.target.value }))} />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--line-b)' }}>y =</span>
+              <input className="input-field" value={userAnswer.y}
+                onChange={e => setUserAnswer(prev => ({ ...prev, y: e.target.value }))} />
+            </div>
+            <button className="btn btn-accent btn-sm" onClick={checkAnswer}>Check</button>
+          </div>
+          {feedback && (
+            <div className={`feedback ${feedback.correct ? 'correct' : 'incorrect'}`} style={{ marginTop: 12 }}>
+              {feedback.msg}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Step 5: Elimination Method ───────────────────────────────
+function StepElimination() {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [elimChoice, setElimChoice] = useState(null);
+  const [userAnswer, setUserAnswer] = useState({ x: '', y: '' });
+  const [feedback, setFeedback] = useState(null);
+  const totalSteps = 6;
+
+  // 2x + 3y = 12
+  // 4x - 3y = 6
+  const stepsElimY = [
+    {
+      eq: <><span className="eq-num">2</span><span className="eq-var-x">x</span> <span className="eq-op">+</span> <span className="eq-num">3</span><span className="eq-var-y">y</span> <span className="eq-op">=</span> <span className="eq-num">12</span></>,
+      eq2: <><span className="eq-num">4</span><span className="eq-var-x">x</span> <span className="eq-op">-</span> <span className="eq-num">3</span><span className="eq-var-y">y</span> <span className="eq-op">=</span> <span className="eq-num">6</span></>,
+      desc: 'Start with the system',
+    },
+    {
+      eq: <><span className="eq-num">2</span><span className="eq-var-x">x</span> <span className="eq-op">+</span> <span className="eq-highlight"><span className="eq-num">3</span><span className="eq-var-y">y</span></span> <span className="eq-op">=</span> <span className="eq-num">12</span></>,
+      eq2: <><span className="eq-num">4</span><span className="eq-var-x">x</span> <span className="eq-op">-</span> <span className="eq-highlight"><span className="eq-num">3</span><span className="eq-var-y">y</span></span> <span className="eq-op">=</span> <span className="eq-num">6</span></>,
+      desc: 'Coefficients of y are +3 and -3 — opposites!',
+    },
+    {
+      eq: <><span className="eq-num">6</span><span className="eq-var-x">x</span> <span className="eq-op">+</span> <span style={{ textDecoration: 'line-through', opacity: 0.4 }}><span className="eq-num">0</span><span className="eq-var-y">y</span></span> <span className="eq-op">=</span> <span className="eq-num">18</span></>,
+      desc: 'Add equations — y terms cancel!',
+    },
+    {
+      eq: <><span className="eq-num">6</span><span className="eq-var-x">x</span> <span className="eq-op">=</span> <span className="eq-num">18</span> &nbsp;&nbsp;→&nbsp;&nbsp; <span className="eq-var-x">x</span> <span className="eq-op">=</span> <span className="eq-result">3</span></>,
+      desc: 'Solve for x',
+    },
+    {
+      eq: <><span className="eq-num">2</span>(<span className="eq-result">3</span>) <span className="eq-op">+</span> <span className="eq-num">3</span><span className="eq-var-y">y</span> <span className="eq-op">=</span> <span className="eq-num">12</span></>,
+      desc: 'Substitute x = 3 into Equation 1',
+    },
+    {
+      eq: <><span className="eq-num">3</span><span className="eq-var-y">y</span> <span className="eq-op">=</span> <span className="eq-num">6</span> &nbsp;&nbsp;→&nbsp;&nbsp; <span className="eq-var-y">y</span> <span className="eq-op">=</span> <span className="eq-result">2</span></>,
+      desc: 'Solve for y',
+    },
+  ];
+
+  const stepsElimX = [
+    {
+      eq: <><span className="eq-num">2</span><span className="eq-var-x">x</span> <span className="eq-op">+</span> <span className="eq-num">3</span><span className="eq-var-y">y</span> <span className="eq-op">=</span> <span className="eq-num">12</span></>,
+      eq2: <><span className="eq-num">4</span><span className="eq-var-x">x</span> <span className="eq-op">-</span> <span className="eq-num">3</span><span className="eq-var-y">y</span> <span className="eq-op">=</span> <span className="eq-num">6</span></>,
+      desc: 'Start with the system',
+    },
+    {
+      eq: <><span className="eq-num">-2</span> <span className="eq-op">&times;</span> (<span className="eq-num">2</span><span className="eq-var-x">x</span> <span className="eq-op">+</span> <span className="eq-num">3</span><span className="eq-var-y">y</span> <span className="eq-op">=</span> <span className="eq-num">12</span>)</>,
+      desc: 'Multiply Eq.1 by -2 to match x coefficients',
+    },
+    {
+      eq: <><span className="eq-highlight"><span className="eq-num">-4</span><span className="eq-var-x">x</span></span> <span className="eq-op">-</span> <span className="eq-num">6</span><span className="eq-var-y">y</span> <span className="eq-op">=</span> <span className="eq-num">-24</span></>,
+      eq2: <><span className="eq-highlight"><span className="eq-num">4</span><span className="eq-var-x">x</span></span> <span className="eq-op">-</span> <span className="eq-num">3</span><span className="eq-var-y">y</span> <span className="eq-op">=</span> <span className="eq-num">6</span></>,
+      desc: 'Now x coefficients are -4 and +4',
+    },
+    {
+      eq: <><span style={{ textDecoration: 'line-through', opacity: 0.4 }}><span className="eq-num">0</span><span className="eq-var-x">x</span></span> <span className="eq-op">-</span> <span className="eq-num">9</span><span className="eq-var-y">y</span> <span className="eq-op">=</span> <span className="eq-num">-18</span></>,
+      desc: 'Add equations — x terms cancel!',
+    },
+    {
+      eq: <><span className="eq-var-y">y</span> <span className="eq-op">=</span> <span className="eq-result">2</span></>,
+      desc: 'Solve for y: -9y = -18',
+    },
+    {
+      eq: <><span className="eq-num">2</span><span className="eq-var-x">x</span> <span className="eq-op">+</span> <span className="eq-num">3</span>(<span className="eq-result">2</span>) <span className="eq-op">=</span> <span className="eq-num">12</span> &nbsp;&nbsp;→&nbsp;&nbsp; <span className="eq-var-x">x</span> <span className="eq-op">=</span> <span className="eq-result">3</span></>,
+      desc: 'Substitute back to find x',
+    },
+  ];
+
+  const steps = elimChoice === 'x' ? stepsElimX : stepsElimY;
+
+  function checkAnswer() {
+    const xv = parseFloat(userAnswer.x), yv = parseFloat(userAnswer.y);
+    if (xv === 3 && yv === 2) {
+      setFeedback({ correct: true, msg: 'Correct! The solution is (3, 2), regardless of which variable you eliminate first.' });
+    } else {
+      setFeedback({ correct: false, msg: 'Not quite. The answer should be (3, 2). Review the steps above.' });
+    }
+  }
+
+  return (
+    <div className="anim-fade-up">
+      <h2 className="section-title">The <em>Elimination</em> Method</h2>
+      <p className="section-subtitle">
+        Add or subtract equations to eliminate one variable. Sometimes we multiply first to align coefficients.
+      </p>
+
+      <div className="equation-block">
+        <span className="eq-num">2</span><span className="eq-var-x">x</span> <span className="eq-op">+</span> <span className="eq-num">3</span><span className="eq-var-y">y</span> <span className="eq-op">=</span> <span className="eq-num">12</span>
+        <br/>
+        <span className="eq-num">4</span><span className="eq-var-x">x</span> <span className="eq-op">-</span> <span className="eq-num">3</span><span className="eq-var-y">y</span> <span className="eq-op">=</span> <span className="eq-num">6</span>
+      </div>
+
+      <div style={{ marginTop: 16 }}>
+        <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: 12 }}>
+          Which variable would you like to eliminate?
+        </p>
+        <div className="method-selector">
+          <button className={`btn btn-outline btn-sm ${elimChoice === 'y' ? 'active' : ''}`}
+            onClick={() => { setElimChoice('y'); setCurrentStep(0); setFeedback(null); }}>
+            Eliminate <span style={{ color: 'var(--line-b)' }}>y</span> (easier)
+          </button>
+          <button className={`btn btn-outline btn-sm ${elimChoice === 'x' ? 'active' : ''}`}
+            onClick={() => { setElimChoice('x'); setCurrentStep(0); setFeedback(null); }}>
+            Eliminate <span style={{ color: 'var(--line-a)' }}>x</span> (requires multiplying)
+          </button>
+        </div>
+      </div>
+
+      {elimChoice && (
+        <>
+          <div style={{ display: 'flex', gap: 8, margin: '16px 0' }}>
+            <button className="btn btn-outline btn-sm"
+              disabled={currentStep <= 0}
+              onClick={() => setCurrentStep(s => s - 1)}>
+              Previous Step
+            </button>
+            <button className="btn btn-outline btn-sm"
+              disabled={currentStep >= totalSteps - 1}
+              onClick={() => setCurrentStep(s => s + 1)}
+              style={currentStep < totalSteps - 1 ? { borderColor: 'var(--accent)', color: 'var(--accent)' } : {}}>
+              Next Step
+            </button>
+          </div>
+
+          <div className="step-anim-container">
+            {steps.map((s, i) => (
+              <div key={`${elimChoice}-${i}`}
+                className={`step-anim-row ${i <= currentStep ? 'visible' : ''} ${i === currentStep ? 'active' : ''} ${i < currentStep ? 'completed' : ''}`}
+                style={{ transitionDelay: `${i * 0.05}s` }}>
+                <span className="step-num">{i + 1}</span>
+                <div style={{ flex: 1 }}>
+                  <div className="step-eq">{s.eq}</div>
+                  {s.eq2 && <div className="step-eq" style={{ marginTop: 4 }}>{s.eq2}</div>}
+                </div>
+                <span className="step-desc">{s.desc}</span>
+              </div>
+            ))}
+          </div>
+
+          {currentStep >= totalSteps - 1 && (
+            <div className="card anim-fade-up" style={{ marginTop: 20 }}>
+              <div className="card-title">Verify the Solution</div>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: 16 }}>
+                Enter the solution:
+              </p>
+              <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--line-a)' }}>x =</span>
+                  <input className="input-field" value={userAnswer.x}
+                    onChange={e => setUserAnswer(prev => ({ ...prev, x: e.target.value }))} />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--line-b)' }}>y =</span>
+                  <input className="input-field" value={userAnswer.y}
+                    onChange={e => setUserAnswer(prev => ({ ...prev, y: e.target.value }))} />
+                </div>
+                <button className="btn btn-accent btn-sm" onClick={checkAnswer}>Check</button>
+              </div>
+              {feedback && (
+                <div className={`feedback ${feedback.correct ? 'correct' : 'incorrect'}`} style={{ marginTop: 12 }}>
+                  {feedback.msg}
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─── Step 6: Special Cases ────────────────────────────────────
+function StepSpecialCases() {
+  const [caseType, setCaseType] = useState('unique');
+  const [quizAnswers, setQuizAnswers] = useState({});
+  const [quizFeedback, setQuizFeedback] = useState({});
+
+  const configs = {
+    unique: { m1: 1, b1: -1, m2: -1, b2: 3, label: 'One Solution', desc: 'Different slopes — the lines cross exactly once.' },
+    none: { m1: 2, b1: 1, m2: 2, b2: -2, label: 'No Solution', desc: 'Same slope, different intercepts — the lines are parallel and never meet.' },
+    infinite: { m1: -1, b1: 3, m2: -1, b2: 3, label: 'Infinite Solutions', desc: 'Same slope AND same intercept — the lines are identical.' },
+  };
+
+  const c = configs[caseType];
+  const sol = solveSystem(c.m1, c.b1, c.m2, c.b2);
+
+  const quizProblems = [
+    { id: 'q1', eq1: 'y = 3x + 2', eq2: 'y = 3x - 4', answer: 'none', m1: 3, b1: 2, m2: 3, b2: -4 },
+    { id: 'q2', eq1: 'y = -x + 5', eq2: 'y = 2x - 1', answer: 'unique', m1: -1, b1: 5, m2: 2, b2: -1 },
+    { id: 'q3', eq1: 'y = 0.5x + 3', eq2: 'y = 0.5x + 3', answer: 'infinite', m1: 0.5, b1: 3, m2: 0.5, b2: 3 },
+  ];
+
+  function checkQuiz(id, chosen) {
+    const prob = quizProblems.find(p => p.id === id);
+    setQuizAnswers(prev => ({ ...prev, [id]: chosen }));
+    setQuizFeedback(prev => ({
+      ...prev,
+      [id]: chosen === prob.answer
+        ? { correct: true, msg: 'Correct!' }
+        : { correct: false, msg: `Not quite. These lines ${prob.answer === 'none' ? 'are parallel (same slope, different intercept)' : prob.answer === 'infinite' ? 'are identical (same equation)' : 'have different slopes, so they cross'}.` }
+    }));
+  }
+
+  return (
+    <div className="anim-fade-up">
+      <h2 className="section-title"><em>Special</em> Cases</h2>
+      <p className="section-subtitle">
+        Not every system has exactly one solution. Lines can be parallel (no solution) or overlap completely (infinite solutions).
+      </p>
+
+      <div className="method-selector">
+        {Object.entries(configs).map(([key, val]) => (
+          <button key={key} className={`btn btn-outline ${caseType === key ? 'active' : ''}`}
+            onClick={() => setCaseType(key)}>
+            {val.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="graph-container">
+        <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
+          <span className="tag tag-blue">{formatEq(c.m1, c.b1)}</span>
+          <span className="tag tag-pink">{formatEq(c.m2, c.b2)}</span>
+        </div>
+        <CoordinateGraph width={600} height={360} id="special-cases"
+          lines={[
+            { m: c.m1, b: c.b1, color: 'var(--line-a)' },
+            { m: c.m2, b: c.b2, color: 'var(--line-b)', dash: caseType === 'infinite' },
+          ]}
+          points={sol.type === 'unique' ?
+            [{ x: sol.x, y: sol.y, color: 'var(--accent)', label: `(${sol.x}, ${sol.y})` }] : []}
+        />
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: 12, textAlign: 'center' }}>
+          {c.desc}
+          {caseType === 'infinite' && (
+            <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', display: 'block', marginTop: 4 }}>
+              (Line 2 shown dashed so you can see both)
+            </span>
+          )}
+        </p>
+      </div>
+
+      <div style={{ marginTop: 32 }}>
+        <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', fontWeight: 400, marginBottom: 16 }}>
+          Identify the Case
+        </h3>
+        {quizProblems.map((prob, i) => (
+          <div key={prob.id} className="card" style={{ animationDelay: `${i * 0.1}s` }}>
+            <div className="equation-block" style={{ fontSize: '0.95rem', padding: '12px 16px', margin: '0 0 12px 0' }}>
+              {prob.eq1}<br/>{prob.eq2}
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {['unique', 'none', 'infinite'].map(opt => (
+                <button key={opt}
+                  className={`diff-btn ${quizAnswers[prob.id] === opt ? 'active' : ''}`}
+                  onClick={() => checkQuiz(prob.id, opt)}
+                  disabled={quizFeedback[prob.id]?.correct}>
+                  {opt === 'unique' ? 'One Solution' : opt === 'none' ? 'No Solution' : 'Infinite'}
+                </button>
+              ))}
+            </div>
+            {quizFeedback[prob.id] && (
+              <div className={`feedback ${quizFeedback[prob.id].correct ? 'correct' : 'incorrect'}`}>
+                {quizFeedback[prob.id].msg}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Step 7: Practice ─────────────────────────────────────────
+function StepPractice() {
+  const [difficulty, setDifficulty] = useState('easy');
+  const [problem, setProblem] = useState(null);
+  const [userAnswer, setUserAnswer] = useState({ x: '', y: '' });
+  const [feedback, setFeedback] = useState(null);
+  const [showGraph, setShowGraph] = useState(false);
+  const [solved, setSolved] = useState(0);
+
+  function generateProblem(diff) {
+    let a1, b1, c1, a2, b2, c2, solX, solY;
+    if (diff === 'easy') {
+      solX = Math.floor(Math.random() * 7) - 3;
+      solY = Math.floor(Math.random() * 7) - 3;
+      a1 = 1; b1 = 1; c1 = solX + solY;
+      a2 = 1; b2 = -1; c2 = solX - solY;
+    } else if (diff === 'medium') {
+      solX = Math.floor(Math.random() * 9) - 4;
+      solY = Math.floor(Math.random() * 9) - 4;
+      a1 = Math.floor(Math.random() * 3) + 1;
+      b1 = Math.floor(Math.random() * 3) + 1;
+      c1 = a1 * solX + b1 * solY;
+      a2 = Math.floor(Math.random() * 3) + 1;
+      b2 = -(Math.floor(Math.random() * 3) + 1);
+      c2 = a2 * solX + b2 * solY;
+    } else {
+      solX = Math.floor(Math.random() * 11) - 5;
+      solY = Math.floor(Math.random() * 11) - 5;
+      a1 = (Math.random() < 0.5 ? 1 : -1) * (Math.floor(Math.random() * 4) + 2);
+      b1 = (Math.random() < 0.5 ? 1 : -1) * (Math.floor(Math.random() * 4) + 1);
+      c1 = a1 * solX + b1 * solY;
+      a2 = (Math.random() < 0.5 ? 1 : -1) * (Math.floor(Math.random() * 4) + 1);
+      b2 = (Math.random() < 0.5 ? 1 : -1) * (Math.floor(Math.random() * 4) + 2);
+      c2 = a2 * solX + b2 * solY;
+    }
+
+    const m1 = -a1 / b1;
+    const yint1 = c1 / b1;
+    const m2 = -a2 / b2;
+    const yint2 = c2 / b2;
+
+    return { a1, b1, c1, a2, b2, c2, solX, solY, m1, yint1, m2, yint2 };
+  }
+
+  function newProblem() {
+    setProblem(generateProblem(difficulty));
+    setUserAnswer({ x: '', y: '' });
+    setFeedback(null);
+    setShowGraph(false);
+  }
+
+  useEffect(() => { newProblem(); }, [difficulty]);
+
+  function formatCoeff(c, v, first = false) {
+    if (c === 0) return null;
+    const sign = c > 0 ? (first ? '' : '+ ') : '- ';
+    const absC = Math.abs(c);
+    const coeff = absC === 1 ? '' : absC.toString();
+    return `${sign}${coeff}${v}`;
+  }
+
+  function formatLinearEq(a, b, c) {
+    let parts = [];
+    if (a !== 0) parts.push(formatCoeff(a, 'x', parts.length === 0));
+    if (b !== 0) parts.push(formatCoeff(b, 'y', parts.length === 0));
+    return parts.join(' ') + ' = ' + c;
+  }
+
+  function checkAnswer() {
+    if (!problem) return;
+    const xv = parseFloat(userAnswer.x), yv = parseFloat(userAnswer.y);
+    if (isNaN(xv) || isNaN(yv)) {
+      setFeedback({ correct: false, msg: 'Please enter valid numbers for both x and y.' });
+      return;
+    }
+    if (xv === problem.solX && yv === problem.solY) {
+      setFeedback({ correct: true, msg: `Correct! (${problem.solX}, ${problem.solY}) satisfies both equations.` });
+      setSolved(s => s + 1);
+      setShowGraph(true);
+    } else {
+      // Check in each equation
+      const check1 = problem.a1 * xv + problem.b1 * yv;
+      const check2 = problem.a2 * xv + problem.b2 * yv;
+      let hint = '';
+      if (check1 !== problem.c1 && check2 !== problem.c2) {
+        hint = ' Your answer doesn\'t satisfy either equation.';
+      } else if (check1 !== problem.c1) {
+        hint = ' Your answer doesn\'t satisfy the first equation.';
+      } else {
+        hint = ' Your answer doesn\'t satisfy the second equation.';
+      }
+      setFeedback({ correct: false, msg: `Not quite.${hint} Try again!` });
+    }
+  }
+
+  if (!problem) return null;
+
+  return (
+    <div className="anim-fade-up">
+      <h2 className="section-title"><em>Practice</em> Problems</h2>
+      <p className="section-subtitle">
+        Solve randomly generated systems using any method you prefer. Pick your difficulty level.
+      </p>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>
+        <div className="difficulty-selector">
+          {['easy', 'medium', 'hard'].map(d => (
+            <button key={d} className={`diff-btn ${difficulty === d ? 'active' : ''}`}
+              onClick={() => setDifficulty(d)}>
+              {d}
+            </button>
+          ))}
+        </div>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+          Solved: {solved}
+        </span>
+      </div>
+
+      <div className="card">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+          <div className="card-title">Solve the System</div>
+          <button className="btn btn-outline btn-sm" onClick={newProblem}>
+            New Problem
+          </button>
+        </div>
+
+        <div className="equation-block">
+          {formatLinearEq(problem.a1, problem.b1, problem.c1)}<br/>
+          {formatLinearEq(problem.a2, problem.b2, problem.c2)}
+        </div>
+
+        <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginTop: 20, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--line-a)' }}>x =</span>
+            <input className="input-field" value={userAnswer.x}
+              onChange={e => setUserAnswer(prev => ({ ...prev, x: e.target.value }))}
+              onKeyDown={e => e.key === 'Enter' && checkAnswer()} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--line-b)' }}>y =</span>
+            <input className="input-field" value={userAnswer.y}
+              onChange={e => setUserAnswer(prev => ({ ...prev, y: e.target.value }))}
+              onKeyDown={e => e.key === 'Enter' && checkAnswer()} />
+          </div>
+          <button className="btn btn-accent btn-sm" onClick={checkAnswer}>Check</button>
+          <button className="btn btn-outline btn-sm" onClick={() => setShowGraph(!showGraph)}>
+            {showGraph ? 'Hide' : 'Show'} Graph
+          </button>
+        </div>
+
+        {feedback && (
+          <div className={`feedback ${feedback.correct ? 'correct' : 'incorrect'}`}>
+            {feedback.msg}
+          </div>
+        )}
+
+        {!feedback?.correct && (
+          <div style={{ marginTop: 12 }}>
+            <button className="btn btn-outline btn-sm" style={{ fontSize: '0.75rem' }}
+              onClick={() => {
+                setFeedback({ correct: true, msg: `The answer is (${problem.solX}, ${problem.solY}).` });
+                setShowGraph(true);
+              }}>
+              Show Answer
+            </button>
+          </div>
+        )}
+      </div>
+
+      {showGraph && (
+        <div className="graph-container anim-fade-up">
+          <CoordinateGraph width={600} height={400} id="practice-graph"
+            xRange={[-10, 10]} yRange={[-8, 8]}
+            lines={[
+              { m: problem.m1, b: problem.yint1, color: 'var(--line-a)' },
+              { m: problem.m2, b: problem.yint2, color: 'var(--line-b)' },
+            ]}
+            points={[{
+              x: problem.solX, y: problem.solY,
+              color: 'var(--accent)',
+              label: `(${problem.solX}, ${problem.solY})`
+            }]}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Main App ─────────────────────────────────────────────────
+const TOTAL_STEPS = 7;
+const STEP_NAMES = ['Landing', 'What\'s a System?', 'Graphing', 'Substitution', 'Elimination', 'Special Cases', 'Practice'];
+
+function App() {
+  const [step, setStep] = useState(0);
+  const [maxVisited, setMaxVisited] = useState(0);
+  const contentRef = useRef(null);
+
+  useEffect(() => {
+    if (step > maxVisited) setMaxVisited(step);
+  }, [step]);
+
+  useEffect(() => {
+    if (contentRef.current) {
+      contentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [step]);
+
+  function goNext() { if (step < TOTAL_STEPS - 1) setStep(step + 1); }
+  function goPrev() { if (step > 0) setStep(step - 1); }
+
+  // Save completion
+  useEffect(() => {
+    if (step === TOTAL_STEPS - 1 && maxVisited >= TOTAL_STEPS - 1) {
+      try {
+        const progress = JSON.parse(localStorage.getItem('math-progress') || '[]');
+        if (!progress.includes(4)) { progress.push(4); localStorage.setItem('math-progress', JSON.stringify(progress)); }
+      } catch (e) {}
+    }
+  }, [step, maxVisited]);
+
+  return (
+    <div className="lesson-container" ref={contentRef}>
+      {/* Header */}
+      {step > 0 && (
+        <header className="lesson-header anim-fade-in">
+          <a href="index.html" className="back-link">
+            <svg viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" />
+            </svg>
+            Lessons
+          </a>
+
+          <div className="progress-bar-container">
+            {Array.from({ length: TOTAL_STEPS - 1 }).map((_, i) => (
+              <div key={i} className={`progress-step ${i + 1 === step ? 'active' : ''} ${i + 1 < step ? 'completed' : ''}`}
+                title={STEP_NAMES[i + 1]}
+                onClick={() => { if (i + 1 <= maxVisited) setStep(i + 1); }}
+                style={{ cursor: i + 1 <= maxVisited ? 'pointer' : 'default' }}
+              />
+            ))}
+          </div>
+
+          <span className="step-label">{step}/{TOTAL_STEPS - 1}</span>
+        </header>
+      )}
+
+      {/* Step Content */}
+      <div className="step-content" key={step}>
+        {step === 0 && <StepLanding onStart={() => setStep(1)} />}
+        {step === 1 && <StepWhatIsSystem />}
+        {step === 2 && <StepGraphing />}
+        {step === 3 && <StepSubstitution />}
+        {step === 4 && <StepElimination />}
+        {step === 5 && <StepSpecialCases />}
+        {step === 6 && <StepPractice />}
+      </div>
+
+      {/* Navigation Footer */}
+      {step > 0 && (
+        <div className="nav-footer">
+          <button className="nav-btn secondary" onClick={goPrev} disabled={step <= 0}>
+            <svg viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" />
+            </svg>
+            Previous
+          </button>
+          <button className="nav-btn primary" onClick={goNext} disabled={step >= TOTAL_STEPS - 1}>
+            Next
+            <svg viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" />
+            </svg>
+          </button>
+        </div>
+      )}
+      {step === TOTAL_STEPS - 1 && (
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',margin:'0 auto',maxWidth:700,padding:'16px 24px',borderTop:'1px solid var(--border-subtle)'}}>
+          <a href="03-graphing-linear.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent-light)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>&larr; Previous Lesson: Graphing &amp; Linear Functions</a>
+          <a href="05-exponents-radicals.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent-light)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>Next Lesson: Exponents &amp; Radicals &rarr;</a>
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

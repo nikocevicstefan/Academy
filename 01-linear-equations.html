@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linear Equations — Interactive Lesson</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0f;--bg2:#0e0e18;--bg3:#161625;--bg4:#222238;
+  --text:#b8bdd0;--text-dim:#5a5f78;--text-bright:#e0e4f0;
+  --cyan:#22d3ee;--cyan-dim:#22d3ee25;--cyan-glow:#22d3ee12;
+  --blue:#6366f1;--blue-dim:#6366f130;--blue-glow:#6366f112;
+  --teal:#2dd4bf;--teal-dim:#2dd4bf25;
+  --rose:#f43f5e;--rose-dim:#f43f5e25;
+  --amber:#fbbf24;--amber-dim:#fbbf2425;
+  --green:#34d399;--green-dim:#34d39925;
+  --font-display:'Fraunces',serif;
+  --font-body:'IBM Plex Sans',sans-serif;
+  --font-mono:'DM Mono',monospace;
+}
+html{font-size:16px;scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);line-height:1.7;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::selection{background:var(--cyan);color:#000}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+#root{min-height:100vh}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes glow{0%,100%{filter:drop-shadow(0 0 8px var(--cyan-dim))}50%{filter:drop-shadow(0 0 20px var(--cyan))}}
+@keyframes typewriter{from{width:0}to{width:100%}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes scaleIn{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes slideRight{from{transform:translateX(-30px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes tiltLeft{from{transform:rotate(0deg)}to{transform:rotate(-8deg)}}
+@keyframes tiltRight{from{transform:rotate(0deg)}to{transform:rotate(8deg)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes correctPop{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+input[type="number"]{-moz-appearance:textfield}
+</style>
+
+<script type="text/babel">
+const {useState,useEffect,useRef,useCallback,useMemo,Fragment} = React;
+
+/* =========================================================
+   PROGRESS BAR
+   ========================================================= */
+function ProgressBar({current,total}){
+  const pct = total>1 ? (current/(total-1))*100 : 0;
+  return(
+    <div style={{position:'fixed',top:0,left:0,right:0,zIndex:1000,height:3,background:current===0?'transparent':'var(--bg3)',transition:'background .6s'}}>
+      <div style={{
+        height:'100%',width:`${pct}%`,
+        background:'linear-gradient(90deg,var(--blue),var(--cyan),var(--teal))',
+        transition:'width .6s cubic-bezier(.4,0,.2,1)',
+        boxShadow:'0 0 20px var(--cyan-dim)',
+        borderRadius:'0 2px 2px 0'
+      }}/>
+    </div>
+  );
+}
+
+/* =========================================================
+   STEP DOTS (right side)
+   ========================================================= */
+function StepDots({current,total,onNavigate}){
+  const labels = ['Landing','What is an Equation?','Balance Principle','One-Step','Two-Step','Word Problems','Practice'];
+  return(
+    <div style={{position:'fixed',right:20,top:'50%',transform:'translateY(-50%)',zIndex:900,display:'flex',flexDirection:'column',gap:12,alignItems:'center'}}>
+      {Array.from({length:total},(_,i)=>(
+        <button key={i} onClick={()=>onNavigate(i)} title={labels[i]||`Step ${i+1}`} style={{
+          width:i===current?10:6,height:i===current?10:6,
+          borderRadius:'50%',border:'none',cursor:'pointer',
+          background:i<current?'var(--teal)':i===current?'var(--cyan)':'var(--bg4)',
+          transition:'all .3s',
+          boxShadow:i===current?'0 0 12px var(--cyan-dim)':'none',
+          opacity:i===current?1:.7,
+        }}/>
+      ))}
+    </div>
+  );
+}
+
+/* =========================================================
+   NAV BUTTONS
+   ========================================================= */
+function NavButtons({current,total,onPrev,onNext,nextLabel}){
+  return(
+    <div style={{display:'flex',gap:12,marginTop:48,justifyContent:'center',flexWrap:'wrap'}}>
+      {current>0&&(
+        <button onClick={onPrev} style={{
+          padding:'12px 28px',background:'transparent',border:'1px solid var(--bg4)',
+          color:'var(--text-dim)',borderRadius:6,cursor:'pointer',fontFamily:'var(--font-mono)',
+          fontSize:13,transition:'all .2s',letterSpacing:'.5px'
+        }}
+        onMouseEnter={e=>{e.target.style.borderColor='var(--text-dim)';e.target.style.color='var(--text)'}}
+        onMouseLeave={e=>{e.target.style.borderColor='var(--bg4)';e.target.style.color='var(--text-dim)'}}
+        >{'\u2190'} Previous</button>
+      )}
+      {current<total-1&&(
+        <button onClick={onNext} style={{
+          padding:'12px 28px',background:'var(--cyan)',border:'none',
+          color:'#000',borderRadius:6,cursor:'pointer',fontFamily:'var(--font-mono)',
+          fontSize:13,fontWeight:500,transition:'all .2s',letterSpacing:'.5px',
+          boxShadow:'0 4px 20px var(--cyan-dim)'
+        }}
+        onMouseEnter={e=>{e.target.style.transform='translateY(-1px)';e.target.style.boxShadow='0 6px 28px var(--cyan-dim)'}}
+        onMouseLeave={e=>{e.target.style.transform='translateY(0)';e.target.style.boxShadow='0 4px 20px var(--cyan-dim)'}}
+        >{nextLabel||'Next'} {'\u2192'}</button>
+      )}
+    </div>
+  );
+}
+
+/* =========================================================
+   BACK TO LESSONS LINK
+   ========================================================= */
+function BackLink(){
+  return(
+    <a href="index.html" style={{
+      position:'fixed',top:16,left:20,zIndex:900,
+      color:'var(--text-dim)',fontFamily:'var(--font-mono)',fontSize:12,
+      textDecoration:'none',display:'flex',alignItems:'center',gap:6,
+      transition:'color .2s',letterSpacing:'.5px'
+    }}
+    onMouseEnter={e=>e.currentTarget.style.color='var(--cyan)'}
+    onMouseLeave={e=>e.currentTarget.style.color='var(--text-dim)'}
+    >
+      <span style={{fontSize:14}}>{'\u2190'}</span> Back to Lessons
+    </a>
+  );
+}
+
+/* =========================================================
+   STEP WRAPPER (fade transition)
+   ========================================================= */
+function StepWrapper({children,stepKey}){
+  const [visible,setVisible]=useState(false);
+  useEffect(()=>{setVisible(false);const t=setTimeout(()=>setVisible(true),50);return()=>clearTimeout(t)},[stepKey]);
+  return(
+    <div style={{
+      opacity:visible?1:0,transform:visible?'translateY(0)':'translateY(20px)',
+      transition:'all .5s cubic-bezier(.4,0,.2,1)',
+      maxWidth:800,margin:'0 auto',padding:'80px 24px 120px'
+    }}>
+      {children}
+    </div>
+  );
+}
+
+/* =========================================================
+   MATH DISPLAY
+   ========================================================= */
+function MathEq({children,size,color,glow,style:extraStyle}){
+  return(
+    <span style={{
+      fontFamily:'var(--font-mono)',fontSize:size||18,color:color||'var(--cyan)',
+      letterSpacing:1,fontWeight:400,
+      textShadow:glow?`0 0 20px ${color||'var(--cyan-dim)'}`:undefined,
+      ...extraStyle
+    }}>{children}</span>
+  );
+}
+
+/* =========================================================
+   STEP 0: LANDING
+   ========================================================= */
+function LandingStep({onNext}){
+  const canvasRef=useRef(null);
+  const animRef=useRef(null);
+  useEffect(()=>{
+    const canvas=canvasRef.current;if(!canvas)return;
+    const ctx=canvas.getContext('2d');
+    const dpr=window.devicePixelRatio||1;
+    const W=600,H=200;
+    canvas.width=W*dpr;canvas.height=H*dpr;
+    canvas.style.width=W+'px';canvas.style.height=H+'px';
+    ctx.scale(dpr,dpr);
+    let t=0;
+    const particles=Array.from({length:40},()=>({
+      x:Math.random()*W,y:Math.random()*H,
+      vx:(Math.random()-.5)*.5,vy:(Math.random()-.5)*.5,
+      r:Math.random()*2+1,a:Math.random()*.5+.2
+    }));
+    function draw(){
+      ctx.clearRect(0,0,W,H);
+      t+=0.015;
+      // grid lines
+      ctx.strokeStyle='rgba(34,211,238,0.04)';
+      ctx.lineWidth=1;
+      for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
+      for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+      // animated equation graph line
+      ctx.beginPath();
+      ctx.strokeStyle='rgba(34,211,238,0.5)';
+      ctx.lineWidth=2;
+      for(let x=0;x<W;x++){
+        const y=H/2 - (x-W/2)*0.3 - Math.sin(t+x*0.02)*15;
+        x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+      // second line
+      ctx.beginPath();
+      ctx.strokeStyle='rgba(99,102,241,0.4)';
+      ctx.lineWidth=2;
+      for(let x=0;x<W;x++){
+        const y=H/2 + (x-W/2)*0.15 + Math.cos(t*0.7+x*0.015)*20;
+        x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+      // intersection point
+      const ix=W/2+Math.sin(t*0.5)*60;
+      const iy=H/2-Math.sin(t)*10;
+      ctx.beginPath();ctx.arc(ix,iy,5+Math.sin(t*2)*2,0,Math.PI*2);
+      ctx.fillStyle='rgba(34,211,238,0.8)';ctx.fill();
+      ctx.beginPath();ctx.arc(ix,iy,12+Math.sin(t*2)*4,0,Math.PI*2);
+      ctx.strokeStyle='rgba(34,211,238,0.2)';ctx.lineWidth=1;ctx.stroke();
+      // particles
+      particles.forEach(p=>{
+        p.x+=p.vx;p.y+=p.vy;
+        if(p.x<0||p.x>W)p.vx*=-1;
+        if(p.y<0||p.y>H)p.vy*=-1;
+        ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+        ctx.fillStyle=`rgba(34,211,238,${p.a*(.5+Math.sin(t+p.x)*0.3)})`;
+        ctx.fill();
+      });
+      animRef.current=requestAnimationFrame(draw);
+    }
+    draw();
+    return()=>{if(animRef.current)cancelAnimationFrame(animRef.current)};
+  },[]);
+
+  return(
+    <div style={{minHeight:'100vh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'40px 24px',textAlign:'center'}}>
+      <div style={{animation:'fadeUp .8s ease both'}}>
+        <div style={{fontSize:13,fontFamily:'var(--font-mono)',color:'var(--text-dim)',letterSpacing:3,textTransform:'uppercase',marginBottom:20}}>Chapter 01</div>
+        <h1 style={{fontFamily:'var(--font-display)',fontSize:'clamp(42px,8vw,72px)',fontWeight:700,color:'var(--text-bright)',lineHeight:1.1,marginBottom:8}}>
+          Linear<br/>
+          <span style={{
+            background:'linear-gradient(135deg,var(--cyan),var(--blue))',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',
+          }}>Equations</span>
+        </h1>
+      </div>
+      <div style={{animation:'fadeUp .8s ease .2s both',marginTop:16}}>
+        <canvas ref={canvasRef} style={{borderRadius:12,border:'1px solid var(--bg4)',maxWidth:'100%'}}/>
+      </div>
+      <div style={{animation:'fadeUp .8s ease .4s both',marginTop:32}}>
+        <p style={{fontSize:18,color:'var(--text)',maxWidth:480,margin:'0 auto 8px'}}>
+          Learn to solve equations like
+        </p>
+        <MathEq size={28} glow>2x + 3 = 7</MathEq>
+      </div>
+      <div style={{animation:'fadeUp .8s ease .6s both',marginTop:40}}>
+        <button onClick={onNext} style={{
+          padding:'16px 48px',background:'var(--cyan)',border:'none',color:'#000',
+          borderRadius:8,cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:15,fontWeight:500,
+          letterSpacing:1,transition:'all .25s',
+          boxShadow:'0 4px 30px var(--cyan-dim),0 0 60px var(--cyan-glow)'
+        }}
+        onMouseEnter={e=>{e.target.style.transform='translateY(-2px)';e.target.style.boxShadow='0 8px 40px var(--cyan-dim)'}}
+        onMouseLeave={e=>{e.target.style.transform='translateY(0)';e.target.style.boxShadow='0 4px 30px var(--cyan-dim),0 0 60px var(--cyan-glow)'}}
+        >Begin Lesson</button>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   STEP 1: WHAT IS AN EQUATION?
+   ========================================================= */
+function WhatIsEquation(){
+  const [showExamples,setShowExamples]=useState(false);
+  useEffect(()=>{const t=setTimeout(()=>setShowExamples(true),800);return()=>clearTimeout(t)},[]);
+
+  const equations = [
+    {expr:'x + 5 = 12',isEq:true,why:'Both sides connected by "="'},
+    {expr:'3x - 1 = 8',isEq:true,why:'Statement: left side equals right side'},
+    {expr:'7 > 3',isEq:false,why:'This is an inequality, not an equation'},
+    {expr:'2 + 3',isEq:false,why:'This is just an expression, no "=" sign'},
+    {expr:'4x = 20',isEq:true,why:'Has "=" sign connecting two sides'},
+    {expr:'x + 2',isEq:false,why:'No equals sign, just an expression'},
+  ];
+
+  return(
+    <div>
+      <div style={{fontSize:12,fontFamily:'var(--font-mono)',color:'var(--cyan)',letterSpacing:2,marginBottom:12}}>STEP 02</div>
+      <h2 style={{fontFamily:'var(--font-display)',fontSize:36,color:'var(--text-bright)',marginBottom:24}}>What is an Equation?</h2>
+
+      <p style={{fontSize:16,marginBottom:16,lineHeight:1.8}}>
+        An <strong style={{color:'var(--cyan)'}}>equation</strong> is a mathematical statement that says two things are <em>equal</em>.
+        It always contains an <strong style={{color:'var(--cyan)'}}>=</strong> sign.
+      </p>
+      <p style={{fontSize:16,marginBottom:32,lineHeight:1.8}}>
+        Think of it like a sentence: "This <em>equals</em> that." The equals sign is the verb.
+      </p>
+
+      {/* animated equals sign */}
+      <div style={{display:'flex',justifyContent:'center',marginBottom:40}}>
+        <svg width="320" height="100" viewBox="0 0 320 100">
+          <rect x="20" y="30" width="100" height="40" rx="8" fill="var(--bg3)" stroke="var(--cyan)" strokeWidth="1.5" strokeDasharray="4 2">
+            <animate attributeName="opacity" values="0;1" dur="0.5s" fill="freeze"/>
+          </rect>
+          <text x="70" y="56" textAnchor="middle" fill="var(--cyan)" fontFamily="var(--font-mono)" fontSize="16">
+            left side
+            <animate attributeName="opacity" values="0;1" dur="0.5s" begin="0.2s" fill="freeze"/>
+          </text>
+
+          <text x="160" y="58" textAnchor="middle" fill="var(--amber)" fontFamily="var(--font-display)" fontSize="32" fontWeight="700">
+            =
+            <animate attributeName="opacity" values="0;1;0;1" dur="1.5s" begin="0.4s" fill="freeze"/>
+          </text>
+
+          <rect x="200" y="30" width="100" height="40" rx="8" fill="var(--bg3)" stroke="var(--cyan)" strokeWidth="1.5" strokeDasharray="4 2">
+            <animate attributeName="opacity" values="0;1" dur="0.5s" begin="0.6s" fill="freeze"/>
+          </rect>
+          <text x="250" y="56" textAnchor="middle" fill="var(--cyan)" fontFamily="var(--font-mono)" fontSize="16">
+            right side
+            <animate attributeName="opacity" values="0;1" dur="0.5s" begin="0.8s" fill="freeze"/>
+          </text>
+        </svg>
+      </div>
+
+      {/* Examples */}
+      <h3 style={{fontFamily:'var(--font-display)',fontSize:22,color:'var(--text-bright)',marginBottom:16}}>Equation or Not?</h3>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(260px,1fr))',gap:12}}>
+        {equations.map((item,i)=>(
+          <div key={i} style={{
+            background:'var(--bg2)',border:`1px solid ${item.isEq?'var(--teal-dim)':'var(--rose-dim)'}`,
+            borderRadius:10,padding:'16px 20px',
+            opacity:showExamples?1:0,transform:showExamples?'translateY(0)':'translateY(12px)',
+            transition:`all .4s ease ${i*0.1}s`
+          }}>
+            <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
+              <MathEq size={16}>{item.expr}</MathEq>
+              <span style={{
+                fontSize:11,fontFamily:'var(--font-mono)',
+                padding:'2px 8px',borderRadius:4,
+                background:item.isEq?'var(--teal-dim)':'var(--rose-dim)',
+                color:item.isEq?'var(--teal)':'var(--rose)',
+                fontWeight:500
+              }}>{item.isEq?'EQUATION':'NOT'}</span>
+            </div>
+            <div style={{fontSize:13,color:'var(--text-dim)'}}>{item.why}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   STEP 2: BALANCE PRINCIPLE (interactive beam)
+   ========================================================= */
+function BalancePrinciple(){
+  const [left,setLeft]=useState(5);
+  const [right,setRight]=useState(5);
+  const canvasRef=useRef(null);
+  const animRef=useRef(null);
+  const tiltRef=useRef(0);
+  const targetTiltRef=useRef(0);
+
+  const diff=left-right;
+  const maxTilt=15;
+
+  useEffect(()=>{
+    targetTiltRef.current=Math.max(-maxTilt,Math.min(maxTilt,diff*3));
+  },[diff]);
+
+  useEffect(()=>{
+    const canvas=canvasRef.current;if(!canvas)return;
+    const ctx=canvas.getContext('2d');
+    const dpr=window.devicePixelRatio||1;
+    const W=560,H=300;
+    canvas.width=W*dpr;canvas.height=H*dpr;
+    canvas.style.width=W+'px';canvas.style.height=H+'px';
+    ctx.scale(dpr,dpr);
+    let time=0;
+
+    function draw(){
+      ctx.clearRect(0,0,W,H);
+      time+=0.02;
+
+      // smooth tilt
+      tiltRef.current+=(targetTiltRef.current-tiltRef.current)*0.08;
+      const tilt=tiltRef.current;
+      const tiltRad=tilt*Math.PI/180;
+
+      const cx=W/2,baseY=250;
+      const beamLen=400;
+      const pivotY=140;
+
+      // fulcrum triangle
+      ctx.beginPath();
+      ctx.moveTo(cx,pivotY);
+      ctx.lineTo(cx-30,baseY);
+      ctx.lineTo(cx+30,baseY);
+      ctx.closePath();
+      ctx.fillStyle='var(--bg4)';
+      ctx.fill();
+      ctx.strokeStyle='rgba(34,211,238,0.3)';
+      ctx.lineWidth=1.5;
+      ctx.stroke();
+
+      // beam
+      const lx=cx-beamLen/2*Math.cos(tiltRad);
+      const ly=pivotY-beamLen/2*Math.sin(tiltRad)*-1;
+      const rx=cx+beamLen/2*Math.cos(tiltRad);
+      const ry=pivotY+beamLen/2*Math.sin(tiltRad)*-1;
+
+      ctx.beginPath();
+      ctx.moveTo(lx,ly);
+      ctx.lineTo(rx,ry);
+      ctx.strokeStyle='rgba(34,211,238,0.6)';
+      ctx.lineWidth=4;
+      ctx.lineCap='round';
+      ctx.stroke();
+
+      // platform markers
+      ctx.beginPath();ctx.moveTo(lx,ly-2);ctx.lineTo(lx,ly+2);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(rx,ry-2);ctx.lineTo(rx,ry+2);ctx.stroke();
+
+      // pans (arcs below beam ends)
+      function drawPan(px,py,val,label){
+        const panW=80,panH=8;
+        // chains
+        ctx.beginPath();ctx.moveTo(px-30,py);ctx.lineTo(px-30,py+25);ctx.strokeStyle='rgba(34,211,238,0.2)';ctx.lineWidth=1;ctx.stroke();
+        ctx.beginPath();ctx.moveTo(px+30,py);ctx.lineTo(px+30,py+25);ctx.strokeStyle='rgba(34,211,238,0.2)';ctx.lineWidth=1;ctx.stroke();
+        // pan
+        ctx.beginPath();
+        ctx.moveTo(px-panW/2,py+25);
+        ctx.quadraticCurveTo(px,py+25+panH,px+panW/2,py+25);
+        ctx.strokeStyle='rgba(34,211,238,0.5)';ctx.lineWidth=2;ctx.stroke();
+        // weights as stacked cubes
+        for(let i=0;i<Math.min(val,10);i++){
+          const bx=px-12+(i%3)*12;
+          const by=py+18-Math.floor(i/3)*14;
+          ctx.fillStyle=`rgba(34,211,238,${0.3+i*0.05})`;
+          ctx.fillRect(bx,by-10,10,10);
+          ctx.strokeStyle='rgba(34,211,238,0.4)';
+          ctx.lineWidth=0.5;
+          ctx.strokeRect(bx,by-10,10,10);
+        }
+        // value label
+        ctx.font='500 18px "DM Mono",monospace';
+        ctx.fillStyle='var(--text-bright)';
+        ctx.textAlign='center';
+        ctx.fillText(val,px,py+60);
+        ctx.font='300 11px "DM Mono",monospace';
+        ctx.fillStyle='rgba(90,95,120,0.8)';
+        ctx.fillText(label,px,py+76);
+      }
+
+      drawPan(lx,ly,''+left,'left');
+      drawPan(rx,ry,''+right,'right');
+
+      // pivot glow
+      ctx.beginPath();ctx.arc(cx,pivotY,4,0,Math.PI*2);
+      ctx.fillStyle='var(--cyan)';ctx.fill();
+      ctx.beginPath();ctx.arc(cx,pivotY,8+Math.sin(time*2)*2,0,Math.PI*2);
+      ctx.strokeStyle='rgba(34,211,238,0.2)';ctx.lineWidth=1;ctx.stroke();
+
+      // balanced indicator
+      if(Math.abs(tilt)<1){
+        ctx.font='500 13px "DM Mono",monospace';
+        ctx.fillStyle='var(--teal)';
+        ctx.textAlign='center';
+        ctx.fillText('BALANCED',cx,pivotY-20);
+      }
+
+      // base line
+      ctx.beginPath();ctx.moveTo(cx-60,baseY);ctx.lineTo(cx+60,baseY);
+      ctx.strokeStyle='rgba(34,211,238,0.15)';ctx.lineWidth=2;ctx.stroke();
+
+      animRef.current=requestAnimationFrame(draw);
+    }
+    draw();
+    return()=>{if(animRef.current)cancelAnimationFrame(animRef.current)};
+  },[left,right]);
+
+  function addBoth(n){setLeft(l=>Math.max(0,Math.min(15,l+n)));setRight(r=>Math.max(0,Math.min(15,r+n)))}
+  function addLeft(n){setLeft(l=>Math.max(0,Math.min(15,l+n)))}
+  function addRight(n){setRight(r=>Math.max(0,Math.min(15,r+n)))}
+
+  const btnStyle=(color)=>({
+    padding:'8px 14px',background:'transparent',border:`1px solid ${color}30`,
+    color:color,borderRadius:6,cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:12,
+    transition:'all .15s',letterSpacing:'.5px'
+  });
+
+  return(
+    <div>
+      <div style={{fontSize:12,fontFamily:'var(--font-mono)',color:'var(--cyan)',letterSpacing:2,marginBottom:12}}>STEP 03</div>
+      <h2 style={{fontFamily:'var(--font-display)',fontSize:36,color:'var(--text-bright)',marginBottom:16}}>The Balance Principle</h2>
+      <p style={{fontSize:16,marginBottom:8,lineHeight:1.8}}>
+        An equation is like a <strong style={{color:'var(--cyan)'}}>balance beam</strong>. Whatever you do to one side, you must do to the other to keep it balanced.
+      </p>
+      <p style={{fontSize:14,color:'var(--text-dim)',marginBottom:24}}>
+        Try the buttons below. Notice how adding to both sides keeps balance, but adding to only one side tips the beam.
+      </p>
+
+      <div style={{display:'flex',justifyContent:'center',marginBottom:24}}>
+        <canvas ref={canvasRef} style={{borderRadius:12,border:'1px solid var(--bg4)',maxWidth:'100%',background:'var(--bg2)'}}/>
+      </div>
+
+      {/* Controls */}
+      <div style={{display:'flex',flexDirection:'column',gap:12,alignItems:'center'}}>
+        <div style={{fontSize:12,fontFamily:'var(--font-mono)',color:'var(--text-dim)',marginBottom:4}}>ADD / REMOVE FROM BOTH SIDES</div>
+        <div style={{display:'flex',gap:8,flexWrap:'wrap',justifyContent:'center'}}>
+          <button onClick={()=>addBoth(-1)} style={btnStyle('var(--teal)')}>-1 both</button>
+          <button onClick={()=>addBoth(1)} style={btnStyle('var(--teal)')}>+1 both</button>
+          <button onClick={()=>addBoth(2)} style={btnStyle('var(--teal)')}>+2 both</button>
+        </div>
+
+        <div style={{fontSize:12,fontFamily:'var(--font-mono)',color:'var(--text-dim)',marginTop:12,marginBottom:4}}>ADD / REMOVE FROM ONE SIDE</div>
+        <div style={{display:'flex',gap:8,flexWrap:'wrap',justifyContent:'center'}}>
+          <button onClick={()=>addLeft(-1)} style={btnStyle('var(--blue)')}>-1 left</button>
+          <button onClick={()=>addLeft(1)} style={btnStyle('var(--blue)')}>+1 left</button>
+          <button onClick={()=>addRight(-1)} style={btnStyle('var(--rose)')}>-1 right</button>
+          <button onClick={()=>addRight(1)} style={btnStyle('var(--rose)')}>+1 right</button>
+        </div>
+
+        <button onClick={()=>{setLeft(5);setRight(5)}} style={{
+          marginTop:8,padding:'6px 16px',background:'transparent',border:'1px solid var(--bg4)',
+          color:'var(--text-dim)',borderRadius:6,cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:11,transition:'all .15s'
+        }}>Reset</button>
+      </div>
+
+      <div style={{marginTop:32,padding:'16px 20px',background:'var(--bg2)',border:'1px solid var(--bg4)',borderRadius:10}}>
+        <div style={{fontSize:13,fontFamily:'var(--font-mono)',color:'var(--amber)',marginBottom:8}}>KEY INSIGHT</div>
+        <p style={{fontSize:15,color:'var(--text)',lineHeight:1.7}}>
+          To solve an equation, we perform the <strong style={{color:'var(--cyan)'}}>same operation on both sides</strong> until
+          the variable is alone. This keeps the equation balanced and true.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   STEP 3: ONE-STEP EQUATIONS
+   ========================================================= */
+function OneStepEquations(){
+  const problems=[
+    {eq:'x + 5 = 12',answer:7,op:'Subtract 5',steps:['x + 5 = 12','x + 5 - 5 = 12 - 5','x = 7']},
+    {eq:'x - 3 = 8',answer:11,op:'Add 3',steps:['x - 3 = 8','x - 3 + 3 = 8 + 3','x = 11']},
+    {eq:'2x = 10',answer:5,op:'Divide by 2',steps:['2x = 10','2x / 2 = 10 / 2','x = 5']},
+    {eq:'x / 4 = 3',answer:12,op:'Multiply by 4',steps:['x / 4 = 3','(x/4) \u00d7 4 = 3 \u00d7 4','x = 12']},
+  ];
+  const [current,setCurrent]=useState(0);
+  const [revealedStep,setRevealedStep]=useState(0);
+  const [userAnswer,setUserAnswer]=useState('');
+  const [feedback,setFeedback]=useState(null);
+  const p=problems[current];
+
+  function checkAnswer(){
+    const val=parseFloat(userAnswer);
+    if(val===p.answer){setFeedback('correct');setRevealedStep(p.steps.length)}
+    else setFeedback('incorrect');
+  }
+
+  function nextProblem(){
+    setCurrent(c=>(c+1)%problems.length);
+    setRevealedStep(0);setUserAnswer('');setFeedback(null);
+  }
+
+  function revealNext(){
+    setRevealedStep(s=>Math.min(s+1,p.steps.length));
+  }
+
+  return(
+    <div>
+      <div style={{fontSize:12,fontFamily:'var(--font-mono)',color:'var(--cyan)',letterSpacing:2,marginBottom:12}}>STEP 04</div>
+      <h2 style={{fontFamily:'var(--font-display)',fontSize:36,color:'var(--text-bright)',marginBottom:16}}>One-Step Equations</h2>
+      <p style={{fontSize:16,marginBottom:8,lineHeight:1.8}}>
+        These equations need just <strong style={{color:'var(--cyan)'}}>one inverse operation</strong> to isolate <MathEq size={16}>x</MathEq>.
+      </p>
+      <p style={{fontSize:14,color:'var(--text-dim)',marginBottom:32}}>
+        The key: undo what's being done to <em>x</em> by doing the opposite to both sides.
+      </p>
+
+      {/* Problem selector pills */}
+      <div style={{display:'flex',gap:8,marginBottom:24,flexWrap:'wrap'}}>
+        {problems.map((prob,i)=>(
+          <button key={i} onClick={()=>{setCurrent(i);setRevealedStep(0);setUserAnswer('');setFeedback(null)}} style={{
+            padding:'8px 16px',borderRadius:6,cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:13,
+            background:i===current?'var(--cyan)':'var(--bg2)',
+            color:i===current?'#000':'var(--text-dim)',
+            border:i===current?'none':'1px solid var(--bg4)',
+            transition:'all .2s',fontWeight:i===current?500:400
+          }}>{prob.eq}</button>
+        ))}
+      </div>
+
+      {/* Solution area */}
+      <div style={{background:'var(--bg2)',border:'1px solid var(--bg4)',borderRadius:12,padding:'28px 24px',marginBottom:24}}>
+        <div style={{fontSize:12,fontFamily:'var(--font-mono)',color:'var(--text-dim)',marginBottom:16,opacity:revealedStep>=1?1:0,transition:'opacity .4s ease'}}>
+          INVERSE OPERATION: <span style={{color:'var(--amber)'}}>{p.op}</span> from both sides
+        </div>
+
+        {p.steps.map((step,i)=>(
+          <div key={i} style={{
+            fontFamily:'var(--font-mono)',fontSize:20,
+            color:i===p.steps.length-1?'var(--teal)':'var(--text-bright)',
+            marginBottom:12,padding:'8px 16px',
+            background:i<=revealedStep-1?'var(--bg3)':'transparent',
+            borderRadius:8,borderLeft:i<=revealedStep-1?'3px solid var(--cyan)':'3px solid transparent',
+            opacity:i<=revealedStep-1?1:0,
+            transform:i<=revealedStep-1?'translateX(0)':'translateX(-8px)',
+            pointerEvents:i<=revealedStep-1?'auto':'none',
+            transition:'all .4s ease',
+            fontWeight:i===p.steps.length-1?500:400
+          }}>
+            {step}
+          </div>
+        ))}
+
+        <div style={{display:'flex',gap:8,marginTop:16}}>
+          {revealedStep<p.steps.length&&(
+            <button onClick={revealNext} style={{
+              padding:'8px 20px',background:'var(--bg4)',border:'none',color:'var(--text)',
+              borderRadius:6,cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:12,transition:'all .15s'
+            }}>Reveal Next Step</button>
+          )}
+        </div>
+      </div>
+
+      {/* User answer */}
+      <div style={{background:'var(--bg2)',border:'1px solid var(--bg4)',borderRadius:12,padding:'20px 24px'}}>
+        <div style={{fontSize:12,fontFamily:'var(--font-mono)',color:'var(--text-dim)',marginBottom:12}}>YOUR ANSWER</div>
+        <div style={{display:'flex',alignItems:'center',gap:12,flexWrap:'wrap'}}>
+          <MathEq size={18}>x =</MathEq>
+          <input type="number" value={userAnswer} onChange={e=>setUserAnswer(e.target.value)}
+            onKeyDown={e=>e.key==='Enter'&&checkAnswer()}
+            style={{
+              width:100,padding:'10px 14px',background:'var(--bg3)',border:'1px solid var(--bg4)',
+              color:'var(--text-bright)',borderRadius:6,fontFamily:'var(--font-mono)',fontSize:18,
+              outline:'none',transition:'border-color .2s'
+            }}
+            onFocus={e=>e.target.style.borderColor='var(--cyan)'}
+            onBlur={e=>e.target.style.borderColor='var(--bg4)'}
+          />
+          <button onClick={checkAnswer} style={{
+            padding:'10px 20px',background:'var(--cyan)',border:'none',color:'#000',
+            borderRadius:6,cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:13,fontWeight:500,
+            transition:'all .15s'
+          }}>Check</button>
+          <button onClick={nextProblem} style={{
+            padding:'10px 20px',background:'transparent',border:'1px solid var(--bg4)',color:'var(--text-dim)',
+            borderRadius:6,cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:13,transition:'all .15s'
+          }}>Next Problem</button>
+        </div>
+        {feedback&&(
+          <div style={{
+            marginTop:12,padding:'10px 16px',borderRadius:8,fontFamily:'var(--font-mono)',fontSize:14,
+            background:feedback==='correct'?'var(--green-dim)':'var(--rose-dim)',
+            color:feedback==='correct'?'var(--green)':'var(--rose)',
+            animation:feedback==='correct'?'correctPop .3s ease':'shake .3s ease'
+          }}>
+            {feedback==='correct'?'\u2713 Correct! x = '+p.answer:'\u2717 Not quite. Try again or reveal the steps above.'}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   STEP 4: TWO-STEP EQUATIONS
+   ========================================================= */
+function TwoStepEquations(){
+  const problems=[
+    {eq:'2x + 3 = 7',answer:2,steps:[
+      {text:'2x + 3 = 7',note:'Start with the equation',colors:{}},
+      {text:'2x + 3 - 3 = 7 - 3',note:'Subtract 3 from both sides',colors:{'-3':'var(--rose)'}},
+      {text:'2x = 4',note:'Simplify',colors:{}},
+      {text:'2x / 2 = 4 / 2',note:'Divide both sides by 2',colors:{'/ 2':'var(--rose)'}},
+      {text:'x = 2',note:'Solution!',colors:{}}
+    ]},
+    {eq:'3x - 5 = 10',answer:5,steps:[
+      {text:'3x - 5 = 10',note:'Start with the equation',colors:{}},
+      {text:'3x - 5 + 5 = 10 + 5',note:'Add 5 to both sides',colors:{'+ 5':'var(--teal)'}},
+      {text:'3x = 15',note:'Simplify',colors:{}},
+      {text:'3x / 3 = 15 / 3',note:'Divide both sides by 3',colors:{'/ 3':'var(--teal)'}},
+      {text:'x = 5',note:'Solution!',colors:{}}
+    ]},
+    {eq:'4x + 1 = 17',answer:4,steps:[
+      {text:'4x + 1 = 17',note:'Start with the equation',colors:{}},
+      {text:'4x + 1 - 1 = 17 - 1',note:'Subtract 1 from both sides',colors:{'-1':'var(--rose)'}},
+      {text:'4x = 16',note:'Simplify',colors:{}},
+      {text:'4x / 4 = 16 / 4',note:'Divide both sides by 4',colors:{'/ 4':'var(--rose)'}},
+      {text:'x = 4',note:'Solution!',colors:{}}
+    ]},
+  ];
+  const [pIdx,setPIdx]=useState(0);
+  const [revealed,setRevealed]=useState(1);
+  const [userAnswer,setUserAnswer]=useState('');
+  const [feedback,setFeedback]=useState(null);
+  const p=problems[pIdx];
+
+  function check(){
+    const val=parseFloat(userAnswer);
+    if(val===p.answer){setFeedback('correct');setRevealed(p.steps.length)}
+    else setFeedback('incorrect');
+  }
+  function next(){setPIdx(i=>(i+1)%problems.length);setRevealed(1);setUserAnswer('');setFeedback(null)}
+
+  return(
+    <div>
+      <div style={{fontSize:12,fontFamily:'var(--font-mono)',color:'var(--cyan)',letterSpacing:2,marginBottom:12}}>STEP 05</div>
+      <h2 style={{fontFamily:'var(--font-display)',fontSize:36,color:'var(--text-bright)',marginBottom:16}}>Two-Step Equations</h2>
+      <p style={{fontSize:16,marginBottom:8,lineHeight:1.8}}>
+        These need <strong style={{color:'var(--cyan)'}}>two operations</strong>. The strategy: first undo addition/subtraction, then undo multiplication/division.
+      </p>
+      <p style={{fontSize:14,color:'var(--text-dim)',marginBottom:24}}>
+        Think of it like peeling layers off an onion &mdash; work from the outside in.
+      </p>
+
+      <div style={{display:'flex',gap:8,marginBottom:24,flexWrap:'wrap'}}>
+        {problems.map((prob,i)=>(
+          <button key={i} onClick={()=>{setPIdx(i);setRevealed(1);setUserAnswer('');setFeedback(null)}} style={{
+            padding:'8px 16px',borderRadius:6,cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:13,
+            background:i===pIdx?'var(--cyan)':'var(--bg2)',
+            color:i===pIdx?'#000':'var(--text-dim)',
+            border:i===pIdx?'none':'1px solid var(--bg4)',
+            transition:'all .2s',fontWeight:i===pIdx?500:400
+          }}>{prob.eq}</button>
+        ))}
+      </div>
+
+      <div style={{background:'var(--bg2)',border:'1px solid var(--bg4)',borderRadius:12,padding:'28px 24px',marginBottom:24}}>
+        {p.steps.map((step,i)=>{
+          const show=i<revealed;
+          const isLast=i===p.steps.length-1;
+          return(
+            <div key={i} style={{
+              display:'flex',alignItems:'center',gap:16,
+              marginBottom:12,padding:'10px 16px',
+              background:show?'var(--bg3)':'transparent',
+              borderRadius:8,borderLeft:show?`3px solid ${isLast?'var(--teal)':'var(--cyan)'}`: '3px solid transparent',
+              opacity:show?1:0,
+              transform:show?'translateX(0)':'translateX(-8px)',
+              transition:'all .4s ease',
+              pointerEvents:show?'auto':'none'
+            }}>
+              <div style={{
+                fontFamily:'var(--font-mono)',fontSize:18,
+                color:isLast&&show?'var(--teal)':'var(--text-bright)',
+                fontWeight:isLast?500:400,flex:1
+              }}>{step.text}</div>
+              {show&&<div style={{fontSize:12,fontFamily:'var(--font-mono)',color:'var(--text-dim)',whiteSpace:'nowrap'}}>{step.note}</div>}
+            </div>
+          );
+        })}
+        {revealed<p.steps.length&&(
+          <button onClick={()=>setRevealed(r=>r+1)} style={{
+            marginTop:8,padding:'8px 20px',background:'var(--bg4)',border:'none',color:'var(--text)',
+            borderRadius:6,cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:12
+          }}>Reveal Next Step</button>
+        )}
+      </div>
+
+      <div style={{background:'var(--bg2)',border:'1px solid var(--bg4)',borderRadius:12,padding:'20px 24px'}}>
+        <div style={{fontSize:12,fontFamily:'var(--font-mono)',color:'var(--text-dim)',marginBottom:12}}>YOUR ANSWER</div>
+        <div style={{display:'flex',alignItems:'center',gap:12,flexWrap:'wrap'}}>
+          <MathEq size={18}>x =</MathEq>
+          <input type="number" value={userAnswer} onChange={e=>setUserAnswer(e.target.value)}
+            onKeyDown={e=>e.key==='Enter'&&check()}
+            style={{
+              width:100,padding:'10px 14px',background:'var(--bg3)',border:'1px solid var(--bg4)',
+              color:'var(--text-bright)',borderRadius:6,fontFamily:'var(--font-mono)',fontSize:18,
+              outline:'none',transition:'border-color .2s'
+            }}
+            onFocus={e=>e.target.style.borderColor='var(--cyan)'}
+            onBlur={e=>e.target.style.borderColor='var(--bg4)'}
+          />
+          <button onClick={check} style={{
+            padding:'10px 20px',background:'var(--cyan)',border:'none',color:'#000',
+            borderRadius:6,cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:13,fontWeight:500
+          }}>Check</button>
+          <button onClick={next} style={{
+            padding:'10px 20px',background:'transparent',border:'1px solid var(--bg4)',color:'var(--text-dim)',
+            borderRadius:6,cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:13
+          }}>Next</button>
+        </div>
+        {feedback&&(
+          <div style={{
+            marginTop:12,padding:'10px 16px',borderRadius:8,fontFamily:'var(--font-mono)',fontSize:14,
+            background:feedback==='correct'?'var(--green-dim)':'var(--rose-dim)',
+            color:feedback==='correct'?'var(--green)':'var(--rose)',
+            animation:feedback==='correct'?'correctPop .3s ease':'shake .3s ease'
+          }}>
+            {feedback==='correct'?'\u2713 Correct! x = '+p.answer:'\u2717 Not quite. Reveal the steps or try again.'}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   STEP 5: WORD PROBLEMS
+   ========================================================= */
+function WordProblems(){
+  const problems=[
+    {
+      story:'A movie ticket costs $x. If you buy 3 tickets and pay $6 in snacks, the total is $27. How much is one ticket?',
+      highlight:[{text:'3 tickets',color:'var(--cyan)'},{text:'$6 in snacks',color:'var(--amber)'},{text:'$27',color:'var(--teal)'}],
+      equation:'3x + 6 = 27',
+      equationParts:[
+        {display:'3',desc:'number of tickets',color:'var(--cyan)'},
+        {display:'x',desc:'price per ticket (unknown)',color:'var(--rose)'},
+        {display:'+',desc:'',color:'var(--text-dim)'},
+        {display:'6',desc:'snacks cost',color:'var(--amber)'},
+        {display:'=',desc:'',color:'var(--text-dim)'},
+        {display:'27',desc:'total',color:'var(--teal)'}
+      ],
+      answer:7,
+      solutionSteps:['3x + 6 = 27','3x + 6 - 6 = 27 - 6','3x = 21','x = 7']
+    },
+    {
+      story:'You have some stickers. After giving away 8, you have 15 left. How many did you start with?',
+      highlight:[{text:'some stickers',color:'var(--rose)'},{text:'giving away 8',color:'var(--amber)'},{text:'15 left',color:'var(--teal)'}],
+      equation:'x - 8 = 15',
+      equationParts:[
+        {display:'x',desc:'stickers you started with (unknown)',color:'var(--rose)'},
+        {display:'-',desc:'',color:'var(--text-dim)'},
+        {display:'8',desc:'gave away',color:'var(--amber)'},
+        {display:'=',desc:'',color:'var(--text-dim)'},
+        {display:'15',desc:'left over',color:'var(--teal)'}
+      ],
+      answer:23,
+      solutionSteps:['x - 8 = 15','x - 8 + 8 = 15 + 8','x = 23']
+    },
+    {
+      story:'A rope is cut into 4 equal pieces. Each piece is 9 meters long. What was the original length?',
+      highlight:[{text:'4 equal pieces',color:'var(--amber)'},{text:'9 meters',color:'var(--teal)'}],
+      equation:'x / 4 = 9',
+      equationParts:[
+        {display:'x',desc:'original rope length (unknown)',color:'var(--rose)'},
+        {display:'/',desc:'',color:'var(--text-dim)'},
+        {display:'4',desc:'number of pieces',color:'var(--amber)'},
+        {display:'=',desc:'',color:'var(--text-dim)'},
+        {display:'9',desc:'length of each piece',color:'var(--teal)'}
+      ],
+      answer:36,
+      solutionSteps:['x / 4 = 9','(x / 4) \u00d7 4 = 9 \u00d7 4','x = 36']
+    },
+  ];
+
+  const [pIdx,setPIdx]=useState(0);
+  const [phase,setPhase]=useState('read');
+  const [userAnswer,setUserAnswer]=useState('');
+  const [feedback,setFeedback]=useState(null);
+  const [revealedSolution,setRevealedSolution]=useState(0);
+  const p=problems[pIdx];
+
+  function reset(i){setPIdx(i);setPhase('read');setUserAnswer('');setFeedback(null);setRevealedSolution(0)}
+
+  function checkAnswer(){
+    if(parseFloat(userAnswer)===p.answer){setFeedback('correct')}
+    else setFeedback('incorrect');
+  }
+
+  return(
+    <div>
+      <div style={{fontSize:12,fontFamily:'var(--font-mono)',color:'var(--cyan)',letterSpacing:2,marginBottom:12}}>STEP 06</div>
+      <h2 style={{fontFamily:'var(--font-display)',fontSize:36,color:'var(--text-bright)',marginBottom:16}}>Word Problems</h2>
+      <p style={{fontSize:16,marginBottom:24,lineHeight:1.8}}>
+        The real power of equations: translating <strong style={{color:'var(--cyan)'}}>real situations</strong> into math you can solve.
+      </p>
+
+      <div style={{display:'flex',gap:8,marginBottom:24,flexWrap:'wrap'}}>
+        {problems.map((_,i)=>(
+          <button key={i} onClick={()=>reset(i)} style={{
+            padding:'8px 16px',borderRadius:6,cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:13,
+            background:i===pIdx?'var(--cyan)':'var(--bg2)',
+            color:i===pIdx?'#000':'var(--text-dim)',
+            border:i===pIdx?'none':'1px solid var(--bg4)',
+            transition:'all .2s'
+          }}>Problem {i+1}</button>
+        ))}
+      </div>
+
+      {/* Phase 1: Read the story */}
+      <div style={{background:'var(--bg2)',border:'1px solid var(--bg4)',borderRadius:12,padding:'24px',marginBottom:20}}>
+        <div style={{fontSize:12,fontFamily:'var(--font-mono)',color:'var(--amber)',marginBottom:12}}>THE STORY</div>
+        <p style={{fontSize:17,color:'var(--text-bright)',lineHeight:1.8}}>{p.story}</p>
+        {phase==='read'&&(
+          <div style={{marginTop:20}}>
+            <div style={{fontSize:13,fontFamily:'var(--font-mono)',color:'var(--text-dim)',marginBottom:10}}>Key information:</div>
+            <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:16}}>
+              {p.highlight.map((h,i)=>(
+                <span key={i} style={{
+                  padding:'4px 12px',borderRadius:20,fontSize:13,fontFamily:'var(--font-mono)',
+                  background:'var(--bg3)',border:`1px solid ${h.color}30`,color:h.color
+                }}>{h.text}</span>
+              ))}
+            </div>
+            <button onClick={()=>setPhase('equation')} style={{
+              padding:'10px 20px',background:'var(--cyan)',border:'none',color:'#000',
+              borderRadius:6,cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:13,fontWeight:500
+            }}>Build the Equation &rarr;</button>
+          </div>
+        )}
+      </div>
+
+      {/* Phase 2: See the equation breakdown */}
+      {(phase==='equation'||phase==='solve')&&(
+        <div style={{background:'var(--bg2)',border:'1px solid var(--bg4)',borderRadius:12,padding:'24px',marginBottom:20,animation:'fadeUp .4s ease'}}>
+          <div style={{fontSize:12,fontFamily:'var(--font-mono)',color:'var(--teal)',marginBottom:16}}>THE EQUATION</div>
+
+          {/* Big equation display */}
+          <div style={{display:'flex',gap:6,alignItems:'center',justifyContent:'center',marginBottom:20,flexWrap:'wrap'}}>
+            {p.equationParts.map((part,i)=>(
+              <div key={i} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:6}}>
+                <span style={{
+                  fontFamily:'var(--font-mono)',fontSize:28,fontWeight:500,color:part.color,
+                  padding:part.desc?'6px 12px':'6px 4px',
+                  background:part.desc?'var(--bg3)':'transparent',
+                  borderRadius:6,border:part.desc?`1px solid ${part.color}25`:'none',
+                  lineHeight:1
+                }}>{part.display}</span>
+                {part.desc&&(
+                  <span style={{fontSize:10,fontFamily:'var(--font-mono)',color:part.color,opacity:0.7,textAlign:'center',maxWidth:90}}>
+                    {part.desc}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Assembled equation */}
+          <div style={{
+            textAlign:'center',padding:'12px 16px',background:'var(--bg3)',borderRadius:8,
+            borderLeft:'3px solid var(--teal)',marginBottom:16
+          }}>
+            <span style={{fontSize:12,fontFamily:'var(--font-mono)',color:'var(--teal)',marginRight:12}}>READS AS:</span>
+            <MathEq size={20}>{p.equation}</MathEq>
+          </div>
+
+          {phase==='equation'&&(
+            <div style={{textAlign:'center'}}>
+              <button onClick={()=>setPhase('solve')} style={{
+                padding:'10px 20px',background:'var(--cyan)',border:'none',color:'#000',
+                borderRadius:6,cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:13,fontWeight:500
+              }}>Now Solve It &rarr;</button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Phase 3: Solve */}
+      {phase==='solve'&&(
+        <div style={{background:'var(--bg2)',border:'1px solid var(--bg4)',borderRadius:12,padding:'24px',animation:'fadeUp .4s ease'}}>
+          <div style={{fontSize:12,fontFamily:'var(--font-mono)',color:'var(--text-dim)',marginBottom:16}}>SOLVE FOR X</div>
+
+          <div style={{display:'flex',alignItems:'center',gap:12,flexWrap:'wrap',marginBottom:20}}>
+            <MathEq size={18}>x =</MathEq>
+            <input type="number" value={userAnswer} onChange={e=>{setUserAnswer(e.target.value);setFeedback(null)}}
+              onKeyDown={e=>e.key==='Enter'&&checkAnswer()}
+              placeholder="?"
+              style={{
+                width:100,padding:'10px 14px',background:'var(--bg3)',border:'1px solid var(--bg4)',
+                color:'var(--text-bright)',borderRadius:6,fontFamily:'var(--font-mono)',fontSize:18,
+                outline:'none',transition:'border-color .2s'
+              }}
+              onFocus={e=>e.target.style.borderColor='var(--cyan)'}
+              onBlur={e=>e.target.style.borderColor='var(--bg4)'}
+            />
+            <button onClick={checkAnswer} style={{
+              padding:'10px 20px',background:'var(--cyan)',border:'none',color:'#000',
+              borderRadius:6,cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:13,fontWeight:500
+            }}>Check</button>
+          </div>
+
+          {feedback==='correct'&&(
+            <div style={{
+              padding:'10px 16px',borderRadius:8,fontFamily:'var(--font-mono)',fontSize:14,
+              background:'var(--green-dim)',color:'var(--green)',animation:'correctPop .3s ease'
+            }}>{'\u2713'} Correct! x = {p.answer}</div>
+          )}
+          {feedback==='incorrect'&&(
+            <div>
+              <div style={{
+                padding:'10px 16px',borderRadius:8,fontFamily:'var(--font-mono)',fontSize:14,
+                background:'var(--rose-dim)',color:'var(--rose)',marginBottom:12,animation:'shake .3s ease'
+              }}>{'\u2717'} Not quite. Try working through the steps:</div>
+
+              {/* Show solution steps progressively */}
+              <div style={{background:'var(--bg3)',borderRadius:8,padding:'16px'}}>
+                {p.solutionSteps.map((s,i)=>(
+                  <div key={i} style={{
+                    fontFamily:'var(--font-mono)',fontSize:16,
+                    color:i===p.solutionSteps.length-1?'var(--teal)':'var(--text-bright)',
+                    marginBottom:8,padding:'6px 12px',
+                    opacity:i<=revealedSolution?1:0,
+                    transform:i<=revealedSolution?'translateX(0)':'translateX(-8px)',
+                    transition:'all .4s ease',
+                    borderLeft:i<=revealedSolution?('2px solid '+(i===p.solutionSteps.length-1?'var(--teal)':'var(--cyan)')):'2px solid transparent',
+                    fontWeight:i===p.solutionSteps.length-1?500:400
+                  }}>{s}</div>
+                ))}
+                {revealedSolution<p.solutionSteps.length-1&&(
+                  <button onClick={()=>setRevealedSolution(s=>s+1)} style={{
+                    padding:'6px 14px',background:'var(--bg4)',border:'none',color:'var(--text)',
+                    borderRadius:6,cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:11,marginTop:4
+                  }}>Show Next Step</button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* =========================================================
+   STEP 6: PRACTICE SANDBOX
+   ========================================================= */
+function PracticeSandbox(){
+  const [difficulty,setDifficulty]=useState(1); // 1=easy,2=medium,3=hard
+  const [problem,setProblem]=useState(null);
+  const [steps,setSteps]=useState([]);
+  const [currentInput,setCurrentInput]=useState('');
+  const [currentPhase,setCurrentPhase]=useState(0); // 0=not started, phases of solution
+  const [feedback,setFeedback]=useState(null);
+  const [score,setScore]=useState({correct:0,total:0});
+  const [showHint,setShowHint]=useState(false);
+
+  function generateProblem(){
+    setSteps([]);setCurrentInput('');setCurrentPhase(1);setFeedback(null);setShowHint(false);
+    let a,b,c,x,eq,solutionSteps;
+
+    if(difficulty===1){
+      // one-step: ax = b or x + b = c
+      const type=Math.random()<0.5?'mult':'add';
+      if(type==='mult'){
+        a=Math.floor(Math.random()*8)+2;
+        x=Math.floor(Math.random()*12)+1;
+        b=a*x;
+        eq=`${a}x = ${b}`;
+        solutionSteps=[
+          {prompt:'Divide both sides by '+a+'. What is '+b+' / '+a+'?',answer:x,result:`x = ${x}`}
+        ];
+      } else {
+        b=Math.floor(Math.random()*15)+1;
+        x=Math.floor(Math.random()*20)+1;
+        c=x+b;
+        eq=`x + ${b} = ${c}`;
+        solutionSteps=[
+          {prompt:'Subtract '+b+' from both sides. What is '+c+' - '+b+'?',answer:x,result:`x = ${x}`}
+        ];
+      }
+    } else if(difficulty===2){
+      // two-step: ax + b = c
+      a=Math.floor(Math.random()*6)+2;
+      x=Math.floor(Math.random()*10)+1;
+      b=Math.floor(Math.random()*12)+1;
+      c=a*x+b;
+      const sign=Math.random()<0.5;
+      if(sign){
+        eq=`${a}x + ${b} = ${c}`;
+        solutionSteps=[
+          {prompt:`Subtract ${b} from both sides. What is ${c} - ${b}?`,answer:c-b,result:`${a}x = ${c-b}`},
+          {prompt:`Divide both sides by ${a}. What is ${c-b} / ${a}?`,answer:x,result:`x = ${x}`}
+        ];
+      } else {
+        c=a*x-b;
+        if(c<0){c=a*x+b;eq=`${a}x + ${b} = ${c}`;
+          solutionSteps=[
+            {prompt:`Subtract ${b} from both sides. What is ${c} - ${b}?`,answer:c-b,result:`${a}x = ${c-b}`},
+            {prompt:`Divide both sides by ${a}. What is ${c-b} / ${a}?`,answer:x,result:`x = ${x}`}
+          ];
+        } else {
+          eq=`${a}x - ${b} = ${c}`;
+          solutionSteps=[
+            {prompt:`Add ${b} to both sides. What is ${c} + ${b}?`,answer:c+b,result:`${a}x = ${c+b}`},
+            {prompt:`Divide both sides by ${a}. What is ${c+b} / ${a}?`,answer:x,result:`x = ${x}`}
+          ];
+        }
+      }
+    } else {
+      // harder: ax + b = cx + d
+      a=Math.floor(Math.random()*5)+3;
+      let a2=Math.floor(Math.random()*4)+1;
+      if(a2>=a)a2=a-1;
+      x=Math.floor(Math.random()*8)+1;
+      b=Math.floor(Math.random()*10)+1;
+      const d=a*x+b-a2*x;
+      eq=a+'x + '+b+' = '+a2+'x + '+d;
+      const diff=a-a2;
+      const rhs=d-b;
+      solutionSteps=[
+        {prompt:'Subtract '+a2+'x from both sides. What is '+a+' - '+a2+'?',answer:diff,result:diff+'x + '+b+' = '+d},
+        {prompt:'Subtract '+b+' from both sides. What is '+d+' - '+b+'?',answer:rhs,result:diff+'x = '+rhs},
+        {prompt:'Divide both sides by '+diff+'. What is '+rhs+' / '+diff+'?',answer:x,result:'x = '+x}
+      ];
+    }
+
+    setProblem({eq,solutionSteps,answer:x});
+  }
+
+  function checkStep(){
+    if(!problem)return;
+    const phase=currentPhase;
+    const stepDef=problem.solutionSteps[phase-1];
+    if(!stepDef)return;
+    const val=parseFloat(currentInput);
+    if(val===stepDef.answer){
+      setSteps(s=>[...s,{text:stepDef.result,correct:true}]);
+      setFeedback(null);setCurrentInput('');setShowHint(false);
+      if(phase>=problem.solutionSteps.length){
+        // completed
+        setCurrentPhase(0);
+        setFeedback('solved');
+        setScore(s=>({correct:s.correct+1,total:s.total+1}));
+      } else {
+        setCurrentPhase(phase+1);
+      }
+    } else {
+      setFeedback('step-wrong');
+      setScore(s=>{
+        // only penalize once per problem
+        if(s.total===s.correct+s.total-s.total) return s;
+        return s;
+      });
+    }
+  }
+
+  function skip(){
+    if(!problem)return;
+    const stepDef=problem.solutionSteps[currentPhase-1];
+    if(!stepDef)return;
+    setSteps(s=>[...s,{text:stepDef.result,correct:false}]);
+    setCurrentInput('');setShowHint(false);
+    if(currentPhase>=problem.solutionSteps.length){
+      setCurrentPhase(0);
+      setFeedback('skipped');
+      setScore(s=>({...s,total:s.total+1}));
+    } else {
+      setCurrentPhase(currentPhase+1);
+    }
+  }
+
+  const diffLabels=['','Easy','Medium','Hard'];
+  const diffColors=['','var(--teal)','var(--amber)','var(--rose)'];
+
+  return(
+    <div>
+      <div style={{fontSize:12,fontFamily:'var(--font-mono)',color:'var(--cyan)',letterSpacing:2,marginBottom:12}}>STEP 07</div>
+      <h2 style={{fontFamily:'var(--font-display)',fontSize:36,color:'var(--text-bright)',marginBottom:16}}>Practice Sandbox</h2>
+      <p style={{fontSize:16,marginBottom:24,lineHeight:1.8}}>
+        Generate random equations and solve them step by step. Choose your difficulty.
+      </p>
+
+      {/* Difficulty + Score */}
+      <div style={{display:'flex',gap:16,marginBottom:24,flexWrap:'wrap',alignItems:'center'}}>
+        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+          <span style={{fontSize:12,fontFamily:'var(--font-mono)',color:'var(--text-dim)'}}>DIFFICULTY</span>
+          {[1,2,3].map(d=>(
+            <button key={d} onClick={()=>setDifficulty(d)} style={{
+              padding:'6px 14px',borderRadius:6,cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:12,
+              background:d===difficulty?diffColors[d]+'20':'var(--bg2)',
+              color:d===difficulty?diffColors[d]:'var(--text-dim)',
+              border:`1px solid ${d===difficulty?diffColors[d]+'40':'var(--bg4)'}`,
+              transition:'all .2s'
+            }}>{diffLabels[d]}</button>
+          ))}
+        </div>
+        <div style={{marginLeft:'auto',fontFamily:'var(--font-mono)',fontSize:13,color:'var(--text-dim)'}}>
+          Score: <span style={{color:'var(--teal)'}}>{score.correct}</span> / {score.total}
+        </div>
+      </div>
+
+      {/* Generate button */}
+      <div style={{marginBottom:24,textAlign:'center'}}>
+        <button onClick={generateProblem} style={{
+          padding:'14px 36px',background:'var(--cyan)',border:'none',color:'#000',
+          borderRadius:8,cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:14,fontWeight:500,
+          transition:'all .2s',boxShadow:'0 4px 20px var(--cyan-dim)'
+        }}
+        onMouseEnter={e=>{e.target.style.transform='translateY(-1px)'}}
+        onMouseLeave={e=>{e.target.style.transform='translateY(0)'}}
+        >{problem?'New Equation':'Generate Equation'}</button>
+      </div>
+
+      {/* Problem display */}
+      {problem&&(
+        <div style={{background:'var(--bg2)',border:'1px solid var(--bg4)',borderRadius:12,padding:'28px 24px',animation:'scaleIn .3s ease'}}>
+          <div style={{textAlign:'center',marginBottom:24}}>
+            <div style={{fontSize:12,fontFamily:'var(--font-mono)',color:'var(--text-dim)',marginBottom:8}}>SOLVE</div>
+            <MathEq size={28} glow>{problem.eq}</MathEq>
+          </div>
+
+          {/* Completed steps */}
+          {steps.map((s,i)=>(
+            <div key={i} style={{
+              padding:'10px 16px',marginBottom:8,borderRadius:8,
+              background:'var(--bg3)',borderLeft:`3px solid ${s.correct?'var(--teal)':'var(--amber)'}`,
+              fontFamily:'var(--font-mono)',fontSize:16,color:'var(--text-bright)',
+              animation:'slideRight .3s ease'
+            }}>
+              {s.correct?'\u2713':'~'} {s.text}
+            </div>
+          ))}
+
+          {/* Current step input */}
+          {currentPhase>0&&currentPhase<=problem.solutionSteps.length&&(
+            <div style={{marginTop:16}}>
+              <div style={{fontSize:14,color:'var(--text)',marginBottom:12,lineHeight:1.6}}>
+                {problem.solutionSteps[currentPhase-1].prompt}
+              </div>
+              <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
+                <input type="number" value={currentInput} onChange={e=>setCurrentInput(e.target.value)}
+                  onKeyDown={e=>e.key==='Enter'&&checkStep()}
+                  placeholder="?"
+                  style={{
+                    width:100,padding:'10px 14px',background:'var(--bg3)',border:'1px solid var(--bg4)',
+                    color:'var(--text-bright)',borderRadius:6,fontFamily:'var(--font-mono)',fontSize:18,
+                    outline:'none',transition:'border-color .2s'
+                  }}
+                  onFocus={e=>e.target.style.borderColor='var(--cyan)'}
+                  onBlur={e=>e.target.style.borderColor='var(--bg4)'}
+                  autoFocus
+                />
+                <button onClick={checkStep} style={{
+                  padding:'10px 20px',background:'var(--cyan)',border:'none',color:'#000',
+                  borderRadius:6,cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:13,fontWeight:500
+                }}>Submit</button>
+                <button onClick={()=>setShowHint(!showHint)} style={{
+                  padding:'10px 16px',background:'transparent',border:'1px solid var(--bg4)',color:'var(--text-dim)',
+                  borderRadius:6,cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:12
+                }}>Hint</button>
+                <button onClick={skip} style={{
+                  padding:'10px 16px',background:'transparent',border:'1px solid var(--bg4)',color:'var(--text-dim)',
+                  borderRadius:6,cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:12
+                }}>Skip</button>
+              </div>
+              {showHint&&(
+                <div style={{marginTop:8,fontSize:13,fontFamily:'var(--font-mono)',color:'var(--amber)',animation:'fadeIn .3s ease'}}>
+                  The answer is {problem.solutionSteps[currentPhase-1].answer}
+                </div>
+              )}
+              {feedback==='step-wrong'&&(
+                <div style={{marginTop:8,fontSize:13,fontFamily:'var(--font-mono)',color:'var(--rose)',animation:'shake .3s ease'}}>
+                  Not quite. Try again or use the hint.
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Solved */}
+          {(feedback==='solved'||feedback==='skipped')&&(
+            <div style={{
+              marginTop:16,padding:'14px 20px',borderRadius:8,textAlign:'center',
+              background:feedback==='solved'?'var(--green-dim)':'var(--amber-dim)',
+              color:feedback==='solved'?'var(--green)':'var(--amber)',
+              fontFamily:'var(--font-mono)',fontSize:15,
+              animation:'correctPop .3s ease'
+            }}>
+              {feedback==='solved'
+                ? `\u2713 Solved! x = ${problem.answer}`
+                : `Answer was x = ${problem.answer}. Try the next one!`
+              }
+            </div>
+          )}
+        </div>
+      )}
+
+      {!problem&&(
+        <div style={{textAlign:'center',padding:'60px 20px',color:'var(--text-dim)',fontFamily:'var(--font-mono)',fontSize:14}}>
+          Click "Generate Equation" to start practicing
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* =========================================================
+   COMPLETION STEP (shown after last step)
+   ========================================================= */
+
+/* =========================================================
+   MAIN APP
+   ========================================================= */
+function App(){
+  const [step,setStep]=useState(0);
+  const totalSteps=7;
+
+  function goTo(s){setStep(Math.max(0,Math.min(totalSteps-1,s)))}
+  function next(){goTo(step+1)}
+  function prev(){goTo(step-1)}
+
+  // save visited to localStorage on step 6 (practice) or completion
+  useEffect(()=>{
+    if(step>=totalSteps-1){
+      try{
+        const progress=JSON.parse(localStorage.getItem('math-progress')||'[]');
+        if(!progress.includes(1)){progress.push(1);localStorage.setItem('math-progress',JSON.stringify(progress));}
+      }catch(e){}
+    }
+  },[step]);
+
+  return(
+    <div style={{position:'relative'}}>
+      <ProgressBar current={step} total={totalSteps}/>
+      <StepDots current={step} total={totalSteps} onNavigate={goTo}/>
+      <BackLink/>
+
+      {step===0&&<LandingStep onNext={next}/>}
+
+      {step>0&&step<totalSteps&&(
+        <StepWrapper stepKey={step}>
+          {step===1&&<WhatIsEquation/>}
+          {step===2&&<BalancePrinciple/>}
+          {step===3&&<OneStepEquations/>}
+          {step===4&&<TwoStepEquations/>}
+          {step===5&&<WordProblems/>}
+          {step===6&&<PracticeSandbox/>}
+
+          <NavButtons current={step} total={totalSteps} onPrev={prev} onNext={next}
+            nextLabel={step===totalSteps-2?'Finish':undefined}
+          />
+          {step===totalSteps-1&&(
+            <div style={{display:'flex',justifyContent:'flex-end',marginTop:32,padding:'16px 0',borderTop:'1px solid var(--bg4)'}}>
+              <a href="02-inequalities.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--cyan)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>Next Lesson: Inequalities &rarr;</a>
+            </div>
+          )}
+        </StepWrapper>
+      )}
+
+      {/* background ambient */}
+      <div style={{
+        position:'fixed',top:0,left:0,right:0,bottom:0,zIndex:-1,pointerEvents:'none',
+        background:`
+          radial-gradient(ellipse 60% 50% at 20% 20%, rgba(99,102,241,0.06), transparent),
+          radial-gradient(ellipse 50% 40% at 80% 80%, rgba(34,211,238,0.04), transparent),
+          var(--bg)
+        `
+      }}/>
+
+      {/* subtle noise overlay */}
+      <div style={{
+        position:'fixed',top:0,left:0,right:0,bottom:0,zIndex:-1,pointerEvents:'none',
+        opacity:0.03,
+        backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+        backgroundSize:'128px 128px'
+      }}/>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</head>
+<body>
+<div id="root"></div>
+</body>
+</html>

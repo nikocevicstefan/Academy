@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Polynomials & Factoring — Math Foundations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-deep: #06060b;
+    --bg-primary: #0a0a12;
+    --bg-card: rgba(255, 255, 255, 0.03);
+    --bg-card-hover: rgba(255, 255, 255, 0.06);
+    --border-subtle: rgba(255, 255, 255, 0.06);
+    --border-hover: rgba(255, 255, 255, 0.12);
+    --text-primary: #e8e6f0;
+    --text-secondary: rgba(232, 230, 240, 0.55);
+    --text-tertiary: rgba(232, 230, 240, 0.3);
+    --font-display: 'Instrument Serif', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --accent: #e2b84a;
+    --accent-bright: #f5cc5a;
+    --accent-dim: #b8943a;
+    --accent-glow: rgba(226, 184, 74, 0.15);
+    --term-x2: #e2b84a;
+    --term-x: #5bbef5;
+    --term-const: #e87ce8;
+    --term-x3: #5be8a0;
+    --term-x4: #f58a5b;
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  }
+
+  html {
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    min-height: 100vh;
+    overflow-x: hidden;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% -10%, rgba(226, 184, 74, 0.05) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 50%, rgba(226, 184, 74, 0.03) 0%, transparent 50%),
+      var(--bg-deep);
+  }
+
+  #root { min-height: 100vh; }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.3;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 256px;
+  }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.14); }
+
+  ::selection {
+    background: rgba(226, 184, 74, 0.3);
+    color: #fff;
+  }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulseGlow {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  @keyframes termAssemble {
+    0% { opacity: 0; transform: translateY(30px) scale(0.8) rotate(-5deg); }
+    60% { opacity: 1; transform: translateY(-4px) scale(1.02) rotate(1deg); }
+    100% { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); }
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  @keyframes gridCellFill {
+    from { opacity: 0; transform: scale(0.85); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes factorPull {
+    0% { opacity: 1; transform: translateX(0); }
+    50% { transform: translateX(-20px); opacity: 0.6; }
+    100% { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes successPop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+  }
+
+  .drop-zone { transition: all 0.2s ease; }
+  .drop-zone.drag-over {
+    background: var(--accent-glow) !important;
+    border-color: var(--accent) !important;
+    transform: scale(1.05);
+  }
+
+  button { cursor: pointer; }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback, useMemo, Fragment } = React;
+
+/* ====================================================================
+   CONSTANTS & HELPERS
+   ==================================================================== */
+const TOTAL_STEPS = 7;
+const STEP_TITLES = [
+  'Landing', 'What Are Polynomials?', 'Adding & Subtracting',
+  'Multiplying (Area Model)', 'Factoring Basics', 'Special Patterns', 'Practice'
+];
+
+const TERM_COLORS = {
+  'x^4': '#f58a5b',
+  'x^3': '#5be8a0',
+  'x^2': '#e2b84a',
+  'x^1': '#5bbef5',
+  'x^0': '#e87ce8',
+};
+
+function getTermColor(degree) {
+  return TERM_COLORS[`x^${degree}`] || '#e8e6f0';
+}
+
+function termToString(coeff, variable, degree) {
+  if (degree === 0) return `${coeff}`;
+  const c = coeff === 1 ? '' : coeff === -1 ? '-' : `${coeff}`;
+  const v = variable || 'x';
+  if (degree === 1) return `${c}${v}`;
+  return `${c}${v}^${degree}`;
+}
+
+/* ====================================================================
+   PROGRESS BAR
+   ==================================================================== */
+function ProgressBar({ step, totalSteps }) {
+  return (
+    <div style={{
+      position: 'sticky', top: 0, zIndex: 100,
+      background: 'rgba(6,6,11,0.85)', backdropFilter: 'blur(16px)',
+      borderBottom: '1px solid var(--border-subtle)',
+      padding: '12px 24px',
+    }}>
+      <div style={{
+        maxWidth: 900, margin: '0 auto',
+        display: 'flex', alignItems: 'center', gap: 16,
+      }}>
+        <a href="index.html" style={{
+          fontFamily: 'var(--font-mono)', fontSize: 11,
+          letterSpacing: '0.08em', textTransform: 'uppercase',
+          color: 'var(--text-tertiary)', textDecoration: 'none',
+          transition: 'color 0.3s',
+          whiteSpace: 'nowrap',
+        }}
+        onMouseEnter={e => e.target.style.color = 'var(--accent)'}
+        onMouseLeave={e => e.target.style.color = 'var(--text-tertiary)'}
+        >Back to Lessons</a>
+
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 4 }}>
+          {Array.from({ length: totalSteps }, (_, i) => (
+            <div key={i} style={{
+              flex: 1, height: 3, borderRadius: 2,
+              background: i < step ? 'var(--accent)' : i === step ? 'rgba(226,184,74,0.4)' : 'rgba(255,255,255,0.06)',
+              transition: 'background 0.5s var(--ease-out-expo)',
+            }} />
+          ))}
+        </div>
+
+        <span style={{
+          fontFamily: 'var(--font-mono)', fontSize: 11,
+          color: 'var(--text-tertiary)', whiteSpace: 'nowrap',
+        }}>{step + 1}/{totalSteps}</span>
+      </div>
+    </div>
+  );
+}
+
+/* ====================================================================
+   NAVIGATION BUTTONS
+   ==================================================================== */
+function NavButtons({ step, setStep, canProceed = true }) {
+  return (
+    <div style={{
+      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+      marginTop: 48, gap: 16,
+    }}>
+      {step > 0 ? (
+        <button onClick={() => setStep(step - 1)} style={{
+          fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 400,
+          color: 'var(--text-secondary)',
+          background: 'var(--bg-card)', border: '1px solid var(--border-subtle)',
+          padding: '12px 28px', borderRadius: 10,
+          transition: 'all 0.3s ease',
+        }}
+        onMouseEnter={e => { e.target.style.borderColor = 'var(--border-hover)'; e.target.style.color = 'var(--text-primary)'; }}
+        onMouseLeave={e => { e.target.style.borderColor = 'var(--border-subtle)'; e.target.style.color = 'var(--text-secondary)'; }}
+        >Previous</button>
+      ) : <div />}
+
+      {step < TOTAL_STEPS - 1 ? (
+        <button onClick={() => canProceed && setStep(step + 1)} style={{
+          fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 500,
+          color: canProceed ? '#0a0a12' : 'var(--text-tertiary)',
+          background: canProceed ? 'var(--accent)' : 'rgba(255,255,255,0.05)',
+          border: 'none',
+          padding: '12px 32px', borderRadius: 10,
+          transition: 'all 0.3s ease',
+          opacity: canProceed ? 1 : 0.5,
+        }}
+        onMouseEnter={e => { if (canProceed) e.target.style.background = 'var(--accent-bright)'; }}
+        onMouseLeave={e => { if (canProceed) e.target.style.background = 'var(--accent)'; }}
+        >Next</button>
+      ) : null}
+    </div>
+  );
+}
+
+/* ====================================================================
+   STEP 0: LANDING
+   ==================================================================== */
+function StepLanding({ setStep }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setTimeout(() => setMounted(true), 100); }, []);
+
+  const terms = [
+    { text: '3x\u00b2', color: 'var(--term-x2)', delay: 0.3 },
+    { text: '+', color: 'var(--text-tertiary)', delay: 0.5 },
+    { text: '5x', color: 'var(--term-x)', delay: 0.7 },
+    { text: '-', color: 'var(--text-tertiary)', delay: 0.9 },
+    { text: '2', color: 'var(--term-const)', delay: 1.1 },
+  ];
+
+  return (
+    <div style={{
+      minHeight: '80vh', display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center', textAlign: 'center',
+      padding: '40px 20px',
+    }}>
+      {/* Animated polynomial */}
+      <div style={{
+        display: 'flex', alignItems: 'baseline', gap: 12,
+        marginBottom: 48, fontFamily: 'var(--font-display)', fontSize: 'clamp(36px, 7vw, 64px)',
+      }}>
+        {terms.map((t, i) => (
+          <span key={i} style={{
+            color: t.color,
+            opacity: mounted ? 1 : 0,
+            transform: mounted ? 'translateY(0) scale(1) rotate(0deg)' : 'translateY(30px) scale(0.8) rotate(-5deg)',
+            transition: `all 0.8s var(--ease-out-expo) ${t.delay}s`,
+            display: 'inline-block',
+            textShadow: `0 0 30px ${t.color}40`,
+          }}>{t.text}</span>
+        ))}
+      </div>
+
+      {/* Title */}
+      <h1 style={{
+        fontFamily: 'var(--font-display)', fontWeight: 400,
+        fontSize: 'clamp(40px, 7vw, 72px)', lineHeight: 1.05,
+        marginBottom: 20,
+        opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(24px)',
+        transition: 'all 1s var(--ease-out-expo) 0.5s',
+      }}>
+        <span style={{ color: 'var(--text-primary)' }}>Polynomials</span>
+        <br />
+        <span style={{
+          fontStyle: 'italic',
+          background: 'linear-gradient(135deg, var(--accent), var(--accent-bright))',
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+        }}>&amp; Factoring</span>
+      </h1>
+
+      <p style={{
+        fontFamily: 'var(--font-body)', fontSize: 'clamp(15px, 2vw, 18px)',
+        fontWeight: 300, color: 'var(--text-secondary)', maxWidth: 440,
+        lineHeight: 1.7, marginBottom: 48,
+        opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(24px)',
+        transition: 'all 1s var(--ease-out-expo) 0.7s',
+      }}>
+        Build, multiply, and deconstruct polynomial expressions.
+        Master the area model and factor like an architect.
+      </p>
+
+      <button onClick={() => setStep(1)} style={{
+        fontFamily: 'var(--font-body)', fontSize: 16, fontWeight: 500,
+        color: '#0a0a12', background: 'var(--accent)', border: 'none',
+        padding: '16px 48px', borderRadius: 12,
+        opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(24px)',
+        transition: 'all 0.8s var(--ease-out-expo) 0.9s',
+        boxShadow: '0 4px 24px rgba(226,184,74,0.25)',
+      }}
+      onMouseEnter={e => { e.target.style.background = 'var(--accent-bright)'; e.target.style.transform = 'translateY(-2px)'; e.target.style.boxShadow = '0 8px 32px rgba(226,184,74,0.35)'; }}
+      onMouseLeave={e => { e.target.style.background = 'var(--accent)'; e.target.style.transform = 'translateY(0)'; e.target.style.boxShadow = '0 4px 24px rgba(226,184,74,0.25)'; }}
+      >Begin Lesson</button>
+    </div>
+  );
+}
+
+/* ====================================================================
+   STEP 1: WHAT ARE POLYNOMIALS?
+   ==================================================================== */
+function StepWhatAre({ step, setStep }) {
+  const [showBreakdown, setShowBreakdown] = useState(false);
+  const [dragState, setDragState] = useState({ dragging: null, placed: {} });
+  const [showExamples, setShowExamples] = useState(false);
+
+  useEffect(() => {
+    setTimeout(() => setShowBreakdown(true), 600);
+    setTimeout(() => setShowExamples(true), 1200);
+  }, []);
+
+  const polyParts = [
+    { text: '3', label: 'coefficient', color: 'var(--accent)', x: 0 },
+    { text: 'x', label: 'variable', color: 'var(--term-x)', x: 1 },
+    { text: '\u00b2', label: 'exponent (degree)', color: '#5be8a0', x: 2 },
+  ];
+
+  const labels = ['coefficient', 'variable', 'exponent (degree)'];
+  const allPlaced = labels.every(l => Object.values(dragState.placed).includes(l));
+
+  const handleDragStart = (label) => {
+    setDragState(prev => ({ ...prev, dragging: label }));
+  };
+
+  const handleDrop = (targetIdx) => {
+    if (!dragState.dragging) return;
+    const correctLabel = polyParts[targetIdx].label;
+    if (dragState.dragging === correctLabel) {
+      setDragState(prev => ({
+        dragging: null,
+        placed: { ...prev.placed, [targetIdx]: correctLabel }
+      }));
+    } else {
+      setDragState(prev => ({ ...prev, dragging: null }));
+    }
+  };
+
+  const examples = [
+    { name: 'Monomial', expr: '7x\u00b3', terms: 1, desc: 'One term' },
+    { name: 'Binomial', expr: 'x\u00b2 - 4', terms: 2, desc: 'Two terms' },
+    { name: 'Trinomial', expr: '2x\u00b2 + 3x - 1', terms: 3, desc: 'Three terms' },
+  ];
+
+  return (
+    <div style={{ animation: 'fadeInUp 0.6s var(--ease-out-expo)' }}>
+      <h2 style={{
+        fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 5vw, 40px)',
+        fontWeight: 400, marginBottom: 12,
+      }}>
+        What Are <span style={{ fontStyle: 'italic', color: 'var(--accent)' }}>Polynomials</span>?
+      </h2>
+      <p style={{
+        fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 300,
+        color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 36, maxWidth: 600,
+      }}>
+        A polynomial is an expression made up of <strong style={{ color: 'var(--text-primary)', fontWeight: 500 }}>terms</strong> that
+        are added or subtracted. Each term has a coefficient, a variable, and an exponent.
+      </p>
+
+      {/* Breakdown visual */}
+      <div style={{
+        background: 'var(--bg-card)', border: '1px solid var(--border-subtle)',
+        borderRadius: 16, padding: 'clamp(24px, 4vw, 40px)', marginBottom: 32,
+        opacity: showBreakdown ? 1 : 0, transform: showBreakdown ? 'translateY(0)' : 'translateY(16px)',
+        transition: 'all 0.6s var(--ease-out-expo)',
+      }}>
+        <div style={{
+          fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-tertiary)',
+          textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 20,
+        }}>Anatomy of a term</div>
+
+        {/* Large term display */}
+        <div style={{
+          display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+          gap: 4, marginBottom: 32, fontSize: 'clamp(48px, 10vw, 80px)',
+          fontFamily: 'var(--font-display)',
+        }}>
+          {polyParts.map((p, i) => (
+            <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <span style={{
+                color: p.color, lineHeight: 1,
+                textShadow: `0 0 30px ${p.color}30`,
+              }}>{p.text}</span>
+              {/* Drop zone */}
+              <div
+                className="drop-zone"
+                onDragOver={e => { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }}
+                onDragLeave={e => e.currentTarget.classList.remove('drag-over')}
+                onDrop={e => { e.preventDefault(); e.currentTarget.classList.remove('drag-over'); handleDrop(i); }}
+                style={{
+                  marginTop: 12, padding: '6px 14px', borderRadius: 8, minWidth: 100, textAlign: 'center',
+                  fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.04em',
+                  border: dragState.placed[i] ? `1px solid ${p.color}50` : '1px dashed var(--border-hover)',
+                  background: dragState.placed[i] ? `${p.color}15` : 'transparent',
+                  color: dragState.placed[i] ? p.color : 'var(--text-tertiary)',
+                }}
+              >
+                {dragState.placed[i] || '?'}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Draggable labels */}
+        <div style={{
+          display: 'flex', justifyContent: 'center', gap: 12, flexWrap: 'wrap',
+        }}>
+          {labels.filter(l => !Object.values(dragState.placed).includes(l)).map(l => (
+            <div key={l} draggable
+              onDragStart={() => handleDragStart(l)}
+              style={{
+                padding: '8px 16px', borderRadius: 8,
+                background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-subtle)',
+                fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-secondary)',
+                cursor: 'grab', userSelect: 'none',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={e => { e.target.style.borderColor = 'var(--accent)'; e.target.style.color = 'var(--accent)'; }}
+              onMouseLeave={e => { e.target.style.borderColor = 'var(--border-subtle)'; e.target.style.color = 'var(--text-secondary)'; }}
+            >{l}</div>
+          ))}
+        </div>
+        {allPlaced && (
+          <div style={{
+            marginTop: 20, textAlign: 'center', color: '#5be8a0',
+            fontFamily: 'var(--font-mono)', fontSize: 13,
+            animation: 'fadeIn 0.4s ease',
+          }}>Correct! Each part has a role in defining the term.</div>
+        )}
+      </div>
+
+      {/* The "degree" concept */}
+      <div style={{
+        background: 'var(--bg-card)', border: '1px solid var(--border-subtle)',
+        borderRadius: 16, padding: 'clamp(20px, 3vw, 32px)', marginBottom: 32,
+        opacity: showBreakdown ? 1 : 0, transition: 'all 0.6s var(--ease-out-expo) 0.2s',
+      }}>
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+          The <strong style={{ color: 'var(--accent)', fontWeight: 500 }}>degree</strong> of a polynomial is the highest exponent.
+          For example, <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--term-x2)' }}>3x&#178; + 5x - 2</span> has degree <strong style={{ color: 'var(--text-primary)' }}>2</strong> (a quadratic).
+        </p>
+      </div>
+
+      {/* Examples */}
+      {showExamples && (
+        <div style={{
+          display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gap: 16, animation: 'fadeInUp 0.6s var(--ease-out-expo)',
+        }}>
+          {examples.map((ex, i) => (
+            <div key={i} style={{
+              background: 'var(--bg-card)', border: '1px solid var(--border-subtle)',
+              borderRadius: 14, padding: '20px 24px', textAlign: 'center',
+            }}>
+              <div style={{
+                fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent)',
+                textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8,
+              }}>{ex.name}</div>
+              <div style={{
+                fontFamily: 'var(--font-display)', fontSize: 24, color: 'var(--text-primary)',
+                marginBottom: 8,
+              }}>{ex.expr}</div>
+              <div style={{
+                fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--text-tertiary)',
+              }}>{ex.desc}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <NavButtons step={step} setStep={setStep} />
+    </div>
+  );
+}
+
+/* ====================================================================
+   STEP 2: ADDING & SUBTRACTING
+   ==================================================================== */
+function StepAddSubtract({ step, setStep }) {
+  const [phase, setPhase] = useState(0); // 0=show, 1=interactive
+  const [combined, setCombined] = useState({});
+  const [dragTerm, setDragTerm] = useState(null);
+
+  const poly1 = [
+    { id: 'a1', coeff: 3, deg: 2, text: '3x\u00b2' },
+    { id: 'a2', coeff: 5, deg: 1, text: '5x' },
+    { id: 'a3', coeff: -2, deg: 0, text: '-2' },
+  ];
+  const poly2 = [
+    { id: 'b1', coeff: 1, deg: 2, text: 'x\u00b2' },
+    { id: 'b2', coeff: -3, deg: 1, text: '-3x' },
+    { id: 'b3', coeff: 7, deg: 0, text: '7' },
+  ];
+
+  const buckets = [
+    { deg: 2, label: 'x\u00b2 terms', result: '4x\u00b2', ids: ['a1','b1'] },
+    { deg: 1, label: 'x terms', result: '2x', ids: ['a2','b2'] },
+    { deg: 0, label: 'constants', result: '5', ids: ['a3','b3'] },
+  ];
+
+  const allCombined = buckets.every(b => combined[b.deg] && combined[b.deg].length === 2);
+
+  const handleDrop2 = (deg) => {
+    if (!dragTerm) return;
+    if (dragTerm.deg !== deg) { setDragTerm(null); return; }
+    setCombined(prev => {
+      const cur = prev[deg] || [];
+      if (cur.includes(dragTerm.id)) return prev;
+      return { ...prev, [deg]: [...cur, dragTerm.id] };
+    });
+    setDragTerm(null);
+  };
+
+  const placedIds = Object.values(combined).flat();
+
+  return (
+    <div style={{ animation: 'fadeInUp 0.6s var(--ease-out-expo)' }}>
+      <h2 style={{
+        fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 5vw, 40px)',
+        fontWeight: 400, marginBottom: 12,
+      }}>
+        Adding &amp; <span style={{ fontStyle: 'italic', color: 'var(--accent)' }}>Subtracting</span>
+      </h2>
+      <p style={{
+        fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 300,
+        color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 12, maxWidth: 600,
+      }}>
+        To add polynomials, <strong style={{ color: 'var(--text-primary)', fontWeight: 500 }}>combine like terms</strong> --
+        terms with the same variable and degree. Drag each term to its matching group.
+      </p>
+
+      {/* Problem display */}
+      <div style={{
+        background: 'var(--bg-card)', border: '1px solid var(--border-subtle)',
+        borderRadius: 16, padding: 'clamp(20px, 3vw, 32px)', marginBottom: 24,
+        textAlign: 'center',
+      }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Add these polynomials</div>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(20px, 4vw, 28px)', marginBottom: 8 }}>
+          (<span style={{ color: getTermColor(2) }}>3x&#178;</span> + <span style={{ color: getTermColor(1) }}>5x</span> - <span style={{ color: getTermColor(0) }}>2</span>)
+          {' '}<span style={{ color: 'var(--text-tertiary)' }}>+</span>{' '}
+          (<span style={{ color: getTermColor(2) }}>x&#178;</span> - <span style={{ color: getTermColor(1) }}>3x</span> + <span style={{ color: getTermColor(0) }}>7</span>)
+        </div>
+      </div>
+
+      {/* Draggable terms */}
+      <div style={{
+        display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginBottom: 24,
+      }}>
+        {[...poly1, ...poly2].filter(t => !placedIds.includes(t.id)).map(t => (
+          <div key={t.id} draggable
+            onDragStart={() => setDragTerm(t)}
+            style={{
+              padding: '10px 18px', borderRadius: 10,
+              background: `${getTermColor(t.deg)}12`,
+              border: `1px solid ${getTermColor(t.deg)}30`,
+              color: getTermColor(t.deg),
+              fontFamily: 'var(--font-display)', fontSize: 20,
+              cursor: 'grab', userSelect: 'none',
+            }}
+          >{t.text}</div>
+        ))}
+      </div>
+
+      {/* Drop buckets */}
+      <div style={{
+        display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+        gap: 16, marginBottom: 24,
+      }}>
+        {buckets.map(b => {
+          const items = combined[b.deg] || [];
+          const full = items.length === 2;
+          return (
+            <div key={b.deg}
+              className="drop-zone"
+              onDragOver={e => { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }}
+              onDragLeave={e => e.currentTarget.classList.remove('drag-over')}
+              onDrop={e => { e.preventDefault(); e.currentTarget.classList.remove('drag-over'); handleDrop2(b.deg); }}
+              style={{
+                padding: 20, borderRadius: 14, textAlign: 'center',
+                background: full ? `${getTermColor(b.deg)}08` : 'var(--bg-card)',
+                border: `1px ${full ? 'solid' : 'dashed'} ${full ? getTermColor(b.deg) + '40' : 'var(--border-subtle)'}`,
+                minHeight: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              <div style={{
+                fontFamily: 'var(--font-mono)', fontSize: 11, color: getTermColor(b.deg),
+                textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, opacity: 0.7,
+              }}>{b.label}</div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+                {items.map(id => {
+                  const t = [...poly1, ...poly2].find(t => t.id === id);
+                  return (
+                    <span key={id} style={{
+                      padding: '6px 12px', borderRadius: 8,
+                      background: `${getTermColor(b.deg)}15`,
+                      color: getTermColor(b.deg),
+                      fontFamily: 'var(--font-display)', fontSize: 18,
+                    }}>{t.text}</span>
+                  );
+                })}
+              </div>
+              {full && (
+                <div style={{
+                  marginTop: 12, fontFamily: 'var(--font-display)', fontSize: 22,
+                  color: getTermColor(b.deg), animation: 'fadeIn 0.3s ease',
+                }}>= {b.result}</div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {allCombined && (
+        <div style={{
+          textAlign: 'center', padding: 24, background: 'var(--bg-card)',
+          border: '1px solid rgba(91,232,160,0.2)', borderRadius: 14,
+          animation: 'fadeInUp 0.4s var(--ease-out-expo)',
+        }}>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 28, color: '#5be8a0', marginBottom: 8 }}>
+            = 4x&#178; + 2x + 5
+          </div>
+          <div style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-secondary)' }}>
+            Like terms combined. The result is a trinomial of degree 2.
+          </div>
+        </div>
+      )}
+
+      <NavButtons step={step} setStep={setStep} />
+    </div>
+  );
+}
+
+/* ====================================================================
+   STEP 3: MULTIPLYING POLYNOMIALS — AREA MODEL (star feature)
+   ==================================================================== */
+function StepMultiply({ step, setStep }) {
+  const [mode, setMode] = useState('demo'); // demo | interactive
+  const [demoPhase, setDemoPhase] = useState(0);
+  const [userAnswers, setUserAnswers] = useState({});
+  const [showFOIL, setShowFOIL] = useState(false);
+
+  // Demo: (2x + 3)(x + 4)
+  const demoTop = [{ text: 'x', coeff: 1, deg: 1 }, { text: '4', coeff: 4, deg: 0 }];
+  const demoLeft = [{ text: '2x', coeff: 2, deg: 1 }, { text: '3', coeff: 3, deg: 0 }];
+  const demoCells = [
+    [{ text: '2x\u00b2', coeff: 2, deg: 2 }, { text: '8x', coeff: 8, deg: 1 }],
+    [{ text: '3x', coeff: 3, deg: 1 }, { text: '12', coeff: 12, deg: 0 }],
+  ];
+
+  useEffect(() => {
+    if (mode !== 'demo') return;
+    const timers = [
+      setTimeout(() => setDemoPhase(1), 600),
+      setTimeout(() => setDemoPhase(2), 1200),
+      setTimeout(() => setDemoPhase(3), 1800),
+      setTimeout(() => setDemoPhase(4), 2400),
+      setTimeout(() => setDemoPhase(5), 3200),
+    ];
+    return () => timers.forEach(clearTimeout);
+  }, [mode]);
+
+  // Interactive: (x + 5)(x - 2)
+  const intTop = [{ text: 'x', id: 't0' }, { text: '-2', id: 't1' }];
+  const intLeft = [{ text: 'x', id: 'l0' }, { text: '5', id: 'l1' }];
+  const intCorrect = {
+    '0-0': 'x\u00b2', '0-1': '-2x',
+    '1-0': '5x', '1-1': '-10',
+  };
+  const intResult = 'x\u00b2 + 3x - 10';
+
+  const normalizeAnswer = (s) => s.replace(/\s/g,'').replace(/\u00b2/g,'^2').replace(/\u00b3/g,'^3');
+  const allCorrect = Object.keys(intCorrect).every(k =>
+    userAnswers[k] && normalizeAnswer(userAnswers[k]) === normalizeAnswer(intCorrect[k])
+  );
+
+  const cellStyle = (r, c, filled) => ({
+    width: 'clamp(80px, 18vw, 120px)', height: 'clamp(60px, 14vw, 80px)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    borderRadius: 10,
+    background: filled ? `${getTermColor(demoCells[r]?.[c]?.deg ?? 1)}10` : 'rgba(255,255,255,0.02)',
+    border: `1px solid ${filled ? getTermColor(demoCells[r]?.[c]?.deg ?? 1) + '30' : 'var(--border-subtle)'}`,
+    fontFamily: 'var(--font-display)', fontSize: 'clamp(18px, 4vw, 24px)',
+    color: filled ? getTermColor(demoCells[r]?.[c]?.deg ?? 1) : 'var(--text-tertiary)',
+    transition: 'all 0.5s var(--ease-out-expo)',
+    animation: filled ? 'gridCellFill 0.4s var(--ease-out-expo)' : 'none',
+  });
+
+  return (
+    <div style={{ animation: 'fadeInUp 0.6s var(--ease-out-expo)' }}>
+      <h2 style={{
+        fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 5vw, 40px)',
+        fontWeight: 400, marginBottom: 12,
+      }}>
+        The <span style={{ fontStyle: 'italic', color: 'var(--accent)' }}>Area Model</span>
+      </h2>
+      <p style={{
+        fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 300,
+        color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 24, maxWidth: 600,
+      }}>
+        Multiply polynomials using a grid. Each cell is the product of its row and column headers.
+        Then combine like terms for the final answer.
+      </p>
+
+      {/* Mode toggle */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 28 }}>
+        {[['demo', 'Watch Demo'], ['interactive', 'Try It']].map(([m, label]) => (
+          <button key={m} onClick={() => { setMode(m); setDemoPhase(0); }} style={{
+            fontFamily: 'var(--font-mono)', fontSize: 12,
+            padding: '8px 20px', borderRadius: 8,
+            background: mode === m ? 'var(--accent)' : 'var(--bg-card)',
+            color: mode === m ? '#0a0a12' : 'var(--text-secondary)',
+            border: mode === m ? 'none' : '1px solid var(--border-subtle)',
+            fontWeight: mode === m ? 500 : 400,
+            transition: 'all 0.3s ease',
+          }}>{label}</button>
+        ))}
+      </div>
+
+      {mode === 'demo' ? (
+        /* ---- DEMO MODE ---- */
+        <div style={{
+          background: 'var(--bg-card)', border: '1px solid var(--border-subtle)',
+          borderRadius: 16, padding: 'clamp(20px, 4vw, 40px)',
+        }}>
+          <div style={{
+            fontFamily: 'var(--font-display)', fontSize: 22, textAlign: 'center', marginBottom: 28,
+          }}>
+            (<span style={{ color: getTermColor(1) }}>2x</span> + <span style={{ color: getTermColor(0) }}>3</span>)
+            (<span style={{ color: getTermColor(1) }}>x</span> + <span style={{ color: getTermColor(0) }}>4</span>)
+          </div>
+
+          {/* Grid */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
+            <div>
+              {/* Header row */}
+              <div style={{ display: 'flex', gap: 8, marginLeft: 'clamp(80px, 18vw, 120px)', marginBottom: 8 }}>
+                {demoTop.map((h, i) => (
+                  <div key={i} style={{
+                    width: 'clamp(80px, 18vw, 120px)', textAlign: 'center',
+                    fontFamily: 'var(--font-display)', fontSize: 20,
+                    color: demoPhase >= 1 ? getTermColor(h.deg) : 'var(--text-tertiary)',
+                    opacity: demoPhase >= 1 ? 1 : 0.3,
+                    transition: 'all 0.5s var(--ease-out-expo)',
+                  }}>{h.text}</div>
+                ))}
+              </div>
+              {/* Grid rows */}
+              {demoLeft.map((lh, r) => (
+                <div key={r} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
+                  <div style={{
+                    width: 'clamp(72px, 16vw, 112px)', textAlign: 'center',
+                    fontFamily: 'var(--font-display)', fontSize: 20,
+                    color: demoPhase >= 1 ? getTermColor(lh.deg) : 'var(--text-tertiary)',
+                    opacity: demoPhase >= 1 ? 1 : 0.3,
+                    transition: 'all 0.5s var(--ease-out-expo)',
+                  }}>{lh.text}</div>
+                  {demoCells[r].map((cell, c) => {
+                    const cellPhase = r * 2 + c + 2;
+                    return (
+                      <div key={c} style={cellStyle(r, c, demoPhase >= cellPhase)}>
+                        {demoPhase >= cellPhase ? cell.text : '\u00b7'}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Combination step */}
+          {demoPhase >= 5 && (
+            <div style={{ textAlign: 'center', animation: 'fadeInUp 0.5s var(--ease-out-expo)' }}>
+              <div style={{
+                fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-tertiary)',
+                textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12,
+              }}>Combine like terms</div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, marginBottom: 8 }}>
+                <span style={{ color: getTermColor(2) }}>2x&#178;</span>
+                {' + '}
+                <span style={{ color: getTermColor(1), textDecoration: 'underline', textDecorationColor: getTermColor(1) + '40' }}>8x + 3x</span>
+                {' + '}
+                <span style={{ color: getTermColor(0) }}>12</span>
+              </div>
+              <div style={{
+                fontFamily: 'var(--font-display)', fontSize: 28,
+                color: '#5be8a0', marginTop: 12,
+              }}>
+                = 2x&#178; + 11x + 12
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        /* ---- INTERACTIVE MODE ---- */
+        <div style={{
+          background: 'var(--bg-card)', border: '1px solid var(--border-subtle)',
+          borderRadius: 16, padding: 'clamp(20px, 4vw, 40px)',
+        }}>
+          <div style={{
+            fontFamily: 'var(--font-display)', fontSize: 22, textAlign: 'center', marginBottom: 28,
+          }}>
+            (<span style={{ color: getTermColor(1) }}>x</span> + <span style={{ color: getTermColor(0) }}>5</span>)
+            (<span style={{ color: getTermColor(1) }}>x</span> - <span style={{ color: getTermColor(0) }}>2</span>)
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
+            <div>
+              {/* Header */}
+              <div style={{ display: 'flex', gap: 8, marginLeft: 'clamp(80px, 18vw, 120px)', marginBottom: 8 }}>
+                {intTop.map((h, i) => (
+                  <div key={i} style={{
+                    width: 'clamp(80px, 18vw, 120px)', textAlign: 'center',
+                    fontFamily: 'var(--font-display)', fontSize: 20,
+                    color: i === 0 ? getTermColor(1) : getTermColor(0),
+                  }}>{h.text}</div>
+                ))}
+              </div>
+              {/* Rows */}
+              {intLeft.map((lh, r) => (
+                <div key={r} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
+                  <div style={{
+                    width: 'clamp(72px, 16vw, 112px)', textAlign: 'center',
+                    fontFamily: 'var(--font-display)', fontSize: 20,
+                    color: r === 0 ? getTermColor(1) : getTermColor(0),
+                  }}>{lh.text}</div>
+                  {[0, 1].map(c => {
+                    const key = `${r}-${c}`;
+                    const val = userAnswers[key] || '';
+                    const correct = normalizeAnswer(val) === normalizeAnswer(intCorrect[key]);
+                    const attempted = val.length > 0;
+                    return (
+                      <div key={c} style={{
+                        width: 'clamp(80px, 18vw, 120px)', height: 'clamp(60px, 14vw, 80px)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        borderRadius: 10,
+                        background: attempted && correct ? 'rgba(91,232,160,0.08)' : 'rgba(255,255,255,0.02)',
+                        border: `1px solid ${attempted ? (correct ? 'rgba(91,232,160,0.4)' : 'rgba(255,80,80,0.3)') : 'var(--border-subtle)'}`,
+                      }}>
+                        <input
+                          value={val}
+                          onChange={e => setUserAnswers(prev => ({ ...prev, [key]: e.target.value }))}
+                          placeholder={`${intLeft[r].text} \u00b7 ${intTop[c].text}`}
+                          style={{
+                            width: '90%', background: 'transparent', border: 'none',
+                            textAlign: 'center', outline: 'none',
+                            fontFamily: 'var(--font-display)', fontSize: 18,
+                            color: attempted && correct ? '#5be8a0' : 'var(--text-primary)',
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {allCorrect && (
+            <div style={{
+              textAlign: 'center', animation: 'fadeInUp 0.4s var(--ease-out-expo)',
+              marginTop: 8,
+            }}>
+              <div style={{
+                fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-tertiary)',
+                textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10,
+              }}>Combined result</div>
+              <div style={{
+                fontFamily: 'var(--font-display)', fontSize: 28, color: '#5be8a0',
+              }}>= {intResult}</div>
+            </div>
+          )}
+
+          {/* FOIL connection */}
+          <button onClick={() => setShowFOIL(!showFOIL)} style={{
+            display: 'block', margin: '24px auto 0', fontFamily: 'var(--font-mono)',
+            fontSize: 11, color: 'var(--accent)', background: 'none',
+            border: '1px solid var(--accent-glow)', padding: '8px 18px',
+            borderRadius: 8, letterSpacing: '0.06em', textTransform: 'uppercase',
+          }}>
+            {showFOIL ? 'Hide' : 'Show'} FOIL Connection
+          </button>
+          {showFOIL && (
+            <div style={{
+              marginTop: 16, padding: 20, borderRadius: 12,
+              background: 'rgba(226,184,74,0.05)', border: '1px solid rgba(226,184,74,0.15)',
+              animation: 'fadeIn 0.3s ease',
+            }}>
+              <p style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+                <strong style={{ color: 'var(--accent)' }}>FOIL</strong> is just a special case of the area model for two binomials:
+                <strong style={{ color: 'var(--text-primary)' }}> F</strong>irst,{' '}
+                <strong style={{ color: 'var(--text-primary)' }}>O</strong>utside,{' '}
+                <strong style={{ color: 'var(--text-primary)' }}>I</strong>nside,{' '}
+                <strong style={{ color: 'var(--text-primary)' }}>L</strong>ast -- each maps to a cell in the 2x2 grid.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      <NavButtons step={step} setStep={setStep} />
+    </div>
+  );
+}
+
+/* ====================================================================
+   STEP 4: FACTORING BASICS
+   ==================================================================== */
+function StepFactoring({ step, setStep }) {
+  const [animPhase, setAnimPhase] = useState(0);
+  const [gcfInput, setGcfInput] = useState('');
+  const [factoredInput, setFactoredInput] = useState('');
+  const [gcfCorrect, setGcfCorrect] = useState(false);
+  const [factCorrect, setFactCorrect] = useState(false);
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setAnimPhase(1), 500);
+    const t2 = setTimeout(() => setAnimPhase(2), 1200);
+    const t3 = setTimeout(() => setAnimPhase(3), 1900);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, []);
+
+  // Check GCF: 8x^2 + 12x => GCF is 4x
+  const checkGCF = (val) => {
+    setGcfInput(val);
+    setGcfCorrect(val.replace(/\s/g,'') === '4x');
+  };
+  const checkFactored = (val) => {
+    setFactoredInput(val);
+    const v = val.replace(/\s/g,'');
+    setFactCorrect(v === '4x(2x+3)');
+  };
+
+  return (
+    <div style={{ animation: 'fadeInUp 0.6s var(--ease-out-expo)' }}>
+      <h2 style={{
+        fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 5vw, 40px)',
+        fontWeight: 400, marginBottom: 12,
+      }}>
+        <span style={{ fontStyle: 'italic', color: 'var(--accent)' }}>Factoring</span> Basics
+      </h2>
+      <p style={{
+        fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 300,
+        color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 32, maxWidth: 600,
+      }}>
+        Factoring is <strong style={{ color: 'var(--text-primary)', fontWeight: 500 }}>reverse multiplication</strong>.
+        Start by pulling out the Greatest Common Factor (GCF) from every term.
+      </p>
+
+      {/* GCF Animation */}
+      <div style={{
+        background: 'var(--bg-card)', border: '1px solid var(--border-subtle)',
+        borderRadius: 16, padding: 'clamp(20px, 4vw, 40px)', marginBottom: 28,
+      }}>
+        <div style={{
+          fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-tertiary)',
+          textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 20,
+        }}>Pulling out the GCF</div>
+
+        {/* Original expression */}
+        <div style={{
+          fontFamily: 'var(--font-display)', fontSize: 'clamp(22px, 5vw, 32px)',
+          textAlign: 'center', marginBottom: 24,
+        }}>
+          <span style={{ color: getTermColor(2), opacity: animPhase >= 1 ? 1 : 0.4, transition: 'all 0.5s ease' }}>
+            {animPhase >= 2 ? (<><span style={{ color: 'var(--accent)', textDecoration: 'underline', textDecorationColor: 'var(--accent-glow)' }}>6</span>x<sup>3</sup></>) : '6x\u00b3'}
+          </span>
+          {' + '}
+          <span style={{ color: getTermColor(1), opacity: animPhase >= 1 ? 1 : 0.4, transition: 'all 0.5s ease' }}>
+            {animPhase >= 2 ? (<><span style={{ color: 'var(--accent)', textDecoration: 'underline', textDecorationColor: 'var(--accent-glow)' }}>9</span>x<sup>2</sup></>) : '9x\u00b2'}
+          </span>
+          {' - '}
+          <span style={{ color: getTermColor(0), opacity: animPhase >= 1 ? 1 : 0.4, transition: 'all 0.5s ease' }}>
+            {animPhase >= 2 ? (<><span style={{ color: 'var(--accent)', textDecoration: 'underline', textDecorationColor: 'var(--accent-glow)' }}>3</span>x</>) : '3x'}
+          </span>
+        </div>
+
+        {animPhase >= 2 && (
+          <div style={{ textAlign: 'center', marginBottom: 16, animation: 'fadeIn 0.4s ease' }}>
+            <span style={{
+              fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--accent)',
+              padding: '4px 12px', borderRadius: 6,
+              background: 'var(--accent-glow)', border: '1px solid rgba(226,184,74,0.2)',
+            }}>GCF: 3x</span>
+          </div>
+        )}
+
+        {animPhase >= 3 && (
+          <div style={{
+            textAlign: 'center',
+            fontFamily: 'var(--font-display)', fontSize: 'clamp(22px, 5vw, 32px)',
+            animation: 'fadeInUp 0.5s var(--ease-out-expo)',
+          }}>
+            <span style={{ color: 'var(--accent)' }}>3x</span>
+            <span style={{ color: 'var(--text-tertiary)' }}>(</span>
+            <span style={{ color: getTermColor(2) }}>2x&#178;</span>
+            {' + '}
+            <span style={{ color: getTermColor(1) }}>3x</span>
+            {' - '}
+            <span style={{ color: getTermColor(0) }}>1</span>
+            <span style={{ color: 'var(--text-tertiary)' }}>)</span>
+          </div>
+        )}
+      </div>
+
+      {/* Interactive GCF */}
+      <div style={{
+        background: 'var(--bg-card)', border: '1px solid var(--border-subtle)',
+        borderRadius: 16, padding: 'clamp(20px, 4vw, 32px)',
+      }}>
+        <div style={{
+          fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent)',
+          textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 16,
+        }}>Your turn</div>
+
+        <div style={{
+          fontFamily: 'var(--font-display)', fontSize: 24, textAlign: 'center', marginBottom: 24,
+        }}>
+          <span style={{ color: getTermColor(2) }}>8x&#178;</span>
+          {' + '}
+          <span style={{ color: getTermColor(1) }}>12x</span>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 400, margin: '0 auto' }}>
+          <div>
+            <label style={{
+              fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-tertiary)',
+              display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.08em',
+            }}>What is the GCF?</label>
+            <input value={gcfInput} onChange={e => checkGCF(e.target.value)}
+              placeholder="e.g. 4x"
+              style={{
+                width: '100%', padding: '10px 14px', borderRadius: 8,
+                background: 'rgba(255,255,255,0.03)',
+                border: `1px solid ${gcfCorrect ? 'rgba(91,232,160,0.4)' : 'var(--border-subtle)'}`,
+                color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', fontSize: 14,
+                outline: 'none',
+              }}
+            />
+            {gcfInput && (
+              <div style={{
+                marginTop: 6, fontFamily: 'var(--font-mono)', fontSize: 11,
+                color: gcfCorrect ? '#5be8a0' : '#ff6b6b',
+              }}>{gcfCorrect ? 'Correct -- the GCF is 4x!' : 'Not quite. What divides both 8x\u00b2 and 12x evenly?'}</div>
+            )}
+          </div>
+
+          {gcfCorrect && (
+            <div style={{ animation: 'fadeIn 0.3s ease' }}>
+              <label style={{
+                fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-tertiary)',
+                display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.08em',
+              }}>Write the factored form</label>
+              <input value={factoredInput} onChange={e => checkFactored(e.target.value)}
+                placeholder="e.g. 4x(...)"
+                style={{
+                  width: '100%', padding: '10px 14px', borderRadius: 8,
+                  background: 'rgba(255,255,255,0.03)',
+                  border: `1px solid ${factCorrect ? 'rgba(91,232,160,0.4)' : 'var(--border-subtle)'}`,
+                  color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', fontSize: 14,
+                  outline: 'none',
+                }}
+              />
+              {factoredInput && (
+                <div style={{
+                  marginTop: 6, fontFamily: 'var(--font-mono)', fontSize: 11,
+                  color: factCorrect ? '#5be8a0' : '#ff6b6b',
+                }}>{factCorrect ? 'Perfect factoring!' : 'Divide each term by 4x: 8x\u00b2/4x = 2x, 12x/4x = 3'}</div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <NavButtons step={step} setStep={setStep} />
+    </div>
+  );
+}
+
+/* ====================================================================
+   STEP 5: SPECIAL PATTERNS
+   ==================================================================== */
+function StepSpecial({ step, setStep }) {
+  const [activePattern, setActivePattern] = useState(0);
+  const [answers, setAnswers] = useState({});
+
+  const patterns = [
+    {
+      name: 'Difference of Squares',
+      formula: 'a\u00b2 - b\u00b2 = (a + b)(a - b)',
+      example: 'x\u00b2 - 9',
+      answer: '(x+3)(x-3)',
+      alts: ['(x-3)(x+3)'],
+      color: 'var(--term-x2)',
+    },
+    {
+      name: 'Perfect Square Trinomial',
+      formula: 'a\u00b2 + 2ab + b\u00b2 = (a + b)\u00b2',
+      example: 'x\u00b2 + 6x + 9',
+      answer: '(x+3)^2',
+      alts: ['(x+3)\u00b2'],
+      color: 'var(--term-x)',
+    },
+    {
+      name: 'Difference Pattern 2',
+      formula: 'a\u00b2 - 2ab + b\u00b2 = (a - b)\u00b2',
+      example: 'x\u00b2 - 10x + 25',
+      answer: '(x-5)^2',
+      alts: ['(x-5)\u00b2'],
+      color: 'var(--term-const)',
+    },
+  ];
+
+  const p = patterns[activePattern];
+
+  const checkAnswer = (val) => {
+    const norm = (s) => s.replace(/\s/g,'').replace(/\u00b2/g,'^2').replace(/\u00b3/g,'^3');
+    const v = norm(val);
+    return v === norm(p.answer) || (p.alts && p.alts.some(a => v === norm(a)));
+  };
+
+  return (
+    <div style={{ animation: 'fadeInUp 0.6s var(--ease-out-expo)' }}>
+      <h2 style={{
+        fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 5vw, 40px)',
+        fontWeight: 400, marginBottom: 12,
+      }}>
+        Special <span style={{ fontStyle: 'italic', color: 'var(--accent)' }}>Patterns</span>
+      </h2>
+      <p style={{
+        fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 300,
+        color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 32, maxWidth: 600,
+      }}>
+        Certain polynomial forms can be factored instantly using pattern recognition.
+      </p>
+
+      {/* Pattern tabs */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
+        {patterns.map((pat, i) => (
+          <button key={i} onClick={() => setActivePattern(i)} style={{
+            fontFamily: 'var(--font-mono)', fontSize: 11,
+            padding: '8px 16px', borderRadius: 8,
+            background: activePattern === i ? `${pat.color}` : 'var(--bg-card)',
+            color: activePattern === i ? '#0a0a12' : 'var(--text-secondary)',
+            border: activePattern === i ? 'none' : '1px solid var(--border-subtle)',
+            fontWeight: activePattern === i ? 600 : 400,
+            transition: 'all 0.3s ease',
+          }}>{pat.name}</button>
+        ))}
+      </div>
+
+      {/* Pattern card */}
+      <div style={{
+        background: 'var(--bg-card)', border: `1px solid ${p.color}20`,
+        borderRadius: 16, padding: 'clamp(24px, 4vw, 40px)', marginBottom: 28,
+      }}>
+        {/* Formula */}
+        <div style={{
+          textAlign: 'center', marginBottom: 32,
+          fontFamily: 'var(--font-display)', fontSize: 'clamp(20px, 4vw, 28px)',
+          color: p.color,
+        }}>{p.formula}</div>
+
+        {/* Geometric visual */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 32 }}>
+          {activePattern === 0 ? (
+            /* Difference of squares: big square minus small square */
+            <svg width="200" height="200" viewBox="0 0 200 200">
+              <rect x="10" y="10" width="140" height="140" fill={`${p.color}15`} stroke={p.color} strokeWidth="1.5" rx="4" />
+              <text x="80" y="90" fill={p.color} fontFamily="var(--font-display)" fontSize="20" textAnchor="middle">a&#178;</text>
+              <rect x="100" y="100" width="60" height="60" fill="rgba(255,80,80,0.12)" stroke="#ff6b6b" strokeWidth="1.5" rx="4" />
+              <text x="130" y="137" fill="#ff6b6b" fontFamily="var(--font-display)" fontSize="16" textAnchor="middle">b&#178;</text>
+              <text x="80" y="190" fill="var(--text-tertiary)" fontFamily="var(--font-mono)" fontSize="11" textAnchor="middle">a&#178; - b&#178;</text>
+            </svg>
+          ) : (
+            /* Perfect square: (a+b)^2 grid */
+            <svg width="200" height="200" viewBox="0 0 200 200">
+              <rect x="10" y="10" width="110" height="110" fill={`${p.color}12`} stroke={p.color} strokeWidth="1.5" rx="4" />
+              <text x="65" y="72" fill={p.color} fontFamily="var(--font-display)" fontSize="16" textAnchor="middle">a&#178;</text>
+              <rect x="120" y="10" width="70" height="110" fill="rgba(226,184,74,0.1)" stroke="var(--accent)" strokeWidth="1" rx="4" />
+              <text x="155" y="72" fill="var(--accent)" fontFamily="var(--font-display)" fontSize="14" textAnchor="middle">ab</text>
+              <rect x="10" y="120" width="110" height="70" fill="rgba(226,184,74,0.1)" stroke="var(--accent)" strokeWidth="1" rx="4" />
+              <text x="65" y="162" fill="var(--accent)" fontFamily="var(--font-display)" fontSize="14" textAnchor="middle">ab</text>
+              <rect x="120" y="120" width="70" height="70" fill="rgba(232,124,232,0.1)" stroke="var(--term-const)" strokeWidth="1.5" rx="4" />
+              <text x="155" y="162" fill="var(--term-const)" fontFamily="var(--font-display)" fontSize="14" textAnchor="middle">b&#178;</text>
+            </svg>
+          )}
+        </div>
+
+        {/* Interactive */}
+        <div style={{ maxWidth: 400, margin: '0 auto' }}>
+          <div style={{
+            fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-tertiary)',
+            textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8,
+          }}>Factor this expression</div>
+          <div style={{
+            fontFamily: 'var(--font-display)', fontSize: 24,
+            textAlign: 'center', marginBottom: 16, color: 'var(--text-primary)',
+          }}>{p.example}</div>
+          <input
+            value={answers[activePattern] || ''}
+            onChange={e => setAnswers(prev => ({ ...prev, [activePattern]: e.target.value }))}
+            placeholder="e.g. (a+b)(a-b)"
+            style={{
+              width: '100%', padding: '10px 14px', borderRadius: 8,
+              background: 'rgba(255,255,255,0.03)',
+              border: `1px solid ${answers[activePattern] && checkAnswer(answers[activePattern]) ? 'rgba(91,232,160,0.4)' : 'var(--border-subtle)'}`,
+              color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', fontSize: 14,
+              outline: 'none', textAlign: 'center',
+            }}
+          />
+          <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginTop: 8 }}>
+            {['\u00b2', '\u00b3'].map(s => (
+              <button key={s} onClick={() => setAnswers(prev => ({ ...prev, [activePattern]: (prev[activePattern] || '') + s }))} style={{
+                background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-subtle)',
+                borderRadius: 6, padding: '3px 10px', color: 'var(--text-tertiary)',
+                fontFamily: 'var(--font-mono)', fontSize: 15, cursor: 'pointer', lineHeight: '1.4'
+              }}>{s}</button>
+            ))}
+          </div>
+          {answers[activePattern] && (
+            <div style={{
+              marginTop: 8, textAlign: 'center',
+              fontFamily: 'var(--font-mono)', fontSize: 12,
+              color: checkAnswer(answers[activePattern]) ? '#5be8a0' : '#ff6b6b',
+            }}>
+              {checkAnswer(answers[activePattern]) ? 'Pattern recognized -- well done!' : 'Look for the pattern in the formula above.'}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <NavButtons step={step} setStep={setStep} />
+    </div>
+  );
+}
+
+/* ====================================================================
+   STEP 6: PRACTICE
+   ==================================================================== */
+function StepPractice({ step, setStep, onComplete }) {
+  const [difficulty, setDifficulty] = useState('easy');
+  const [problem, setProblem] = useState(null);
+  const [userAnswer, setUserAnswer] = useState('');
+  const [showSolution, setShowSolution] = useState(false);
+  const [score, setScore] = useState({ correct: 0, total: 0 });
+  const [feedback, setFeedback] = useState(null);
+
+  const problems = useMemo(() => ({
+    easy: [
+      { q: '(x + 3) + (2x - 1)', a: '3x+2', type: 'Add', solution: 'Combine like terms: x + 2x = 3x, 3 + (-1) = 2' },
+      { q: '(4x - 5) + (x + 8)', a: '5x+3', type: 'Add', solution: 'Combine: 4x + x = 5x, -5 + 8 = 3' },
+      { q: 'Factor: 6x + 12', a: '6(x+2)', type: 'Factor', solution: 'GCF is 6. 6x/6 = x, 12/6 = 2' },
+      { q: 'Factor: 5x\u00b2 - 10x', a: '5x(x-2)', type: 'Factor', solution: 'GCF is 5x. 5x\u00b2/5x = x, -10x/5x = -2' },
+    ],
+    medium: [
+      { q: 'Expand: (x + 3)(x + 2)', a: 'x^2+5x+6', type: 'Multiply', solution: 'Area model: x\u00b7x=x\u00b2, x\u00b72=2x, 3\u00b7x=3x, 3\u00b72=6. Combine: x\u00b2+5x+6' },
+      { q: 'Expand: (2x - 1)(x + 4)', a: '2x^2+7x-4', type: 'Multiply', solution: '2x\u00b7x=2x\u00b2, 2x\u00b74=8x, -1\u00b7x=-x, -1\u00b74=-4. Combine: 2x\u00b2+7x-4' },
+      { q: 'Factor: x\u00b2 - 16', a: '(x+4)(x-4)', type: 'Factor', solution: 'Difference of squares: x\u00b2 - 4\u00b2 = (x+4)(x-4)' },
+      { q: 'Factor: x\u00b2 + 8x + 16', a: '(x+4)^2', type: 'Factor', solution: 'Perfect square: x\u00b2 + 2(4)x + 4\u00b2 = (x+4)\u00b2' },
+    ],
+    hard: [
+      { q: 'Expand: (3x + 2)(2x - 5)', a: '6x^2-11x-10', type: 'Multiply', solution: '3x\u00b72x=6x\u00b2, 3x\u00b7(-5)=-15x, 2\u00b72x=4x, 2\u00b7(-5)=-10. Combine: 6x\u00b2-11x-10' },
+      { q: 'Factor: x\u00b2 - 49', a: '(x+7)(x-7)', type: 'Factor', solution: 'x\u00b2 - 7\u00b2 = (x+7)(x-7)' },
+      { q: 'Factor: 4x\u00b2 - 12x + 9', a: '(2x-3)^2', type: 'Factor', solution: '(2x)\u00b2 - 2(2x)(3) + 3\u00b2 = (2x-3)\u00b2' },
+      { q: 'Expand: (x - 3)(x\u00b2 + 3x + 9)', a: 'x^3-27', type: 'Multiply', solution: 'Difference of cubes pattern: x\u00b3 - 27' },
+    ],
+  }), []);
+
+  const generateProblem = useCallback(() => {
+    const pool = problems[difficulty];
+    const p = pool[Math.floor(Math.random() * pool.length)];
+    setProblem(p);
+    setUserAnswer('');
+    setShowSolution(false);
+    setFeedback(null);
+  }, [difficulty, problems]);
+
+  useEffect(() => { generateProblem(); }, [difficulty]);
+
+  const checkPracticeAnswer = () => {
+    if (!problem) return;
+    const clean = (s) => s.replace(/\s/g,'').replace(/\u00b2/g,'^2').replace(/\u00b3/g,'^3').toLowerCase();
+    const isCorrect = clean(userAnswer) === clean(problem.a);
+
+    // Also check alternatives for factoring
+    let altCorrect = false;
+    if (problem.type === 'Factor' && !isCorrect) {
+      // Check reverse order for products
+      const reversed = problem.a.replace(/\(([^)]+)\)\(([^)]+)\)/, '($2)($1)');
+      altCorrect = clean(userAnswer) === clean(reversed);
+    }
+
+    if (isCorrect || altCorrect) {
+      setFeedback('correct');
+      setScore(prev => ({ correct: prev.correct + 1, total: prev.total + 1 }));
+    } else {
+      setFeedback('incorrect');
+      setScore(prev => ({ ...prev, total: prev.total + 1 }));
+    }
+  };
+
+  if (!problem) return null;
+
+  return (
+    <div style={{ animation: 'fadeInUp 0.6s var(--ease-out-expo)' }}>
+      <h2 style={{
+        fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 5vw, 40px)',
+        fontWeight: 400, marginBottom: 12,
+      }}>
+        <span style={{ fontStyle: 'italic', color: 'var(--accent)' }}>Practice</span>
+      </h2>
+
+      {/* Score & difficulty */}
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        flexWrap: 'wrap', gap: 12, marginBottom: 28,
+      }}>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {['easy', 'medium', 'hard'].map(d => (
+            <button key={d} onClick={() => { setDifficulty(d); setScore({ correct: 0, total: 0 }); }} style={{
+              fontFamily: 'var(--font-mono)', fontSize: 11, padding: '6px 14px',
+              borderRadius: 6, textTransform: 'uppercase', letterSpacing: '0.06em',
+              background: difficulty === d ? 'var(--accent)' : 'var(--bg-card)',
+              color: difficulty === d ? '#0a0a12' : 'var(--text-secondary)',
+              border: difficulty === d ? 'none' : '1px solid var(--border-subtle)',
+              fontWeight: difficulty === d ? 600 : 400,
+            }}>{d}</button>
+          ))}
+        </div>
+        <div style={{
+          fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text-secondary)',
+        }}>
+          Score: <span style={{ color: '#5be8a0' }}>{score.correct}</span>/{score.total}
+        </div>
+      </div>
+
+      {/* Problem card */}
+      <div style={{
+        background: 'var(--bg-card)', border: '1px solid var(--border-subtle)',
+        borderRadius: 16, padding: 'clamp(24px, 4vw, 40px)', marginBottom: 24,
+      }}>
+        <div style={{
+          fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent)',
+          textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 16,
+        }}>{problem.type}</div>
+        <div style={{
+          fontFamily: 'var(--font-display)', fontSize: 'clamp(22px, 5vw, 32px)',
+          textAlign: 'center', marginBottom: 28, color: 'var(--text-primary)',
+        }}>{problem.q}</div>
+
+        <div style={{ maxWidth: 400, margin: '0 auto' }}>
+          <input
+            value={userAnswer}
+            onChange={e => setUserAnswer(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && !feedback && checkPracticeAnswer()}
+            placeholder="Your answer..."
+            disabled={!!feedback}
+            style={{
+              width: '100%', padding: '12px 16px', borderRadius: 10,
+              background: 'rgba(255,255,255,0.03)',
+              border: `1px solid ${feedback === 'correct' ? 'rgba(91,232,160,0.4)' : feedback === 'incorrect' ? 'rgba(255,80,80,0.3)' : 'var(--border-subtle)'}`,
+              color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', fontSize: 16,
+              outline: 'none', textAlign: 'center',
+            }}
+          />
+          {!feedback && (
+            <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginTop: 8 }}>
+              {['\u00b2', '\u00b3'].map(s => (
+                <button key={s} onClick={() => setUserAnswer(prev => prev + s)} style={{
+                  background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-subtle)',
+                  borderRadius: 6, padding: '3px 10px', color: 'var(--text-tertiary)',
+                  fontFamily: 'var(--font-mono)', fontSize: 15, cursor: 'pointer', lineHeight: '1.4'
+                }}>{s}</button>
+              ))}
+            </div>
+          )}
+
+          {!feedback && (
+            <button onClick={checkPracticeAnswer} style={{
+              display: 'block', width: '100%', marginTop: 12,
+              fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 500,
+              padding: '12px', borderRadius: 10,
+              background: 'var(--accent)', color: '#0a0a12', border: 'none',
+            }}>Check Answer</button>
+          )}
+
+          {feedback && (
+            <div style={{ marginTop: 16, animation: 'fadeIn 0.3s ease' }}>
+              <div style={{
+                fontFamily: 'var(--font-mono)', fontSize: 13, textAlign: 'center',
+                color: feedback === 'correct' ? '#5be8a0' : '#ff6b6b', marginBottom: 12,
+              }}>
+                {feedback === 'correct' ? 'Correct!' : `Not quite. The answer is: ${problem.a}`}
+              </div>
+
+              <button onClick={() => setShowSolution(!showSolution)} style={{
+                display: 'block', margin: '0 auto 12px',
+                fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-secondary)',
+                background: 'none', border: '1px solid var(--border-subtle)',
+                padding: '6px 14px', borderRadius: 6,
+              }}>
+                {showSolution ? 'Hide' : 'Show'} Solution
+              </button>
+
+              {showSolution && (
+                <div style={{
+                  padding: 16, borderRadius: 10,
+                  background: 'rgba(226,184,74,0.05)', border: '1px solid rgba(226,184,74,0.15)',
+                  fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-secondary)',
+                  lineHeight: 1.6, animation: 'fadeIn 0.3s ease',
+                }}>{problem.solution}</div>
+              )}
+
+              <button onClick={generateProblem} style={{
+                display: 'block', width: '100%', marginTop: 12,
+                fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 500,
+                padding: '12px', borderRadius: 10,
+                background: 'var(--accent)', color: '#0a0a12', border: 'none',
+              }}>Next Problem</button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Completion */}
+      {score.total >= 5 && score.correct >= 3 && (
+        <div style={{
+          textAlign: 'center', padding: 32, background: 'var(--bg-card)',
+          border: '1px solid rgba(91,232,160,0.2)', borderRadius: 16,
+          animation: 'fadeInUp 0.5s var(--ease-out-expo)', marginBottom: 24,
+        }}>
+          <div style={{
+            fontFamily: 'var(--font-display)', fontSize: 28, color: '#5be8a0', marginBottom: 8,
+          }}>Lesson Complete!</div>
+          <p style={{
+            fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-secondary)', marginBottom: 20,
+          }}>You scored {score.correct}/{score.total}. Your progress has been saved.</p>
+          <button onClick={onComplete} style={{
+            fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 500,
+            padding: '12px 32px', borderRadius: 10,
+            background: '#5be8a0', color: '#0a0a12', border: 'none',
+          }}>Mark as Complete</button>
+        </div>
+      )}
+
+      <NavButtons step={step} setStep={setStep} />
+      {step === TOTAL_STEPS - 1 && (
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:32,padding:'16px 0',borderTop:'1px solid var(--border-subtle)'}}>
+          <a href="05-exponents-radicals.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>&larr; Previous Lesson: Exponents &amp; Radicals</a>
+          <a href="07-quadratics.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>Next Lesson: Quadratic Equations &rarr;</a>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ====================================================================
+   MAIN APP
+   ==================================================================== */
+function App() {
+  const [step, setStep] = useState(0);
+
+  const handleComplete = () => {
+    try {
+      const progress = JSON.parse(localStorage.getItem('math-progress') || '[]');
+      if (!progress.includes(6)) {
+        progress.push(6);
+        localStorage.setItem('math-progress', JSON.stringify(progress));
+      }
+    } catch {}
+  };
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [step]);
+
+  const renderStep = () => {
+    switch (step) {
+      case 0: return <StepLanding setStep={setStep} />;
+      case 1: return <StepWhatAre step={step} setStep={setStep} />;
+      case 2: return <StepAddSubtract step={step} setStep={setStep} />;
+      case 3: return <StepMultiply step={step} setStep={setStep} />;
+      case 4: return <StepFactoring step={step} setStep={setStep} />;
+      case 5: return <StepSpecial step={step} setStep={setStep} />;
+      case 6: return <StepPractice step={step} setStep={setStep} onComplete={handleComplete} />;
+      default: return null;
+    }
+  };
+
+  return (
+    <div>
+      {step > 0 && <ProgressBar step={step} totalSteps={TOTAL_STEPS} />}
+      <div style={{
+        maxWidth: 800, margin: '0 auto',
+        padding: step === 0 ? '0 20px' : '40px 20px 80px',
+        position: 'relative', zIndex: 1,
+      }}>
+        {renderStep()}
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>

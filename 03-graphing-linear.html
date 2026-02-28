@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Graphing & Linear Functions — Interactive Lesson</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0f;--bg2:#0f0f18;--bg3:#181825;--bg4:#252540;
+  --text:#c5c5d8;--text-dim:#6e6e8a;--text-bright:#e8e8f4;
+  --violet:#a78bfa;--violet-dim:#a78bfa30;--violet-glow:#a78bfa15;--violet-deep:#7c3aed;
+  --purple:#c084fc;--purple-dim:#c084fc25;
+  --rose:#f472b6;--rose-dim:#f472b630;
+  --cyan:#67e8f9;--cyan-dim:#67e8f930;
+  --green:#4ade80;--green-dim:#4ade8030;
+  --amber:#fbbf24;--amber-dim:#fbbf2430;
+  --red:#f87171;--red-dim:#f8717130;
+  --font-display:'Fraunces',serif;
+  --font-body:'IBM Plex Sans',sans-serif;
+  --font-mono:'DM Mono',monospace;
+}
+html{font-size:16px;scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);line-height:1.7;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::selection{background:var(--violet);color:#fff}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+#root{min-height:100vh}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes drawAxisX{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes drawAxisY{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes gridFadeIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+@keyframes dotPop{0%{transform:scale(0)}60%{transform:scale(1.3)}100%{transform:scale(1)}}
+@keyframes lineGrow{from{stroke-dashoffset:1000}to{stroke-dashoffset:0}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes scanline{from{transform:translateY(-100%)}to{transform:translateY(100vh)}}
+
+.lesson-container{max-width:880px;margin:0 auto;padding:40px 24px 80px}
+</style>
+
+<script type="text/babel">
+const {useState,useEffect,useRef,useCallback,useMemo,Fragment} = React;
+
+/* ═══════════════════════════════════════════════
+   CONSTANTS
+   ═══════════════════════════════════════════════ */
+const TOTAL_STEPS = 7;
+const GRID_SIZE = 400;
+const GRID_RANGE = 10; // -10 to 10
+const CELL = GRID_SIZE / (GRID_RANGE * 2);
+const ORIGIN = GRID_SIZE / 2;
+
+function toCanvas(x, y) {
+  return { cx: ORIGIN + x * CELL, cy: ORIGIN - y * CELL };
+}
+function fromCanvas(cx, cy) {
+  return { x: Math.round((cx - ORIGIN) / CELL), y: Math.round((ORIGIN - cy) / CELL) };
+}
+
+/* ═══════════════════════════════════════════════
+   SHARED UI COMPONENTS
+   ═══════════════════════════════════════════════ */
+function ProgressBar({current, total}) {
+  return (
+    <div style={{position:'fixed',top:0,left:0,right:0,zIndex:1000,height:3,background:current===0?'transparent':'var(--bg3)',transition:'background .6s'}}>
+      <div style={{
+        height:'100%',width:`${(current/(total-1))*100}%`,
+        background:'linear-gradient(90deg,var(--violet-deep),var(--violet),var(--purple))',
+        transition:'width .6s cubic-bezier(.4,0,.2,1)',
+        boxShadow:'0 0 20px var(--violet-dim)',
+        borderRadius:'0 2px 2px 0'
+      }}/>
+    </div>
+  );
+}
+
+function StepDots({current, total, onNavigate}) {
+  return (
+    <div style={{position:'fixed',right:24,top:'50%',transform:'translateY(-50%)',zIndex:900,display:'flex',flexDirection:'column',gap:12,alignItems:'center'}}>
+      {Array.from({length:total},(_,i)=>(
+        <button key={i} onClick={()=>onNavigate(i)} aria-label={`Step ${i+1}`} style={{
+          width:i===current?10:6,height:i===current?10:6,
+          borderRadius:'50%',border:'none',cursor:'pointer',
+          background:i<current?'var(--green)':i===current?'var(--violet)':'var(--bg4)',
+          transition:'all .3s',
+          boxShadow:i===current?'0 0 12px var(--violet-dim)':'none',
+          opacity:i===current?1:.7,
+        }}/>
+      ))}
+    </div>
+  );
+}
+
+function NavButtons({current, total, onPrev, onNext, nextLabel}) {
+  return (
+    <div style={{display:'flex',gap:12,marginTop:48,justifyContent:'center',flexWrap:'wrap'}}>
+      {current > 0 && (
+        <button onClick={onPrev} style={{
+          padding:'12px 28px',background:'transparent',border:'1px solid var(--bg4)',
+          color:'var(--text-dim)',borderRadius:6,cursor:'pointer',fontFamily:'var(--font-mono)',
+          fontSize:13,transition:'all .2s',letterSpacing:'.5px'
+        }}
+        onMouseEnter={e=>{e.target.style.borderColor='var(--text-dim)';e.target.style.color='var(--text)'}}
+        onMouseLeave={e=>{e.target.style.borderColor='var(--bg4)';e.target.style.color='var(--text-dim)'}}
+        >{'\u2190'} Previous</button>
+      )}
+      {(current < total - 1 || nextLabel) && (
+        <button onClick={onNext} style={{
+          padding:'12px 28px',background:'var(--violet-deep)',border:'none',
+          color:'#fff',borderRadius:6,cursor:'pointer',fontFamily:'var(--font-mono)',
+          fontSize:13,transition:'all .2s',letterSpacing:'.5px',
+          boxShadow:'0 4px 20px var(--violet-dim)'
+        }}
+        onMouseEnter={e=>e.target.style.transform='translateY(-1px)'}
+        onMouseLeave={e=>e.target.style.transform='translateY(0)'}
+        >{nextLabel || 'Next Step'} {'\u2192'}</button>
+      )}
+    </div>
+  );
+}
+
+function SectionLabel({number, title}) {
+  return (
+    <div style={{marginBottom:40,animation:'fadeUp .6s ease'}}>
+      <div style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--violet)',letterSpacing:2,textTransform:'uppercase',marginBottom:8}}>
+        Step {String(number).padStart(2,'0')}
+      </div>
+      <h2 style={{fontFamily:'var(--font-display)',fontSize:'clamp(28px,5vw,44px)',fontWeight:700,color:'var(--text-bright)',lineHeight:1.15,letterSpacing:'-0.02em'}}>
+        {title}
+      </h2>
+    </div>
+  );
+}
+
+function InfoCard({children, accent='var(--violet)'}) {
+  return (
+    <div style={{
+      background:'var(--bg2)',border:`1px solid ${accent}22`,borderLeft:`3px solid ${accent}`,
+      borderRadius:'0 8px 8px 0',padding:'16px 20px',margin:'20px 0',fontSize:14,lineHeight:1.8
+    }}>{children}</div>
+  );
+}
+
+function Tag({children, color='var(--violet)'}) {
+  return <span style={{display:'inline-block',padding:'2px 10px',borderRadius:4,background:`${color}18`,color,fontFamily:'var(--font-mono)',fontSize:12,fontWeight:500,letterSpacing:'.3px'}}>{children}</span>;
+}
+
+function MathEq({children, color='var(--violet)', size=20, style:extra={}}) {
+  return <span style={{fontFamily:'var(--font-mono)',fontSize:size,color,fontWeight:500,...extra}}>{children}</span>;
+}
+
+/* ═══════════════════════════════════════════════
+   COORDINATE PLANE (SVG)
+   ═══════════════════════════════════════════════ */
+function CoordinatePlane({
+  width=GRID_SIZE, height=GRID_SIZE, range=GRID_RANGE,
+  children, onPlaneClick, hoverCoord, setHoverCoord,
+  showQuadrants=false, animate=false, style:extraStyle={}
+}) {
+  const cell = width / (range * 2);
+  const origin = width / 2;
+  const svgRef = useRef(null);
+  const [animPhase, setAnimPhase] = useState(animate ? 0 : 3);
+
+  useEffect(() => {
+    if (!animate) return;
+    const t1 = setTimeout(() => setAnimPhase(1), 200);
+    const t2 = setTimeout(() => setAnimPhase(2), 800);
+    const t3 = setTimeout(() => setAnimPhase(3), 1400);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, [animate]);
+
+  const handleMouseMove = useCallback((e) => {
+    if (!setHoverCoord) return;
+    const rect = svgRef.current.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const gx = Math.round((mx - origin) / cell);
+    const gy = Math.round((origin - my) / cell);
+    if (gx >= -range && gx <= range && gy >= -range && gy <= range) {
+      setHoverCoord({x: gx, y: gy});
+    } else {
+      setHoverCoord(null);
+    }
+  }, [cell, origin, range, setHoverCoord]);
+
+  const handleClick = useCallback((e) => {
+    if (!onPlaneClick) return;
+    const rect = svgRef.current.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const gx = Math.round((mx - origin) / cell);
+    const gy = Math.round((origin - my) / cell);
+    if (gx >= -range && gx <= range && gy >= -range && gy <= range) {
+      onPlaneClick({x: gx, y: gy});
+    }
+  }, [cell, origin, range, onPlaneClick]);
+
+  const quadrantColors = ['var(--cyan)','var(--green)','var(--amber)','var(--rose)'];
+  const quadrantLabels = ['I','II','III','IV'];
+  const quadrantPositions = [
+    {x: origin + origin/2, y: origin/2 - 10},
+    {x: origin/2, y: origin/2 - 10},
+    {x: origin/2, y: origin + origin/2 + 10},
+    {x: origin + origin/2, y: origin + origin/2 + 10},
+  ];
+
+  return (
+    <svg ref={svgRef} width={width} height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      style={{background:'var(--bg2)',borderRadius:12,border:'1px solid var(--bg4)',cursor:onPlaneClick?'crosshair':'default',...extraStyle}}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={() => setHoverCoord && setHoverCoord(null)}
+      onClick={handleClick}
+    >
+      {/* Grid lines */}
+      <g opacity={animPhase >= 1 ? 1 : 0} style={{transition:'opacity .5s'}}>
+        {Array.from({length: range*2+1}, (_, i) => {
+          const pos = i * cell;
+          const isMajor = i === range;
+          return (
+            <Fragment key={i}>
+              <line x1={pos} y1={0} x2={pos} y2={height}
+                stroke={isMajor ? 'none' : 'var(--bg4)'} strokeWidth={isMajor ? 0 : 0.5}
+                opacity={Math.abs(i - range) % 5 === 0 ? 0.6 : 0.3}
+              />
+              <line x1={0} y1={pos} x2={width} y2={pos}
+                stroke={isMajor ? 'none' : 'var(--bg4)'} strokeWidth={isMajor ? 0 : 0.5}
+                opacity={Math.abs(i - range) % 5 === 0 ? 0.6 : 0.3}
+              />
+            </Fragment>
+          );
+        })}
+      </g>
+
+      {/* Quadrant overlays */}
+      {showQuadrants && animPhase >= 2 && (
+        <g>
+          <rect x={origin} y={0} width={origin} height={origin} fill={quadrantColors[0]} opacity={0.04}/>
+          <rect x={0} y={0} width={origin} height={origin} fill={quadrantColors[1]} opacity={0.04}/>
+          <rect x={0} y={origin} width={origin} height={origin} fill={quadrantColors[2]} opacity={0.04}/>
+          <rect x={origin} y={origin} width={origin} height={origin} fill={quadrantColors[3]} opacity={0.04}/>
+          {quadrantLabels.map((label, i) => (
+            <text key={i} x={quadrantPositions[i].x} y={quadrantPositions[i].y}
+              textAnchor="middle" dominantBaseline="middle"
+              fill={quadrantColors[i]} fontSize={16} fontFamily="var(--font-display)" fontWeight={700}
+              opacity={0.5}
+            >
+              {label}
+            </text>
+          ))}
+        </g>
+      )}
+
+      {/* Axes */}
+      <g opacity={animPhase >= 2 ? 1 : 0} style={{transition:'opacity .4s'}}>
+        <line x1={0} y1={origin} x2={width} y2={origin} stroke="var(--text-dim)" strokeWidth={1.5}/>
+        <line x1={origin} y1={0} x2={origin} y2={height} stroke="var(--text-dim)" strokeWidth={1.5}/>
+        {/* Axis arrows */}
+        <polygon points={`${width-2},${origin-4} ${width-2},${origin+4} ${width+4},${origin}`} fill="var(--text-dim)"/>
+        <polygon points={`${origin-4},2 ${origin+4},2 ${origin},-4`} fill="var(--text-dim)"/>
+      </g>
+
+      {/* Tick marks and labels */}
+      <g opacity={animPhase >= 3 ? 1 : 0} style={{transition:'opacity .4s'}}>
+        {Array.from({length: range*2+1}, (_, i) => {
+          const val = i - range;
+          if (val === 0) return null;
+          const pos = i * cell;
+          return (
+            <Fragment key={i}>
+              <line x1={pos} y1={origin-3} x2={pos} y2={origin+3} stroke="var(--text-dim)" strokeWidth={1}/>
+              <line x1={origin-3} y1={pos} x2={origin+3} y2={pos} stroke="var(--text-dim)" strokeWidth={1}/>
+              {Math.abs(val) % 2 === 0 && (
+                <>
+                  <text x={pos} y={origin+16} textAnchor="middle" fill="var(--text-dim)" fontSize={9} fontFamily="var(--font-mono)">{val}</text>
+                  <text x={origin-12} y={height - pos + 3} textAnchor="end" fill="var(--text-dim)" fontSize={9} fontFamily="var(--font-mono)">{val}</text>
+                </>
+              )}
+            </Fragment>
+          );
+        })}
+        {/* Axis labels */}
+        <text x={width - 8} y={origin - 12} textAnchor="end" fill="var(--text-dim)" fontSize={12} fontFamily="var(--font-mono)" fontStyle="italic">x</text>
+        <text x={origin + 12} y={14} textAnchor="start" fill="var(--text-dim)" fontSize={12} fontFamily="var(--font-mono)" fontStyle="italic">y</text>
+        {/* Origin label */}
+        <text x={origin - 10} y={origin + 16} textAnchor="end" fill="var(--text-dim)" fontSize={9} fontFamily="var(--font-mono)">0</text>
+      </g>
+
+      {/* Hover crosshair */}
+      {hoverCoord && (
+        <g>
+          <line x1={origin + hoverCoord.x * cell} y1={0} x2={origin + hoverCoord.x * cell} y2={height}
+            stroke="var(--violet)" strokeWidth={0.5} opacity={0.3} strokeDasharray="4,4"/>
+          <line x1={0} y1={origin - hoverCoord.y * cell} x2={width} y2={origin - hoverCoord.y * cell}
+            stroke="var(--violet)" strokeWidth={0.5} opacity={0.3} strokeDasharray="4,4"/>
+          <circle cx={origin + hoverCoord.x * cell} cy={origin - hoverCoord.y * cell} r={4}
+            fill="var(--violet)" opacity={0.5}/>
+          <rect x={origin + hoverCoord.x * cell + 8} y={origin - hoverCoord.y * cell - 24}
+            width={70} height={22} rx={4} fill="var(--bg3)" stroke="var(--violet)" strokeWidth={0.5}/>
+          <text x={origin + hoverCoord.x * cell + 43} y={origin - hoverCoord.y * cell - 10}
+            textAnchor="middle" fill="var(--violet)" fontSize={11} fontFamily="var(--font-mono)">
+            ({hoverCoord.x}, {hoverCoord.y})
+          </text>
+        </g>
+      )}
+
+      {children}
+    </svg>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   STEP 0: LANDING
+   ═══════════════════════════════════════════════ */
+function StepLanding({onNext}) {
+  const [show, setShow] = useState(false);
+  const canvasRef = useRef(null);
+
+  useEffect(() => { setTimeout(() => setShow(true), 100); }, []);
+
+  // Animated coordinate plane canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width = 500;
+    const H = canvas.height = 400;
+    let frame = 0;
+    let raf;
+
+    function draw() {
+      ctx.clearRect(0,0,W,H);
+      const progress = Math.min(frame / 90, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+
+      // Grid
+      ctx.strokeStyle = '#252540';
+      ctx.lineWidth = 0.5;
+      const gridSpacing = 25;
+      for (let i = 0; i <= W / gridSpacing; i++) {
+        const x = i * gridSpacing;
+        const drawLen = H * eased;
+        ctx.globalAlpha = 0.3 * eased;
+        ctx.beginPath();
+        ctx.moveTo(x, H/2 - drawLen/2);
+        ctx.lineTo(x, H/2 + drawLen/2);
+        ctx.stroke();
+      }
+      for (let i = 0; i <= H / gridSpacing; i++) {
+        const y = i * gridSpacing;
+        const drawLen = W * eased;
+        ctx.beginPath();
+        ctx.moveTo(W/2 - drawLen/2, y);
+        ctx.lineTo(W/2 + drawLen/2, y);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+
+      // Axes
+      if (progress > 0.3) {
+        const axisProgress = Math.min((progress - 0.3) / 0.3, 1);
+        const axisEased = 1 - Math.pow(1 - axisProgress, 2);
+        ctx.strokeStyle = '#6e6e8a';
+        ctx.lineWidth = 2;
+        // X axis
+        ctx.beginPath();
+        ctx.moveTo(W/2 - (W/2) * axisEased, H/2);
+        ctx.lineTo(W/2 + (W/2) * axisEased, H/2);
+        ctx.stroke();
+        // Y axis
+        ctx.beginPath();
+        ctx.moveTo(W/2, H/2 - (H/2) * axisEased);
+        ctx.lineTo(W/2, H/2 + (H/2) * axisEased);
+        ctx.stroke();
+      }
+
+      // Animated line: y = 0.7x + 1
+      if (progress > 0.6) {
+        const lineProgress = Math.min((progress - 0.6) / 0.4, 1);
+        const lineEased = 1 - Math.pow(1 - lineProgress, 3);
+        const m = 0.7;
+        const b = 1;
+        const scale = gridSpacing;
+        const x1 = -10, x2 = 10 * lineEased;
+        ctx.strokeStyle = '#a78bfa';
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = '#a78bfa';
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.moveTo(W/2 + x1 * scale, H/2 - (m * x1 + b) * scale);
+        ctx.lineTo(W/2 + x2 * scale, H/2 - (m * x2 + b) * scale);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // Y-intercept dot only
+        if (lineProgress > 0.5) {
+          const dotAlpha = Math.min((lineProgress - 0.5) / 0.5, 1);
+          const py = H/2 - b * scale;
+          ctx.beginPath();
+          ctx.arc(W/2, py, 4 * dotAlpha, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(167,139,250,' + dotAlpha + ')';
+          ctx.fill();
+        }
+      }
+
+      // Floating equation
+      if (progress > 0.85) {
+        const eqAlpha = Math.min((progress - 0.85) / 0.15, 1);
+        ctx.globalAlpha = eqAlpha;
+        ctx.font = '500 20px "DM Mono", monospace';
+        ctx.fillStyle = '#c084fc';
+        ctx.textAlign = 'center';
+        const bobY = Math.sin(frame * 0.04) * 4;
+        ctx.fillText('y = 0.7x + 1', W/2 + 80, H/2 - 100 + bobY);
+        ctx.globalAlpha = 1;
+      }
+
+      frame++;
+      if (frame < 200) {
+        raf = requestAnimationFrame(draw);
+      } else {
+        // keep animating the floating elements
+        const floatFrame = () => {
+          ctx.clearRect(0,0,W,H);
+          // Redraw static state
+          ctx.strokeStyle = '#252540';
+          ctx.lineWidth = 0.5;
+          ctx.globalAlpha = 0.3;
+          for (let i = 0; i <= W / gridSpacing; i++) {
+            ctx.beginPath(); ctx.moveTo(i * gridSpacing, 0); ctx.lineTo(i * gridSpacing, H); ctx.stroke();
+          }
+          for (let i = 0; i <= H / gridSpacing; i++) {
+            ctx.beginPath(); ctx.moveTo(0, i * gridSpacing); ctx.lineTo(W, i * gridSpacing); ctx.stroke();
+          }
+          ctx.globalAlpha = 1;
+          ctx.strokeStyle = '#6e6e8a';
+          ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(0, H/2); ctx.lineTo(W, H/2); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(W/2, 0); ctx.lineTo(W/2, H); ctx.stroke();
+          const m = 0.7, b = 1, scale = gridSpacing;
+          ctx.strokeStyle = '#a78bfa';
+          ctx.lineWidth = 2.5;
+          ctx.shadowColor = '#a78bfa';
+          ctx.shadowBlur = 12;
+          ctx.beginPath();
+          ctx.moveTo(W/2 - 10*scale, H/2 - (m*-10+b)*scale);
+          ctx.lineTo(W/2 + 10*scale, H/2 - (m*10+b)*scale);
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+          // Y-intercept dot
+          ctx.beginPath(); ctx.arc(W/2, H/2-b*scale, 4, 0, Math.PI*2);
+          ctx.fillStyle = '#a78bfa'; ctx.fill();
+          frame++;
+          const bobY = Math.sin(frame * 0.04) * 4;
+          ctx.font = '500 20px "DM Mono", monospace';
+          ctx.fillStyle = '#c084fc';
+          ctx.textAlign = 'center';
+          ctx.fillText('y = 0.7x + 1', W/2 + 80, H/2 - 100 + bobY);
+          raf = requestAnimationFrame(floatFrame);
+        };
+        raf = requestAnimationFrame(floatFrame);
+      }
+    }
+    raf = requestAnimationFrame(draw);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  return (
+    <div style={{minHeight:'100vh',display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',padding:'40px 24px',textAlign:'center',position:'relative'}}>
+      <div style={{position:'relative',opacity:show?1:0,transform:show?'translateY(0)':'translateY(20px)',transition:'all 0.8s ease'}}>
+        <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--text-dim)',letterSpacing:3,textTransform:'uppercase',marginBottom:20}}>Lesson 03</div>
+        <h1 style={{fontFamily:'var(--font-display)',fontSize:'clamp(32px,6vw,48px)',fontWeight:400,color:'var(--text-bright)',lineHeight:1.15,letterSpacing:'-0.02em',maxWidth:600}}>
+          Graphing & Linear Functions
+        </h1>
+        <p style={{marginTop:16,fontSize:16,color:'var(--text-dim)',maxWidth:460,lineHeight:1.7,fontWeight:300,margin:'16px auto 0'}}>
+          The coordinate plane, slope, y-intercept, and how to graph any line.
+        </p>
+
+        <div style={{margin:'32px auto',maxWidth:500,borderRadius:8,overflow:'hidden',border:'1px solid var(--bg4)'}}>
+          <canvas ref={canvasRef} style={{width:'100%',height:'auto',display:'block'}}/>
+        </div>
+
+        <button onClick={onNext} style={{
+          marginTop:24,padding:'14px 36px',background:'var(--violet-deep)',border:'none',
+          color:'#fff',borderRadius:6,cursor:'pointer',fontFamily:'var(--font-mono)',
+          fontSize:13,letterSpacing:1,transition:'all .2s'
+        }}
+        onMouseEnter={e=>e.target.style.opacity='0.85'}
+        onMouseLeave={e=>e.target.style.opacity='1'}
+        >Start Lesson {'\u2192'}</button>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   STEP 1: THE COORDINATE PLANE
+   ═══════════════════════════════════════════════ */
+function StepCoordinatePlane({onPrev, onNext}) {
+  const [hoverCoord, setHoverCoord] = useState(null);
+  const [clickedPoints, setClickedPoints] = useState([]);
+
+  return (
+    <div className="lesson-container">
+      <SectionLabel number={1} title="The Coordinate Plane"/>
+      <p style={{marginBottom:16,fontSize:15,maxWidth:660}}>
+        The <strong style={{color:'var(--text-bright)'}}>coordinate plane</strong> is a flat surface formed by two number lines that cross at right angles. The horizontal line is the <MathEq color="var(--cyan)" size={15}>x-axis</MathEq> and the vertical line is the <MathEq color="var(--green)" size={15}>y-axis</MathEq>.
+      </p>
+      <p style={{marginBottom:24,fontSize:15,maxWidth:660}}>
+        Where they meet is the <MathEq color="var(--amber)" size={15}>origin (0, 0)</MathEq>. The plane is divided into four <strong style={{color:'var(--text-bright)'}}>quadrants</strong>, numbered I through IV counterclockwise starting from the top-right.
+      </p>
+
+      <InfoCard accent="var(--violet)">
+        <strong style={{color:'var(--text-bright)'}}>Try it:</strong> Move your cursor over the plane to see coordinates. Click anywhere to place a point!
+      </InfoCard>
+
+      <div style={{display:'flex',justifyContent:'center',margin:'32px 0'}}>
+        <CoordinatePlane
+          showQuadrants={true}
+          animate={true}
+          hoverCoord={hoverCoord}
+          setHoverCoord={setHoverCoord}
+          onPlaneClick={(pt) => {
+            setClickedPoints(prev => {
+              if (prev.find(p => p.x === pt.x && p.y === pt.y)) return prev.filter(p => !(p.x === pt.x && p.y === pt.y));
+              return [...prev, pt];
+            });
+          }}
+        >
+          {clickedPoints.map((pt, i) => {
+            const {cx, cy} = toCanvas(pt.x, pt.y);
+            return (
+              <g key={i}>
+                <circle cx={cx} cy={cy} r={5} fill="var(--violet)" style={{animation:'dotPop .3s ease'}}/>
+                <text x={cx + 8} y={cy - 8} fill="var(--violet)" fontSize={10} fontFamily="var(--font-mono)">({pt.x}, {pt.y})</text>
+              </g>
+            );
+          })}
+        </CoordinatePlane>
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:12,marginTop:24}}>
+        {[
+          {label:'Quadrant I', desc:'x > 0, y > 0', color:'var(--cyan)', example:'(3, 4)'},
+          {label:'Quadrant II', desc:'x < 0, y > 0', color:'var(--green)', example:'(-2, 5)'},
+          {label:'Quadrant III', desc:'x < 0, y < 0', color:'var(--amber)', example:'(-3, -1)'},
+          {label:'Quadrant IV', desc:'x > 0, y < 0', color:'var(--rose)', example:'(4, -2)'},
+        ].map((q, i) => (
+          <div key={i} style={{background:'var(--bg2)',border:`1px solid ${q.color}22`,borderRadius:8,padding:'14px 16px'}}>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:12,color:q.color,fontWeight:500,marginBottom:4}}>{q.label}</div>
+            <div style={{fontSize:13,color:'var(--text-dim)',marginBottom:4}}>{q.desc}</div>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--text-bright)'}}>{q.example}</div>
+          </div>
+        ))}
+      </div>
+
+      {clickedPoints.length > 0 && (
+        <div style={{marginTop:20,textAlign:'center'}}>
+          <button onClick={() => setClickedPoints([])} style={{
+            padding:'8px 20px',background:'transparent',border:'1px solid var(--bg4)',
+            color:'var(--text-dim)',borderRadius:6,cursor:'pointer',fontFamily:'var(--font-mono)',
+            fontSize:12,transition:'all .2s'
+          }}
+          onMouseEnter={e => e.target.style.borderColor='var(--text-dim)'}
+          onMouseLeave={e => e.target.style.borderColor='var(--bg4)'}
+          >Clear Points ({clickedPoints.length})</button>
+        </div>
+      )}
+
+      <NavButtons current={1} total={TOTAL_STEPS} onPrev={onPrev} onNext={onNext}/>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   STEP 2: PLOTTING POINTS
+   ═══════════════════════════════════════════════ */
+function StepPlottingPoints({onPrev, onNext}) {
+  const challenges = [
+    {target: {x:3, y:4}, label:'(3, 4)'},
+    {target: {x:-2, y:5}, label:'(-2, 5)'},
+    {target: {x:-4, y:-3}, label:'(-4, -3)'},
+    {target: {x:5, y:-1}, label:'(5, -1)'},
+    {target: {x:0, y:6}, label:'(0, 6)'},
+    {target: {x:-7, y:0}, label:'(-7, 0)'},
+  ];
+  const [currentChallenge, setCurrentChallenge] = useState(0);
+  const [placed, setPlaced] = useState([]);
+  const [hoverCoord, setHoverCoord] = useState(null);
+  const [feedback, setFeedback] = useState(null);
+  const [completed, setCompleted] = useState([]);
+
+  const handlePlot = (pt) => {
+    const target = challenges[currentChallenge].target;
+    if (pt.x === target.x && pt.y === target.y) {
+      setFeedback('correct');
+      setPlaced(prev => [...prev, pt]);
+      setCompleted(prev => [...prev, currentChallenge]);
+      setTimeout(() => {
+        setFeedback(null);
+        if (currentChallenge < challenges.length - 1) {
+          setCurrentChallenge(currentChallenge + 1);
+        }
+      }, 800);
+    } else {
+      setFeedback('wrong');
+      setTimeout(() => setFeedback(null), 600);
+    }
+  };
+
+  const allDone = completed.length === challenges.length;
+
+  return (
+    <div className="lesson-container">
+      <SectionLabel number={2} title="Plotting Points"/>
+      <p style={{marginBottom:16,fontSize:15,maxWidth:660}}>
+        Every point on the plane is described by an <strong style={{color:'var(--text-bright)'}}>ordered pair (x, y)</strong>. The first number tells you how far to go horizontally from the origin; the second tells you how far vertically.
+      </p>
+
+      <InfoCard accent="var(--green)">
+        <strong style={{color:'var(--text-bright)'}}>Challenge:</strong> Plot each point by clicking on the correct location. The grid snaps to whole numbers.
+      </InfoCard>
+
+      {!allDone && (
+        <div style={{textAlign:'center',margin:'20px 0',padding:16,background:'var(--bg2)',borderRadius:10,border:'1px solid var(--bg4)'}}>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--text-dim)',marginBottom:6}}>Plot this point:</div>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:28,color:'var(--violet)',fontWeight:500}}>
+            {challenges[currentChallenge].label}
+          </div>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:12,marginTop:8,color: feedback === 'correct' ? 'var(--green)' : feedback === 'wrong' ? 'var(--red)' : 'var(--text-dim)'}}>
+            {feedback === 'correct' ? 'Correct!' : feedback === 'wrong' ? 'Try again \u2014 check the coordinates!' : `${completed.length} of ${challenges.length} completed`}
+          </div>
+        </div>
+      )}
+
+      {allDone && (
+        <div style={{textAlign:'center',margin:'20px 0',padding:20,background:'var(--bg2)',borderRadius:10,border:'1px solid var(--green)30'}}>
+          <div style={{fontFamily:'var(--font-display)',fontSize:22,color:'var(--green)',fontWeight:700,marginBottom:4}}>All Points Plotted!</div>
+          <div style={{fontSize:14,color:'var(--text-dim)'}}>You nailed every coordinate. Ready for the next concept.</div>
+        </div>
+      )}
+
+      <div style={{display:'flex',justifyContent:'center',margin:'24px 0'}}>
+        <CoordinatePlane
+          hoverCoord={hoverCoord}
+          setHoverCoord={setHoverCoord}
+          onPlaneClick={allDone ? null : handlePlot}
+        >
+          {placed.map((pt, i) => {
+            const {cx, cy} = toCanvas(pt.x, pt.y);
+            return (
+              <g key={i}>
+                <circle cx={cx} cy={cy} r={5} fill="var(--green)" style={{animation:'dotPop .3s ease'}}/>
+                <text x={cx+8} y={cy-8} fill="var(--green)" fontSize={10} fontFamily="var(--font-mono)">({pt.x}, {pt.y})</text>
+              </g>
+            );
+          })}
+        </CoordinatePlane>
+      </div>
+
+      {/* Progress chips */}
+      <div style={{display:'flex',gap:8,justifyContent:'center',flexWrap:'wrap',marginTop:16}}>
+        {challenges.map((c, i) => (
+          <span key={i} style={{
+            padding:'4px 12px',borderRadius:20,fontFamily:'var(--font-mono)',fontSize:12,
+            background: completed.includes(i) ? 'var(--green-dim)' : i === currentChallenge && !allDone ? 'var(--violet-dim)' : 'var(--bg3)',
+            color: completed.includes(i) ? 'var(--green)' : i === currentChallenge && !allDone ? 'var(--violet)' : 'var(--text-dim)',
+            border: `1px solid ${completed.includes(i) ? 'var(--green)' : i === currentChallenge && !allDone ? 'var(--violet)' : 'var(--bg4)'}30`
+          }}>{c.label}</span>
+        ))}
+      </div>
+
+      <NavButtons current={2} total={TOTAL_STEPS} onPrev={onPrev} onNext={onNext}/>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   STEP 3: SLOPE CONCEPT
+   ═══════════════════════════════════════════════ */
+function StepSlope({onPrev, onNext}) {
+  const [slope, setSlope] = useState(1);
+  const [hoverCoord, setHoverCoord] = useState(null);
+  const [showRiseRun, setShowRiseRun] = useState(true);
+
+  const slopeTypes = [
+    {value: 2, label:'Positive (steep)', desc:'Line goes up-right', color:'var(--green)', icon:'\u2197'},
+    {value: 0.5, label:'Positive (gentle)', desc:'Line goes up-right slowly', color:'var(--cyan)', icon:'\u2197'},
+    {value: 0, label:'Zero', desc:'Horizontal line', color:'var(--amber)', icon:'\u2192'},
+    {value: -1, label:'Negative', desc:'Line goes down-right', color:'var(--rose)', icon:'\u2198'},
+  ];
+
+  // Compute two points for rise/run visualization
+  const p1 = {x: -2, y: -2 * slope};
+  const p2 = {x: 2, y: 2 * slope};
+  const rise = p2.y - p1.y;
+  const run = p2.x - p1.x;
+
+  return (
+    <div className="lesson-container">
+      <SectionLabel number={3} title="The Slope"/>
+      <p style={{marginBottom:16,fontSize:15,maxWidth:660}}>
+        <strong style={{color:'var(--text-bright)'}}>Slope</strong> measures the <em>steepness</em> of a line. Think of it as how much the line rises (or falls) for each step to the right. We write slope as <MathEq color="var(--violet)" size={15}>m</MathEq>.
+      </p>
+
+      <div style={{textAlign:'center',margin:'24px 0',padding:24,background:'var(--bg2)',borderRadius:12,border:'1px solid var(--violet-dim)'}}>
+        <div style={{fontFamily:'var(--font-mono)',fontSize:14,color:'var(--text-dim)',marginBottom:12}}>Slope Formula</div>
+        <div style={{fontFamily:'var(--font-mono)',fontSize:26,color:'var(--text-bright)'}}>
+          <span style={{color:'var(--violet)'}}>m</span> = <span style={{display:'inline-flex',flexDirection:'column',alignItems:'center',verticalAlign:'middle',lineHeight:1.2}}>
+            <span style={{color:'var(--cyan)',borderBottom:'2px solid var(--text-dim)',paddingBottom:4}}>rise</span>
+            <span style={{color:'var(--rose)',paddingTop:4}}>run</span>
+          </span> = <span style={{display:'inline-flex',flexDirection:'column',alignItems:'center',verticalAlign:'middle',lineHeight:1.2}}>
+            <span style={{color:'var(--cyan)',borderBottom:'2px solid var(--text-dim)',paddingBottom:4}}>y{'\u2082'} - y{'\u2081'}</span>
+            <span style={{color:'var(--rose)',paddingTop:4}}>x{'\u2082'} - x{'\u2081'}</span>
+          </span>
+        </div>
+      </div>
+
+      <div style={{display:'flex',justifyContent:'center',margin:'24px 0',position:'relative'}}>
+        <CoordinatePlane hoverCoord={hoverCoord} setHoverCoord={setHoverCoord}>
+          {/* The line */}
+          {(() => {
+            const x1c = ORIGIN + (-GRID_RANGE) * CELL;
+            const y1c = ORIGIN - (slope * -GRID_RANGE) * CELL;
+            const x2c = ORIGIN + GRID_RANGE * CELL;
+            const y2c = ORIGIN - (slope * GRID_RANGE) * CELL;
+            return (
+              <line x1={x1c} y1={y1c} x2={x2c} y2={y2c}
+                stroke="var(--violet)" strokeWidth={2.5}
+                style={{filter:'drop-shadow(0 0 6px rgba(167,139,250,0.4))'}}
+              />
+            );
+          })()}
+
+          {/* Rise/Run visualization */}
+          {showRiseRun && slope !== 0 && (() => {
+            const {cx:cx1, cy:cy1} = toCanvas(p1.x, p1.y);
+            const {cx:cx2, cy:cy2} = toCanvas(p2.x, p2.y);
+            const midRunX = (cx1 + cx2) / 2;
+            return (
+              <g>
+                {/* Point 1 */}
+                <circle cx={cx1} cy={cy1} r={5} fill="var(--text-bright)"/>
+                <text x={cx1-8} y={cy1+18} textAnchor="middle" fill="var(--text-dim)" fontSize={10} fontFamily="var(--font-mono)">({p1.x}, {p1.y.toFixed(1)})</text>
+                {/* Point 2 */}
+                <circle cx={cx2} cy={cy2} r={5} fill="var(--text-bright)"/>
+                <text x={cx2+8} y={cy2-10} textAnchor="middle" fill="var(--text-dim)" fontSize={10} fontFamily="var(--font-mono)">({p2.x}, {p2.y.toFixed(1)})</text>
+                {/* Run line (horizontal) */}
+                <line x1={cx1} y1={cy1} x2={cx2} y2={cy1} stroke="var(--rose)" strokeWidth={2} strokeDasharray="6,4"/>
+                <text x={midRunX} y={cy1+16} textAnchor="middle" fill="var(--rose)" fontSize={11} fontFamily="var(--font-mono)" fontWeight={500}>
+                  run = {run}
+                </text>
+                {/* Rise line (vertical) */}
+                <line x1={cx2} y1={cy1} x2={cx2} y2={cy2} stroke="var(--cyan)" strokeWidth={2} strokeDasharray="6,4"/>
+                <text x={cx2+16} y={(cy1+cy2)/2+4} textAnchor="start" fill="var(--cyan)" fontSize={11} fontFamily="var(--font-mono)" fontWeight={500}>
+                  rise = {rise.toFixed(1)}
+                </text>
+                {/* Right angle indicator */}
+                <rect x={cx2-6} y={cy1-(rise>0?6:0)} width={6} height={6} fill="none" stroke="var(--text-dim)" strokeWidth={1}/>
+              </g>
+            );
+          })()}
+        </CoordinatePlane>
+      </div>
+
+      {/* Slope slider */}
+      <div style={{maxWidth:400,margin:'24px auto',textAlign:'center'}}>
+        <div style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--text-dim)',marginBottom:10}}>
+          Drag to change slope
+        </div>
+        <input type="range" min={-5} max={5} step={0.25} value={slope}
+          onChange={e => setSlope(parseFloat(e.target.value))}
+          style={{width:'100%',accentColor:'var(--violet)',cursor:'pointer'}}
+        />
+        <div style={{fontFamily:'var(--font-mono)',fontSize:22,color:'var(--violet)',marginTop:10,fontWeight:500}}>
+          m = {slope.toFixed(2)}
+        </div>
+        <label style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginTop:12,cursor:'pointer',fontSize:13,color:'var(--text-dim)'}}>
+          <input type="checkbox" checked={showRiseRun} onChange={e => setShowRiseRun(e.target.checked)} style={{accentColor:'var(--violet)'}}/>
+          Show rise/run
+        </label>
+      </div>
+
+      {/* Slope type cards */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr))',gap:10,marginTop:24}}>
+        {slopeTypes.map((st, i) => (
+          <button key={i} onClick={() => setSlope(st.value)} style={{
+            background: slope === st.value ? `${st.color}15` : 'var(--bg2)',
+            border: `1px solid ${slope === st.value ? st.color + '40' : 'var(--bg4)'}`,
+            borderRadius:8,padding:'14px 14px',cursor:'pointer',textAlign:'left',
+            transition:'all .2s'
+          }}>
+            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+              <span style={{fontSize:18}}>{st.icon}</span>
+              <span style={{fontFamily:'var(--font-mono)',fontSize:12,color:st.color,fontWeight:500}}>{st.label}</span>
+            </div>
+            <div style={{fontSize:12,color:'var(--text-dim)'}}>{st.desc}</div>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--text-bright)',marginTop:4}}>m = {st.value}</div>
+          </button>
+        ))}
+      </div>
+
+      <InfoCard accent="var(--amber)">
+        <strong style={{color:'var(--text-bright)'}}>Real-world analogy:</strong> A slope of 2 is like a steep hill; you climb 2 meters for every 1 meter forward. A slope of 0.5 is a gentle ramp. A slope of 0 is flat ground. Negative slope means going downhill.
+      </InfoCard>
+
+      <NavButtons current={3} total={TOTAL_STEPS} onPrev={onPrev} onNext={onNext}/>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   STEP 4: Y-INTERCEPT
+   ═══════════════════════════════════════════════ */
+function StepYIntercept({onPrev, onNext}) {
+  const [b, setB] = useState(2);
+  const [hoverCoord, setHoverCoord] = useState(null);
+  const m = 1; // fixed slope for this step
+
+  return (
+    <div className="lesson-container">
+      <SectionLabel number={4} title="The Y-Intercept"/>
+      <p style={{marginBottom:16,fontSize:15,maxWidth:660}}>
+        The <strong style={{color:'var(--text-bright)'}}>y-intercept</strong> is the point where the line crosses the y-axis. At this point, <MathEq color="var(--cyan)" size={15}>x = 0</MathEq>, so the y-intercept is always at <MathEq color="var(--amber)" size={15}>(0, b)</MathEq>.
+      </p>
+      <p style={{marginBottom:24,fontSize:15,maxWidth:660}}>
+        The value <MathEq color="var(--amber)" size={15}>b</MathEq> shifts the entire line up or down without changing its slope. Drag the slider below to see how <MathEq color="var(--amber)" size={15}>b</MathEq> affects the line.
+      </p>
+
+      <div style={{display:'flex',justifyContent:'center',margin:'24px 0'}}>
+        <CoordinatePlane hoverCoord={hoverCoord} setHoverCoord={setHoverCoord}>
+          {/* The line y = x + b */}
+          {(() => {
+            const x1 = -GRID_RANGE, x2 = GRID_RANGE;
+            const y1 = m * x1 + b, y2 = m * x2 + b;
+            const {cx:cx1, cy:cy1} = toCanvas(x1, y1);
+            const {cx:cx2, cy:cy2} = toCanvas(x2, y2);
+            return <line x1={cx1} y1={cy1} x2={cx2} y2={cy2} stroke="var(--violet)" strokeWidth={2.5}
+              style={{filter:'drop-shadow(0 0 6px rgba(167,139,250,0.4))'}}/>;
+          })()}
+          {/* Y-intercept dot */}
+          {(() => {
+            const {cx, cy} = toCanvas(0, b);
+            return (
+              <g>
+                <circle cx={cx} cy={cy} r={7} fill="var(--amber)" style={{animation:'dotPop .3s ease'}}/>
+                <circle cx={cx} cy={cy} r={12} fill="none" stroke="var(--amber)" strokeWidth={1.5} opacity={0.4}>
+                  <animate attributeName="r" from="7" to="18" dur="1.5s" repeatCount="indefinite"/>
+                  <animate attributeName="opacity" from="0.5" to="0" dur="1.5s" repeatCount="indefinite"/>
+                </circle>
+                <text x={cx+14} y={cy-2} fill="var(--amber)" fontSize={12} fontFamily="var(--font-mono)" fontWeight={500}>
+                  (0, {b.toFixed(1)})
+                </text>
+                {/* Label */}
+                <text x={cx+14} y={cy+14} fill="var(--text-dim)" fontSize={10} fontFamily="var(--font-mono)">
+                  y-intercept
+                </text>
+              </g>
+            );
+          })()}
+          {/* Ghost lines showing other b values */}
+          {[-3, 0, 3].filter(gb => Math.abs(gb - b) > 0.5).map((gb, i) => {
+            const x1 = -GRID_RANGE, x2 = GRID_RANGE;
+            const {cx:cx1, cy:cy1} = toCanvas(x1, m*x1+gb);
+            const {cx:cx2, cy:cy2} = toCanvas(x2, m*x2+gb);
+            return <line key={i} x1={cx1} y1={cy1} x2={cx2} y2={cy2} stroke="var(--violet)" strokeWidth={1} opacity={0.15} strokeDasharray="4,6"/>;
+          })}
+        </CoordinatePlane>
+      </div>
+
+      {/* B slider */}
+      <div style={{maxWidth:400,margin:'24px auto',textAlign:'center'}}>
+        <div style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--text-dim)',marginBottom:10}}>
+          Drag to change y-intercept
+        </div>
+        <input type="range" min={-8} max={8} step={0.5} value={b}
+          onChange={e => setB(parseFloat(e.target.value))}
+          style={{width:'100%',accentColor:'var(--amber)',cursor:'pointer'}}
+        />
+        <div style={{display:'flex',justifyContent:'center',gap:24,marginTop:12}}>
+          <div>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--text-dim)'}}>slope (fixed)</div>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:20,color:'var(--violet)',fontWeight:500}}>m = {m}</div>
+          </div>
+          <div>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--text-dim)'}}>y-intercept</div>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:20,color:'var(--amber)',fontWeight:500}}>b = {b.toFixed(1)}</div>
+          </div>
+        </div>
+      </div>
+
+      <InfoCard accent="var(--cyan)">
+        <strong style={{color:'var(--text-bright)'}}>Key insight:</strong> Changing <MathEq color="var(--amber)" size={14}>b</MathEq> slides the line up or down like an elevator, keeping the angle (slope) the same. Notice how the ghost lines show other possible positions.
+      </InfoCard>
+
+      <NavButtons current={4} total={TOTAL_STEPS} onPrev={onPrev} onNext={onNext}/>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   STEP 5: SLOPE-INTERCEPT FORM
+   ═══════════════════════════════════════════════ */
+function StepSlopeIntercept({onPrev, onNext}) {
+  const [m, setM] = useState(1);
+  const [b, setB] = useState(0);
+  const [hoverCoord, setHoverCoord] = useState(null);
+
+  return (
+    <div className="lesson-container">
+      <SectionLabel number={5} title="Slope-Intercept Form"/>
+      <p style={{marginBottom:16,fontSize:15,maxWidth:660}}>
+        Now we combine slope and y-intercept into a single equation. The <strong style={{color:'var(--text-bright)'}}>slope-intercept form</strong> of a linear equation is:
+      </p>
+
+      <div style={{textAlign:'center',margin:'28px 0',padding:28,background:'var(--bg2)',borderRadius:12,border:'1px solid var(--violet-dim)',position:'relative',overflow:'hidden'}}>
+        {/* Subtle gradient background */}
+        <div style={{position:'absolute',inset:0,background:'linear-gradient(135deg,var(--violet-glow),transparent 60%,var(--amber-dim))',pointerEvents:'none'}}/>
+        <div style={{position:'relative'}}>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:36,color:'var(--text-bright)',fontWeight:500}}>
+            y = <span style={{color:'var(--violet)',textShadow:'0 0 20px var(--violet-dim)'}}>{m < 0 ? `(${m.toFixed(1)})` : m.toFixed(1)}</span>x {b >= 0 ? '+' : '\u2212'} <span style={{color:'var(--amber)',textShadow:'0 0 20px var(--amber-dim)'}}>{Math.abs(b).toFixed(1)}</span>
+          </div>
+          <div style={{display:'flex',justifyContent:'center',gap:32,marginTop:16}}>
+            <div style={{display:'flex',alignItems:'center',gap:6}}>
+              <div style={{width:12,height:12,borderRadius:3,background:'var(--violet)'}}/>
+              <span style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--text-dim)'}}>m = slope</span>
+            </div>
+            <div style={{display:'flex',alignItems:'center',gap:6}}>
+              <div style={{width:12,height:12,borderRadius:3,background:'var(--amber)'}}/>
+              <span style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--text-dim)'}}>b = y-intercept</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{display:'flex',justifyContent:'center',margin:'24px 0'}}>
+        <CoordinatePlane hoverCoord={hoverCoord} setHoverCoord={setHoverCoord}>
+          {/* The line */}
+          {(() => {
+            const x1 = -GRID_RANGE, x2 = GRID_RANGE;
+            const y1 = m * x1 + b, y2 = m * x2 + b;
+            const {cx:cx1, cy:cy1} = toCanvas(x1, y1);
+            const {cx:cx2, cy:cy2} = toCanvas(x2, y2);
+            return <line x1={cx1} y1={cy1} x2={cx2} y2={cy2} stroke="var(--violet)" strokeWidth={2.5}
+              style={{filter:'drop-shadow(0 0 6px rgba(167,139,250,0.4))'}}/>;
+          })()}
+          {/* Y-intercept */}
+          {(() => {
+            const {cx, cy} = toCanvas(0, b);
+            return <circle cx={cx} cy={cy} r={5} fill="var(--amber)"/>;
+          })()}
+          {/* X-intercept */}
+          {m !== 0 && (() => {
+            const xInt = -b / m;
+            if (Math.abs(xInt) <= GRID_RANGE) {
+              const {cx, cy} = toCanvas(xInt, 0);
+              return (
+                <g>
+                  <circle cx={cx} cy={cy} r={5} fill="var(--rose)"/>
+                  <text x={cx} y={cy+16} textAnchor="middle" fill="var(--rose)" fontSize={10} fontFamily="var(--font-mono)">
+                    ({xInt.toFixed(1)}, 0)
+                  </text>
+                </g>
+              );
+            }
+            return null;
+          })()}
+          {/* Sample points */}
+          {[-4,-2,0,2,4].map(x => {
+            const y = m * x + b;
+            if (Math.abs(y) > GRID_RANGE) return null;
+            const {cx, cy} = toCanvas(x, y);
+            return <circle key={x} cx={cx} cy={cy} r={3} fill="var(--violet)" opacity={0.6}/>;
+          })}
+        </CoordinatePlane>
+      </div>
+
+      {/* Dual sliders */}
+      <div style={{maxWidth:450,margin:'24px auto',display:'grid',gridTemplateColumns:'1fr 1fr',gap:24}}>
+        <div style={{textAlign:'center'}}>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--violet)',marginBottom:8,letterSpacing:1}}>SLOPE (m)</div>
+          <input type="range" min={-5} max={5} step={0.25} value={m}
+            onChange={e => setM(parseFloat(e.target.value))}
+            style={{width:'100%',accentColor:'var(--violet)',cursor:'pointer'}}
+          />
+          <div style={{fontFamily:'var(--font-mono)',fontSize:24,color:'var(--violet)',marginTop:6,fontWeight:500}}>{m.toFixed(2)}</div>
+        </div>
+        <div style={{textAlign:'center'}}>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--amber)',marginBottom:8,letterSpacing:1}}>Y-INTERCEPT (b)</div>
+          <input type="range" min={-8} max={8} step={0.5} value={b}
+            onChange={e => setB(parseFloat(e.target.value))}
+            style={{width:'100%',accentColor:'var(--amber)',cursor:'pointer'}}
+          />
+          <div style={{fontFamily:'var(--font-mono)',fontSize:24,color:'var(--amber)',marginTop:6,fontWeight:500}}>{b.toFixed(1)}</div>
+        </div>
+      </div>
+
+      {/* Quick facts */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:10,marginTop:24}}>
+        <div style={{background:'var(--bg2)',borderRadius:8,padding:'12px 14px',border:'1px solid var(--bg4)'}}>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--text-dim)',marginBottom:4}}>Y-INTERCEPT</div>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:16,color:'var(--amber)'}}>(0, {b.toFixed(1)})</div>
+        </div>
+        <div style={{background:'var(--bg2)',borderRadius:8,padding:'12px 14px',border:'1px solid var(--bg4)'}}>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--text-dim)',marginBottom:4}}>X-INTERCEPT</div>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:16,color:'var(--rose)'}}>
+            {m !== 0 ? `(${(-b/m).toFixed(1)}, 0)` : 'None (horizontal)'}
+          </div>
+        </div>
+        <div style={{background:'var(--bg2)',borderRadius:8,padding:'12px 14px',border:'1px solid var(--bg4)'}}>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--text-dim)',marginBottom:4}}>DIRECTION</div>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:16,color:m > 0 ? 'var(--green)' : m < 0 ? 'var(--rose)' : 'var(--amber)'}}>
+            {m > 0 ? 'Rising \u2197' : m < 0 ? 'Falling \u2198' : 'Flat \u2192'}
+          </div>
+        </div>
+      </div>
+
+      <NavButtons current={5} total={TOTAL_STEPS} onPrev={onPrev} onNext={onNext}/>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   STEP 6: SANDBOX
+   ═══════════════════════════════════════════════ */
+function StepSandbox({onPrev, onComplete}) {
+  const [lines, setLines] = useState([
+    {m: 1, b: 0, color: '#a78bfa', label: 'Line 1'},
+  ]);
+  const [activeLineIdx, setActiveLineIdx] = useState(0);
+  const [hoverCoord, setHoverCoord] = useState(null);
+  const [inputEq, setInputEq] = useState('');
+  const [inputError, setInputError] = useState('');
+
+  const lineColors = ['#a78bfa','#67e8f9','#f472b6','#4ade80','#fbbf24','#f87171','#818cf8','#fb923c'];
+
+  const addLine = () => {
+    const idx = lines.length;
+    setLines(prev => [...prev, {m: 1, b: 0, color: lineColors[idx % lineColors.length], label: `Line ${idx+1}`}]);
+    setActiveLineIdx(idx);
+  };
+
+  const removeLine = (idx) => {
+    if (lines.length <= 1) return;
+    setLines(prev => prev.filter((_,i) => i !== idx));
+    setActiveLineIdx(Math.max(0, activeLineIdx - 1));
+  };
+
+  const updateLine = (idx, key, value) => {
+    setLines(prev => prev.map((l,i) => i === idx ? {...l, [key]: value} : l));
+  };
+
+  const parseEquation = (eq) => {
+    setInputError('');
+    // Parse "y = mx + b" format
+    const cleaned = eq.replace(/\s+/g, '').toLowerCase();
+    // Pattern: y=<number>x+<number> or y=<number>x-<number> or y=<number>x or y=x+<number> etc.
+    const patterns = [
+      /^y=([+-]?\d*\.?\d*)x([+-]\d*\.?\d+)$/,  // y = mx + b
+      /^y=([+-]?\d*\.?\d*)x$/,                    // y = mx
+      /^y=([+-]?\d*\.?\d+)$/,                     // y = b
+      /^y=x([+-]\d*\.?\d+)$/,                     // y = x + b
+      /^y=x$/,                                      // y = x
+    ];
+
+    let matched = false;
+    let newM = 0, newB = 0;
+
+    // y = mx + b
+    let match = cleaned.match(patterns[0]);
+    if (match) {
+      newM = match[1] === '' || match[1] === '+' ? 1 : match[1] === '-' ? -1 : parseFloat(match[1]);
+      newB = parseFloat(match[2]);
+      matched = true;
+    }
+    // y = mx
+    if (!matched) {
+      match = cleaned.match(patterns[1]);
+      if (match) {
+        newM = match[1] === '' || match[1] === '+' ? 1 : match[1] === '-' ? -1 : parseFloat(match[1]);
+        newB = 0;
+        matched = true;
+      }
+    }
+    // y = b (constant)
+    if (!matched) {
+      match = cleaned.match(patterns[2]);
+      if (match) {
+        newM = 0;
+        newB = parseFloat(match[1]);
+        matched = true;
+      }
+    }
+    // y = x + b
+    if (!matched) {
+      match = cleaned.match(patterns[3]);
+      if (match) {
+        newM = 1;
+        newB = parseFloat(match[1]);
+        matched = true;
+      }
+    }
+    // y = x
+    if (!matched && cleaned.match(patterns[4])) {
+      newM = 1;
+      newB = 0;
+      matched = true;
+    }
+
+    if (matched && !isNaN(newM) && !isNaN(newB)) {
+      const idx = lines.length;
+      setLines(prev => [...prev, {m: newM, b: newB, color: lineColors[idx % lineColors.length], label: `y = ${newM}x ${newB >= 0 ? '+' : '-'} ${Math.abs(newB)}`}]);
+      setActiveLineIdx(idx);
+      setInputEq('');
+    } else {
+      setInputError('Use format: y = 2x + 3 or y = -0.5x - 1');
+    }
+  };
+
+  const activeLine = lines[activeLineIdx];
+
+  // Generate table of values for active line
+  const tableXValues = [-4,-3,-2,-1,0,1,2,3,4];
+  const tableRows = tableXValues.map(x => ({x, y: activeLine.m * x + activeLine.b}));
+
+  return (
+    <div className="lesson-container">
+      <SectionLabel number={6} title="Graph Any Line"/>
+      <p style={{marginBottom:16,fontSize:15,maxWidth:660}}>
+        Now put everything together! Use the sliders to adjust slope and y-intercept, type in equations, or add multiple lines to compare them. This is your sandbox to explore.
+      </p>
+
+      {/* Equation input */}
+      <div style={{display:'flex',gap:8,margin:'20px 0',maxWidth:500}}>
+        <input
+          type="text"
+          value={inputEq}
+          onChange={e => { setInputEq(e.target.value); setInputError(''); }}
+          onKeyDown={e => e.key === 'Enter' && parseEquation(inputEq)}
+          placeholder="y = 2x + 3"
+          style={{
+            flex:1,padding:'10px 16px',background:'var(--bg2)',border:'1px solid var(--bg4)',
+            borderRadius:6,color:'var(--text-bright)',fontFamily:'var(--font-mono)',fontSize:14,
+            outline:'none',transition:'border-color .2s'
+          }}
+          onFocus={e => e.target.style.borderColor = 'var(--violet)'}
+          onBlur={e => e.target.style.borderColor = 'var(--bg4)'}
+        />
+        <button onClick={() => parseEquation(inputEq)} style={{
+          padding:'10px 20px',background:'var(--violet-deep)',border:'none',
+          color:'#fff',borderRadius:6,cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:13,
+          transition:'all .2s',whiteSpace:'nowrap'
+        }}
+        onMouseEnter={e => e.target.style.background = 'var(--violet)'}
+        onMouseLeave={e => e.target.style.background = 'var(--violet-deep)'}
+        >Add Line</button>
+      </div>
+      {inputError && <div style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--red)',marginBottom:12}}>{inputError}</div>}
+
+      <div style={{display:'flex',gap:24,flexWrap:'wrap',justifyContent:'center',margin:'24px 0'}}>
+        {/* Graph */}
+        <div>
+          <CoordinatePlane hoverCoord={hoverCoord} setHoverCoord={setHoverCoord}>
+            {lines.map((line, idx) => {
+              const x1 = -GRID_RANGE, x2 = GRID_RANGE;
+              const y1 = line.m * x1 + line.b, y2 = line.m * x2 + line.b;
+              const {cx:cx1,cy:cy1} = toCanvas(x1, y1);
+              const {cx:cx2,cy:cy2} = toCanvas(x2, y2);
+              return (
+                <g key={idx}>
+                  <line x1={cx1} y1={cy1} x2={cx2} y2={cy2}
+                    stroke={line.color} strokeWidth={idx === activeLineIdx ? 2.5 : 1.5}
+                    opacity={idx === activeLineIdx ? 1 : 0.5}
+                    style={idx === activeLineIdx ? {filter:`drop-shadow(0 0 6px ${line.color}66)`} : {}}
+                  />
+                  {/* Y-intercept dot */}
+                  {Math.abs(line.b) <= GRID_RANGE && (() => {
+                    const {cx,cy} = toCanvas(0, line.b);
+                    return <circle cx={cx} cy={cy} r={idx === activeLineIdx ? 5 : 3} fill={line.color} opacity={idx === activeLineIdx ? 1 : 0.5}/>;
+                  })()}
+                  {/* X-intercept dot */}
+                  {line.m !== 0 && Math.abs(-line.b/line.m) <= GRID_RANGE && (() => {
+                    const xInt = -line.b / line.m;
+                    const {cx,cy} = toCanvas(xInt, 0);
+                    return <circle cx={cx} cy={cy} r={idx === activeLineIdx ? 4 : 2} fill={line.color} opacity={idx === activeLineIdx ? 0.7 : 0.3}/>;
+                  })()}
+                </g>
+              );
+            })}
+          </CoordinatePlane>
+        </div>
+
+        {/* Controls panel */}
+        <div style={{flex:'1 1 260px',minWidth:260,maxWidth:360}}>
+          {/* Line list */}
+          <div style={{marginBottom:16}}>
+            {lines.map((line, idx) => (
+              <div key={idx} onClick={() => setActiveLineIdx(idx)} style={{
+                display:'flex',alignItems:'center',gap:10,padding:'8px 12px',marginBottom:4,
+                borderRadius:6,cursor:'pointer',transition:'all .2s',
+                background: idx === activeLineIdx ? `${line.color}15` : 'transparent',
+                border: `1px solid ${idx === activeLineIdx ? line.color + '40' : 'transparent'}`,
+              }}>
+                <div style={{width:16,height:3,borderRadius:2,background:line.color}}/>
+                <span style={{fontFamily:'var(--font-mono)',fontSize:13,color: idx === activeLineIdx ? 'var(--text-bright)' : 'var(--text-dim)',flex:1}}>
+                  y = {line.m.toFixed(1)}x {line.b >= 0 ? '+' : '\u2212'} {Math.abs(line.b).toFixed(1)}
+                </span>
+                {lines.length > 1 && (
+                  <button onClick={(e) => { e.stopPropagation(); removeLine(idx); }} style={{
+                    width:20,height:20,borderRadius:4,border:'none',background:'var(--bg4)',
+                    color:'var(--text-dim)',cursor:'pointer',fontSize:12,display:'flex',alignItems:'center',justifyContent:'center',
+                    transition:'all .2s'
+                  }}
+                  onMouseEnter={e => { e.target.style.background='var(--red-dim)'; e.target.style.color='var(--red)'; }}
+                  onMouseLeave={e => { e.target.style.background='var(--bg4)'; e.target.style.color='var(--text-dim)'; }}
+                  >{'\u00d7'}</button>
+                )}
+              </div>
+            ))}
+            <button onClick={addLine} style={{
+              width:'100%',padding:'8px',background:'transparent',border:'1px dashed var(--bg4)',
+              borderRadius:6,color:'var(--text-dim)',cursor:'pointer',fontFamily:'var(--font-mono)',
+              fontSize:12,transition:'all .2s',marginTop:4
+            }}
+            onMouseEnter={e => {e.target.style.borderColor='var(--violet)';e.target.style.color='var(--violet)'}}
+            onMouseLeave={e => {e.target.style.borderColor='var(--bg4)';e.target.style.color='var(--text-dim)'}}
+            >+ Add Line</button>
+          </div>
+
+          {/* Active line sliders */}
+          {activeLine && (
+            <div style={{background:'var(--bg2)',borderRadius:10,padding:16,border:'1px solid var(--bg4)'}}>
+              <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--text-dim)',letterSpacing:1,marginBottom:12,textTransform:'uppercase'}}>
+                Active Line
+              </div>
+              <div style={{marginBottom:16}}>
+                <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
+                  <span style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--violet)'}}>Slope (m)</span>
+                  <span style={{fontFamily:'var(--font-mono)',fontSize:14,color:'var(--violet)',fontWeight:500}}>{activeLine.m.toFixed(2)}</span>
+                </div>
+                <input type="range" min={-5} max={5} step={0.25} value={activeLine.m}
+                  onChange={e => updateLine(activeLineIdx, 'm', parseFloat(e.target.value))}
+                  style={{width:'100%',accentColor:'var(--violet)',cursor:'pointer'}}
+                />
+              </div>
+              <div>
+                <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
+                  <span style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--amber)'}}>Y-Intercept (b)</span>
+                  <span style={{fontFamily:'var(--font-mono)',fontSize:14,color:'var(--amber)',fontWeight:500}}>{activeLine.b.toFixed(1)}</span>
+                </div>
+                <input type="range" min={-8} max={8} step={0.5} value={activeLine.b}
+                  onChange={e => updateLine(activeLineIdx, 'b', parseFloat(e.target.value))}
+                  style={{width:'100%',accentColor:'var(--amber)',cursor:'pointer'}}
+                />
+              </div>
+
+              {/* Intercepts info */}
+              <div style={{marginTop:16,paddingTop:12,borderTop:'1px solid var(--bg4)'}}>
+                <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
+                  <span style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--text-dim)'}}>y-intercept</span>
+                  <span style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--amber)'}}>
+                    (0, {activeLine.b.toFixed(1)})
+                  </span>
+                </div>
+                <div style={{display:'flex',justifyContent:'space-between'}}>
+                  <span style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--text-dim)'}}>x-intercept</span>
+                  <span style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--rose)'}}>
+                    {activeLine.m !== 0 ? `(${(-activeLine.b / activeLine.m).toFixed(1)}, 0)` : 'None'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Table of values */}
+          <div style={{marginTop:16,background:'var(--bg2)',borderRadius:10,padding:0,border:'1px solid var(--bg4)',overflow:'hidden'}}>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--text-dim)',letterSpacing:1,textTransform:'uppercase',padding:'10px 14px',borderBottom:'1px solid var(--bg4)',background:'var(--bg3)'}}>
+              Table of Values
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',fontSize:12,fontFamily:'var(--font-mono)'}}>
+              <div style={{padding:'6px 14px',borderBottom:'1px solid var(--bg4)',borderRight:'1px solid var(--bg4)',color:'var(--text-dim)',fontWeight:500}}>x</div>
+              <div style={{padding:'6px 14px',borderBottom:'1px solid var(--bg4)',color:'var(--text-dim)',fontWeight:500}}>y</div>
+              {tableRows.map((row, i) => (
+                <Fragment key={i}>
+                  <div style={{padding:'4px 14px',borderBottom: i < tableRows.length - 1 ? '1px solid var(--bg3)' : 'none',borderRight:'1px solid var(--bg4)',color:'var(--text)'}}>{row.x}</div>
+                  <div style={{padding:'4px 14px',borderBottom: i < tableRows.length - 1 ? '1px solid var(--bg3)' : 'none',color: row.x === 0 ? 'var(--amber)' : activeLine.m !== 0 && Math.abs(row.y) < 0.01 ? 'var(--rose)' : 'var(--text)'}}>
+                    {row.y.toFixed(1)}
+                  </div>
+                </Fragment>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <NavButtons current={6} total={TOTAL_STEPS} onPrev={onPrev} onNext={onComplete} nextLabel="Complete Lesson"/>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   COMPLETION SCREEN
+   ═══════════════════════════════════════════════ */
+function StepComplete() {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    setTimeout(() => setShow(true), 100);
+    try { const p=JSON.parse(localStorage.getItem('math-progress')||'[]'); if(!p.includes(3)){p.push(3);localStorage.setItem('math-progress',JSON.stringify(p));} } catch(e) {}
+  }, []);
+
+  return (
+    <div style={{minHeight:'100vh',display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',padding:'40px 24px',textAlign:'center',position:'relative',overflow:'hidden'}}>
+      <div style={{position:'absolute',top:'30%',left:'50%',transform:'translate(-50%,-50%)',width:600,height:600,background:'radial-gradient(circle,var(--violet-glow) 0%,transparent 70%)',pointerEvents:'none'}}/>
+      <div style={{position:'absolute',inset:0,background:'repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(167,139,250,0.01) 2px,rgba(167,139,250,0.01) 4px)',pointerEvents:'none'}}/>
+
+      <div style={{position:'relative',opacity:show?1:0,transform:show?'translateY(0)':'translateY(40px)',transition:'all 1s cubic-bezier(.4,0,.2,1)'}}>
+        <div style={{width:80,height:80,borderRadius:'50%',background:'var(--violet-dim)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 24px',border:'2px solid var(--violet)',fontSize:36}}>
+          {'\u2713'}
+        </div>
+        <div style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--green)',letterSpacing:4,textTransform:'uppercase',marginBottom:16}}>Lesson Complete</div>
+        <h1 style={{fontFamily:'var(--font-display)',fontSize:'clamp(28px,6vw,48px)',fontWeight:700,color:'var(--text-bright)',lineHeight:1.15,letterSpacing:'-0.02em',maxWidth:600}}>
+          You can graph<br/><span style={{color:'var(--violet)'}}>linear functions!</span>
+        </h1>
+        <p style={{marginTop:20,fontSize:16,color:'var(--text-dim)',maxWidth:480,lineHeight:1.8,fontWeight:300}}>
+          You have learned the coordinate plane, plotting points, slope, y-intercept, and the slope-intercept form. Nice work.
+        </p>
+
+        <div style={{display:'flex',gap:12,marginTop:40,justifyContent:'center',flexWrap:'wrap'}}>
+          <a href="index.html" style={{
+            display:'inline-block',padding:'14px 32px',background:'var(--violet-deep)',border:'none',
+            color:'#fff',borderRadius:8,cursor:'pointer',fontFamily:'var(--font-mono)',
+            fontSize:13,letterSpacing:1,textDecoration:'none',transition:'all .3s',
+            boxShadow:'0 8px 30px var(--violet-dim)'
+          }}
+          onMouseEnter={e=>{e.target.style.transform='translateY(-2px)'}}
+          onMouseLeave={e=>{e.target.style.transform='translateY(0)'}}
+          >{'\u2190'} Back to Lessons</a>
+        </div>
+
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:32,padding:'16px 0',borderTop:'1px solid rgba(167,139,250,0.15)',maxWidth:600,width:'100%'}}>
+          <a href="02-inequalities.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--violet)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>&larr; Previous Lesson: Inequalities</a>
+          <a href="04-systems.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--violet)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>Next Lesson: Systems of Equations &rarr;</a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   MAIN APP
+   ═══════════════════════════════════════════════ */
+function App() {
+  const [step, setStep] = useState(0);
+  const [showComplete, setShowComplete] = useState(false);
+
+  const goNext = useCallback(() => {
+    if (step < TOTAL_STEPS - 1) {
+      setStep(s => s + 1);
+      window.scrollTo({top: 0, behavior: 'smooth'});
+    } else {
+      setShowComplete(true);
+      window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+  }, [step]);
+
+  const goPrev = useCallback(() => {
+    if (showComplete) {
+      setShowComplete(false);
+    } else {
+      setStep(s => Math.max(0, s - 1));
+    }
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }, [showComplete]);
+
+  const goTo = useCallback((s) => {
+    setShowComplete(false);
+    setStep(s);
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }, []);
+
+  if (showComplete) return <StepComplete />;
+
+  return (
+    <div>
+      <ProgressBar current={step} total={TOTAL_STEPS}/>
+      {step > 0 && <StepDots current={step} total={TOTAL_STEPS} onNavigate={goTo}/>}
+
+      {/* Back to Lessons link */}
+      {step > 0 && (
+        <a href="index.html" style={{
+          position:'fixed',top:16,left:20,zIndex:900,fontFamily:'var(--font-mono)',fontSize:12,
+          color:'var(--text-dim)',textDecoration:'none',transition:'color .2s',letterSpacing:'.5px',
+          display:'flex',alignItems:'center',gap:6
+        }}
+        onMouseEnter={e => e.target.style.color='var(--violet)'}
+        onMouseLeave={e => e.target.style.color='var(--text-dim)'}
+        >{'\u2190'} Lessons</a>
+      )}
+
+      <div key={step} style={{animation:'fadeUp .5s ease'}}>
+        {step === 0 && <StepLanding onNext={goNext}/>}
+        {step === 1 && <StepCoordinatePlane onPrev={goPrev} onNext={goNext}/>}
+        {step === 2 && <StepPlottingPoints onPrev={goPrev} onNext={goNext}/>}
+        {step === 3 && <StepSlope onPrev={goPrev} onNext={goNext}/>}
+        {step === 4 && <StepYIntercept onPrev={goPrev} onNext={goNext}/>}
+        {step === 5 && <StepSlopeIntercept onPrev={goPrev} onNext={goNext}/>}
+        {step === 6 && <StepSandbox onPrev={goPrev} onComplete={goNext}/>}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</head>
+<body>
+<div id="root"></div>
+</body>
+</html>
