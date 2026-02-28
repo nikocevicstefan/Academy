@@ -17,7 +17,7 @@
   --violet:#a78bfa;--violet-dim:#a78bfa30;--violet-glow:#a78bfa15;--violet-deep:#7c3aed;
   --purple:#c084fc;--purple-dim:#c084fc25;
   --rose:#f472b6;--rose-dim:#f472b630;
-  --cyan:#67e8f9;--cyan-dim:#67e8f930;
+  --cyan:#67e8f9;--cyan-dim:#67e8f930;--cyan-glow:#67e8f915;
   --green:#4ade80;--green-dim:#4ade8030;
   --amber:#fbbf24;--amber-dim:#fbbf2430;
   --red:#f87171;--red-dim:#f8717130;
@@ -157,6 +157,671 @@ function Tag({children, color='var(--violet)'}) {
 
 function MathEq({children, color='var(--violet)', size=20, style:extra={}}) {
   return <span style={{fontFamily:'var(--font-mono)',fontSize:size,color,fontWeight:500,...extra}}>{children}</span>;
+}
+
+/* ═══════════════════════════════════════════════
+   REAL-WORLD PANEL & EXAMPLES
+   ═══════════════════════════════════════════════ */
+function RealWorldPanel({ examples }) {
+  const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState(0);
+  const contentRef = useRef(null);
+  const [contentHeight, setContentHeight] = useState(0);
+  useEffect(() => {
+    if (contentRef.current) setContentHeight(contentRef.current.scrollHeight);
+  }, [open, tab]);
+  return (
+    <div style={{
+      margin: '24px 0', borderRadius: 12, border: '1px solid var(--bg4)',
+      background: 'var(--bg2)', overflow: 'hidden', transition: 'border-color 0.3s',
+      ...(open ? { borderColor: 'var(--cyan-dim)' } : {}),
+    }}>
+      <button onClick={() => setOpen(!open)} style={{
+        width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+        padding: '14px 18px', background: 'none', border: 'none',
+        cursor: 'pointer', color: 'var(--text)', fontFamily: 'var(--font-body)',
+        fontSize: 14, fontWeight: 500, textAlign: 'left',
+      }}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.3s', transform: open ? 'rotate(90deg)' : 'rotate(0deg)', flexShrink: 0 }}>
+          <path d="M9 18l6-6-6-6"/>
+        </svg>
+        <span>Real-World Applications</span>
+        <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+          {examples.length} {examples.length === 1 ? 'example' : 'examples'}
+        </span>
+      </button>
+      <div style={{
+        maxHeight: open ? contentHeight + 40 : 0, overflow: 'hidden',
+        transition: 'max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+      }}>
+        <div ref={contentRef} style={{ padding: '0 18px 18px' }}>
+          {examples.length > 1 && (
+            <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
+              {examples.map((ex, i) => (
+                <button key={i} onClick={() => setTab(i)} style={{
+                  padding: '6px 14px', borderRadius: 6, border: '1px solid',
+                  borderColor: tab === i ? 'var(--cyan-dim)' : 'var(--bg4)',
+                  background: tab === i ? 'var(--cyan-glow)' : 'transparent',
+                  color: tab === i ? 'var(--cyan)' : 'var(--text-dim)',
+                  fontFamily: 'var(--font-mono)', fontSize: 12, cursor: 'pointer', transition: 'all 0.2s',
+                }}>{ex.title}</button>
+              ))}
+            </div>
+          )}
+          <div style={{ animation: 'fadeIn 0.3s' }}>{examples[tab] && examples[tab].content}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* Elevation Profile / Slope as Grade */
+function ElevationProfileExample() {
+  const canvasRef = useRef(null);
+  const [dragT, setDragT] = useState(0.3);
+  const [isDragging, setIsDragging] = useState(false);
+  const [canvasSize, setCanvasSize] = useState({ w: 0, h: 0 });
+
+  // Terrain control points for cubic bezier segments
+  const terrainPoints = useMemo(() => [
+    { x: 0, y: 0.15 },
+    { x: 0.08, y: 0.18 },
+    { x: 0.15, y: 0.22 },
+    { x: 0.22, y: 0.20 },
+    { x: 0.30, y: 0.35 },
+    { x: 0.38, y: 0.55 },
+    { x: 0.44, y: 0.72 },
+    { x: 0.48, y: 0.82 },
+    { x: 0.52, y: 0.88 },
+    { x: 0.55, y: 0.85 },
+    { x: 0.60, y: 0.70 },
+    { x: 0.65, y: 0.58 },
+    { x: 0.70, y: 0.50 },
+    { x: 0.75, y: 0.48 },
+    { x: 0.80, y: 0.42 },
+    { x: 0.85, y: 0.30 },
+    { x: 0.90, y: 0.22 },
+    { x: 0.95, y: 0.18 },
+    { x: 1.0, y: 0.15 },
+  ], []);
+
+  // Interpolate terrain height at parameter t (0-1)
+  const getTerrainAt = useCallback((t) => {
+    const n = terrainPoints.length - 1;
+    const idx = t * n;
+    const i = Math.min(Math.floor(idx), n - 1);
+    const frac = idx - i;
+    // Catmull-Rom style smooth interpolation
+    const p0 = terrainPoints[Math.max(i - 1, 0)];
+    const p1 = terrainPoints[i];
+    const p2 = terrainPoints[Math.min(i + 1, n)];
+    const p3 = terrainPoints[Math.min(i + 2, n)];
+    const tt = frac;
+    const tt2 = tt * tt;
+    const tt3 = tt2 * tt;
+    const qx = 0.5 * ((2 * p1.x) + (-p0.x + p2.x) * tt + (2*p0.x - 5*p1.x + 4*p2.x - p3.x) * tt2 + (-p0.x + 3*p1.x - 3*p2.x + p3.x) * tt3);
+    const qy = 0.5 * ((2 * p1.y) + (-p0.y + p2.y) * tt + (2*p0.y - 5*p1.y + 4*p2.y - p3.y) * tt2 + (-p0.y + 3*p1.y - 3*p2.y + p3.y) * tt3);
+    return { x: qx, y: qy };
+  }, [terrainPoints]);
+
+  // Get slope at parameter t
+  const getSlopeAt = useCallback((t) => {
+    const dt = 0.005;
+    const a = getTerrainAt(Math.max(0, t - dt));
+    const b = getTerrainAt(Math.min(1, t + dt));
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    if (Math.abs(dx) < 0.0001) return 0;
+    return dy / dx;
+  }, [getTerrainAt]);
+
+  // Labeled road sections
+  const roadSections = useMemo(() => [
+    { startT: 0.05, endT: 0.22, label: 'Highway 6%', color: '#4ade80' },
+    { startT: 0.30, endT: 0.48, label: 'Mountain Road 15%', color: '#fbbf24' },
+    { startT: 0.48, endT: 0.56, label: 'Steep Trail 30%', color: '#f472b6' },
+  ], []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const container = canvas.parentElement;
+    const W = container.clientWidth;
+    const H = 280;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    setCanvasSize({ w: W, h: H });
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    const padL = 50, padR = 20, padT = 30, padB = 40;
+    const plotW = W - padL - padR;
+    const plotH = H - padT - padB;
+
+    // Clear
+    ctx.clearRect(0, 0, W, H);
+
+    // Sky gradient
+    const skyGrad = ctx.createLinearGradient(0, padT, 0, padT + plotH);
+    skyGrad.addColorStop(0, '#0f1128');
+    skyGrad.addColorStop(0.4, '#0f1128');
+    skyGrad.addColorStop(1, '#141830');
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(padL, padT, plotW, plotH);
+
+    // Grid lines
+    ctx.strokeStyle = '#252540';
+    ctx.lineWidth = 0.5;
+    const elevMax = 5000;
+    const distMax = 12;
+    for (let e = 0; e <= elevMax; e += 1000) {
+      const y = padT + plotH - (e / elevMax) * plotH;
+      ctx.beginPath();
+      ctx.moveTo(padL, y);
+      ctx.lineTo(padL + plotW, y);
+      ctx.stroke();
+      ctx.fillStyle = '#6e6e8a';
+      ctx.font = '10px "DM Mono", monospace';
+      ctx.textAlign = 'right';
+      ctx.fillText(e.toLocaleString() + ' ft', padL - 6, y + 3);
+    }
+    for (let d = 0; d <= distMax; d += 2) {
+      const x = padL + (d / distMax) * plotW;
+      ctx.beginPath();
+      ctx.moveTo(x, padT);
+      ctx.lineTo(x, padT + plotH);
+      ctx.stroke();
+      ctx.fillStyle = '#6e6e8a';
+      ctx.font = '10px "DM Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(d + ' mi', x, padT + plotH + 16);
+    }
+
+    // Axis labels
+    ctx.fillStyle = '#6e6e8a';
+    ctx.font = '11px "DM Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('Distance', padL + plotW / 2, H - 4);
+    ctx.save();
+    ctx.translate(12, padT + plotH / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('Elevation', 0, 0);
+    ctx.restore();
+
+    // Draw terrain filled
+    ctx.beginPath();
+    const firstPt = getTerrainAt(0);
+    ctx.moveTo(padL + firstPt.x * plotW, padT + plotH - firstPt.y * plotH);
+    for (let i = 1; i <= 200; i++) {
+      const t = i / 200;
+      const pt = getTerrainAt(t);
+      ctx.lineTo(padL + pt.x * plotW, padT + plotH - pt.y * plotH);
+    }
+    ctx.lineTo(padL + plotW, padT + plotH);
+    ctx.lineTo(padL, padT + plotH);
+    ctx.closePath();
+    const terrGrad = ctx.createLinearGradient(0, padT, 0, padT + plotH);
+    terrGrad.addColorStop(0, '#4ade8025');
+    terrGrad.addColorStop(1, '#4ade8008');
+    ctx.fillStyle = terrGrad;
+    ctx.fill();
+
+    // Draw terrain line
+    ctx.beginPath();
+    const fp = getTerrainAt(0);
+    ctx.moveTo(padL + fp.x * plotW, padT + plotH - fp.y * plotH);
+    for (let i = 1; i <= 200; i++) {
+      const t = i / 200;
+      const pt = getTerrainAt(t);
+      ctx.lineTo(padL + pt.x * plotW, padT + plotH - pt.y * plotH);
+    }
+    ctx.strokeStyle = '#4ade80';
+    ctx.lineWidth = 2;
+    ctx.shadowColor = '#4ade80';
+    ctx.shadowBlur = 6;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Road section labels
+    roadSections.forEach(sec => {
+      const midT = (sec.startT + sec.endT) / 2;
+      const pt = getTerrainAt(midT);
+      const sx = padL + pt.x * plotW;
+      const sy = padT + plotH - pt.y * plotH - 14;
+      ctx.fillStyle = sec.color;
+      ctx.font = '500 9px "DM Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(sec.label, sx, sy);
+    });
+
+    // Draggable point
+    const pt = getTerrainAt(dragT);
+    const px = padL + pt.x * plotW;
+    const py = padT + plotH - pt.y * plotH;
+
+    // Tangent line
+    const slope = getSlopeAt(dragT);
+    const tangentLen = 50;
+    const angle = Math.atan(slope);
+    const dx = tangentLen * Math.cos(angle);
+    const dy = tangentLen * Math.sin(angle);
+    ctx.beginPath();
+    ctx.moveTo(px - dx, py + dy); // flip y since canvas y is inverted
+    ctx.lineTo(px + dx, py - dy);
+    ctx.strokeStyle = '#a78bfa';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 4]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Point circle
+    ctx.beginPath();
+    ctx.arc(px, py, 7, 0, Math.PI * 2);
+    ctx.fillStyle = '#a78bfa';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(px, py, 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+
+    // Grade info box
+    const grade = slope * (elevMax / distMax) * (100 / 5280); // approximate percent grade
+    const gradePercent = Math.abs(slope) * 100;
+    const elevation = pt.y * elevMax;
+    const distance = pt.x * distMax;
+    const gradeColor = gradePercent < 8 ? '#4ade80' : gradePercent < 15 ? '#fbbf24' : '#f472b6';
+
+    // Info box
+    const boxX = px > padL + plotW / 2 ? px - 130 : px + 16;
+    const boxY = Math.max(padT + 4, py - 50);
+    ctx.fillStyle = '#0f0f18ee';
+    ctx.strokeStyle = '#252540';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(boxX, boxY, 118, 46, 6);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = gradeColor;
+    ctx.font = '600 16px "DM Mono", monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(gradePercent.toFixed(1) + '% grade', boxX + 8, boxY + 18);
+    ctx.fillStyle = '#6e6e8a';
+    ctx.font = '10px "DM Mono", monospace';
+    ctx.fillText(distance.toFixed(1) + ' mi, ' + Math.round(elevation).toLocaleString() + ' ft', boxX + 8, boxY + 36);
+
+  }, [dragT, getTerrainAt, getSlopeAt, roadSections]);
+
+  const handlePointerDown = useCallback((e) => {
+    setIsDragging(true);
+    e.target.setPointerCapture(e.pointerId);
+  }, []);
+
+  const handlePointerMove = useCallback((e) => {
+    if (!isDragging) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const padL = 50, padR = 20;
+    const plotW = rect.width - padL - padR;
+    const mx = e.clientX - rect.left - padL;
+    const t = Math.max(0.01, Math.min(0.99, mx / plotW));
+    setDragT(t);
+  }, [isDragging]);
+
+  const handlePointerUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  const currentSlope = getSlopeAt(dragT);
+  const gradePercent = Math.abs(currentSlope) * 100;
+  const gradeColor = gradePercent < 8 ? 'var(--green)' : gradePercent < 15 ? 'var(--amber)' : 'var(--rose)';
+
+  return (
+    <div>
+      <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text)', lineHeight: 1.7, maxWidth: 600, marginBottom: 16 }}>
+        When road engineers talk about slope, they call it <strong style={{ color: 'var(--text-bright)', fontWeight: 500 }}>grade</strong> {'\u2014'} the rise divided by the run, expressed as a percentage. A 6% highway grade means the road climbs 6 feet for every 100 feet of horizontal distance. This is slope in its purest real-world form: <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>m = rise/run</span>. Steep grades are dangerous for trucks because gravity pulls them downhill, which is why you see runaway truck ramps on mountain passes.
+      </p>
+      <div style={{ background: 'var(--bg3)', borderRadius: 8, padding: '12px 16px', border: '1px solid var(--bg4)', marginBottom: 16, fontSize: 13 }}>
+        <p style={{ fontFamily: 'var(--font-body)', color: 'var(--text)', lineHeight: 1.7, margin: 0 }}>
+          <strong style={{ color: 'var(--text-bright)', fontWeight: 500 }}>What you{'\u2019'}re seeing:</strong> The terrain cross-section below shows a mountain road profile. Drag your cursor along the path to see the tangent line at each point {'\u2014'} its steepness IS the slope at that location. Flat sections have near-zero grade, moderate hills show 6{'\u2013'}8%, and steep mountain switchbacks hit 15% or more. The color changes from <span style={{ color: 'var(--green)' }}>green</span> (gentle) to <span style={{ color: 'var(--rose)' }}>red</span> (steep) to show the grade intensity.
+        </p>
+      </div>
+      <div style={{ position: 'relative', borderRadius: 8, overflow: 'hidden', border: '1px solid var(--bg4)' }}>
+        <canvas
+          ref={canvasRef}
+          style={{ width: '100%', display: 'block', cursor: isDragging ? 'grabbing' : 'grab' }}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerLeave={handlePointerUp}
+        />
+      </div>
+      <div style={{ display: 'flex', gap: 12, marginTop: 12, flexWrap: 'wrap' }}>
+        <div style={{ flex: 1, minWidth: 100, padding: '8px 12px', background: 'var(--bg3)', borderRadius: 6, textAlign: 'center' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-dim)', marginBottom: 4 }}>CURRENT GRADE</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 20, fontWeight: 600, color: gradeColor }}>{gradePercent.toFixed(1)}%</div>
+        </div>
+        <div style={{ flex: 1, minWidth: 100, padding: '8px 12px', background: 'var(--bg3)', borderRadius: 6, textAlign: 'center' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-dim)', marginBottom: 4 }}>SLOPE (rise/run)</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 20, fontWeight: 600, color: 'var(--violet)' }}>{currentSlope.toFixed(3)}</div>
+        </div>
+        <div style={{ flex: 1, minWidth: 100, padding: '8px 12px', background: 'var(--bg3)', borderRadius: 6, textAlign: 'center' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-dim)', marginBottom: 4 }}>DIRECTION</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 20, fontWeight: 600, color: currentSlope > 0.001 ? 'var(--green)' : currentSlope < -0.001 ? 'var(--rose)' : 'var(--amber)' }}>
+            {currentSlope > 0.001 ? 'Uphill' : currentSlope < -0.001 ? 'Downhill' : 'Flat'}
+          </div>
+        </div>
+      </div>
+      <div style={{ marginTop: 12, display: 'flex', gap: 16, fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-dim)', justifyContent: 'center', flexWrap: 'wrap' }}>
+        <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: 'var(--green)', marginRight: 4 }}></span>{'< 8% Easy'}</span>
+        <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: 'var(--amber)', marginRight: 4 }}></span>{'8-15% Moderate'}</span>
+        <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: 'var(--rose)', marginRight: 4 }}></span>{'> 15% Steep'}</span>
+      </div>
+      <p style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-dim)', lineHeight: 1.7, maxWidth: 600, marginTop: 16 }}>
+        <strong style={{ color: 'var(--text-bright)', fontWeight: 500 }}>Connection to graphing:</strong> On a graph, slope tells you how fast <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>y</span> changes relative to <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>x</span>. Here, y is elevation and x is horizontal distance. A slope of 0.06 (6% grade) means for every 100m forward, you climb 6m. Road designers graph elevation profiles exactly like this to plan where curves, guardrails, and drainage need to go.
+      </p>
+    </div>
+  );
+}
+
+/* Hooke's Law Spring Example */
+function HookesLawExample() {
+  const [mass, setMass] = useState(3);
+  const [animOffset, setAnimOffset] = useState(0);
+  const prevMassRef = useRef(3);
+  const animRef = useRef(null);
+  const graphCanvasRef = useRef(null);
+
+  const k = 5; // spring constant N/m
+  const g = 9.81;
+  const maxMass = 10;
+  const force = mass * g;
+  const extension = force / k; // F = kx => x = F/k
+
+  // Bounce animation when mass changes
+  useEffect(() => {
+    if (mass === prevMassRef.current) return;
+    prevMassRef.current = mass;
+    let start = null;
+    const duration = 400;
+    const amplitude = 8;
+    const animate = (ts) => {
+      if (!start) start = ts;
+      const elapsed = ts - start;
+      if (elapsed < duration) {
+        const progress = elapsed / duration;
+        const bounce = amplitude * Math.sin(progress * Math.PI * 3) * (1 - progress);
+        setAnimOffset(bounce);
+        animRef.current = requestAnimationFrame(animate);
+      } else {
+        setAnimOffset(0);
+      }
+    };
+    animRef.current = requestAnimationFrame(animate);
+    return () => { if (animRef.current) cancelAnimationFrame(animRef.current); };
+  }, [mass]);
+
+  // Draw the F vs x graph
+  useEffect(() => {
+    const canvas = graphCanvasRef.current;
+    if (!canvas) return;
+    const container = canvas.parentElement;
+    const W = container.clientWidth;
+    const H = 200;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    const padL = 45, padR = 15, padT = 20, padB = 35;
+    const plotW = W - padL - padR;
+    const plotH = H - padT - padB;
+    const maxF = maxMass * g;
+    const maxX = maxF / k;
+
+    ctx.clearRect(0, 0, W, H);
+
+    // Background
+    ctx.fillStyle = '#0f0f18';
+    ctx.fillRect(padL, padT, plotW, plotH);
+
+    // Grid
+    ctx.strokeStyle = '#252540';
+    ctx.lineWidth = 0.5;
+    for (let f = 0; f <= maxF; f += 20) {
+      const y = padT + plotH - (f / maxF) * plotH;
+      ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + plotW, y); ctx.stroke();
+    }
+    for (let x = 0; x <= maxX; x += 4) {
+      const px = padL + (x / maxX) * plotW;
+      ctx.beginPath(); ctx.moveTo(px, padT); ctx.lineTo(px, padT + plotH); ctx.stroke();
+    }
+
+    // Axes
+    ctx.strokeStyle = '#6e6e8a';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(padL, padT); ctx.lineTo(padL, padT + plotH); ctx.lineTo(padL + plotW, padT + plotH); ctx.stroke();
+
+    // Axis labels
+    ctx.fillStyle = '#6e6e8a';
+    ctx.font = '10px "DM Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('Extension x (m)', padL + plotW / 2, H - 4);
+    ctx.save();
+    ctx.translate(12, padT + plotH / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('Force F (N)', 0, 0);
+    ctx.restore();
+
+    // Tick labels
+    ctx.textAlign = 'center';
+    for (let x = 0; x <= maxX; x += 4) {
+      const px = padL + (x / maxX) * plotW;
+      ctx.fillText(x.toFixed(0), px, padT + plotH + 14);
+    }
+    ctx.textAlign = 'right';
+    for (let f = 0; f <= maxF; f += 20) {
+      const y = padT + plotH - (f / maxF) * plotH;
+      ctx.fillText(f.toFixed(0), padL - 6, y + 3);
+    }
+
+    // F = kx line
+    ctx.beginPath();
+    ctx.moveTo(padL, padT + plotH);
+    ctx.lineTo(padL + plotW, padT + plotH - (k * maxX / maxF) * plotH);
+    ctx.strokeStyle = '#67e8f9';
+    ctx.lineWidth = 2;
+    ctx.shadowColor = '#67e8f9';
+    ctx.shadowBlur = 8;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Equation label on line
+    const midX = maxX * 0.6;
+    const midF = k * midX;
+    const lx = padL + (midX / maxX) * plotW;
+    const ly = padT + plotH - (midF / maxF) * plotH;
+    ctx.fillStyle = '#67e8f9';
+    ctx.font = '500 12px "DM Mono", monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('F = ' + k + 'x', lx + 8, ly - 8);
+
+    // Slope annotation
+    const slopeX1 = maxX * 0.25;
+    const slopeX2 = maxX * 0.45;
+    const slopeF1 = k * slopeX1;
+    const slopeF2 = k * slopeX2;
+    const sx1 = padL + (slopeX1 / maxX) * plotW;
+    const sx2 = padL + (slopeX2 / maxX) * plotW;
+    const sy1 = padT + plotH - (slopeF1 / maxF) * plotH;
+    const sy2 = padT + plotH - (slopeF2 / maxF) * plotH;
+
+    ctx.setLineDash([4, 3]);
+    ctx.strokeStyle = '#f472b6';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(sx1, sy1); ctx.lineTo(sx2, sy1); ctx.stroke(); // run
+    ctx.strokeStyle = '#4ade80';
+    ctx.beginPath(); ctx.moveTo(sx2, sy1); ctx.lineTo(sx2, sy2); ctx.stroke(); // rise
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = '#f472b6';
+    ctx.font = '10px "DM Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('run', (sx1 + sx2) / 2, sy1 + 12);
+    ctx.fillStyle = '#4ade80';
+    ctx.textAlign = 'left';
+    ctx.fillText('rise', sx2 + 4, (sy1 + sy2) / 2 + 3);
+
+    // Current point
+    const cpx = padL + (extension / maxX) * plotW;
+    const cpy = padT + plotH - (force / maxF) * plotH;
+    ctx.beginPath();
+    ctx.arc(cpx, cpy, 6, 0, Math.PI * 2);
+    ctx.fillStyle = '#a78bfa';
+    ctx.shadowColor = '#a78bfa';
+    ctx.shadowBlur = 10;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.beginPath();
+    ctx.arc(cpx, cpy, 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+
+    // Dashed lines to axes
+    ctx.setLineDash([3, 3]);
+    ctx.strokeStyle = '#a78bfa55';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cpx, cpy); ctx.lineTo(cpx, padT + plotH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cpx, cpy); ctx.lineTo(padL, cpy); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Point label
+    ctx.fillStyle = '#a78bfa';
+    ctx.font = '500 11px "DM Mono", monospace';
+    ctx.textAlign = 'left';
+    const lblX = cpx + 10 < padL + plotW - 60 ? cpx + 10 : cpx - 80;
+    ctx.fillText('(' + extension.toFixed(1) + ', ' + force.toFixed(1) + ')', lblX, cpy - 10);
+
+  }, [mass, extension, force, k, maxMass, g]);
+
+  // Spring SVG parameters
+  const springTop = 20;
+  const restLength = 60;
+  const maxExtensionPx = 100;
+  const extPx = (extension / (maxMass * g / k)) * maxExtensionPx;
+  const springLength = restLength + extPx + animOffset;
+  const coils = 8;
+  const coilWidth = 16;
+  const weightHeight = 36;
+  const weightWidth = 44;
+  const svgHeight = springTop + springLength + weightHeight + 30;
+
+  // Generate spring zigzag path
+  const springPath = useMemo(() => {
+    const segments = coils * 2;
+    const segLen = springLength / segments;
+    let d = `M 50 ${springTop}`;
+    for (let i = 0; i < segments; i++) {
+      const y = springTop + (i + 1) * segLen;
+      const x = i % 2 === 0 ? 50 + coilWidth : 50 - coilWidth;
+      d += ` L ${x} ${y}`;
+    }
+    d += ` L 50 ${springTop + springLength}`;
+    return d;
+  }, [springLength, coils, coilWidth, springTop]);
+
+  return (
+    <div>
+      <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text)', lineHeight: 1.7, maxWidth: 600, marginBottom: 16 }}>
+        Robert Hooke discovered in 1660 that springs follow a perfect linear relationship: the force <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>F</span> required to stretch a spring equals a constant <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>k</span> times the extension <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>x</span>. Written as <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>F = kx</span>, this is <strong style={{ color: 'var(--text-bright)', fontWeight: 500 }}>slope-intercept form</strong> with <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>b = 0</span> {'\u2014'} the line passes through the origin and <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>k</span> is the slope. A stiffer spring has a steeper slope. This law governs everything from car suspensions to mattress coils to the vibrations of atoms in a crystal.
+      </p>
+      <div style={{ background: 'var(--bg3)', borderRadius: 8, padding: '12px 16px', border: '1px solid var(--bg4)', marginBottom: 16, fontSize: 13 }}>
+        <p style={{ fontFamily: 'var(--font-body)', color: 'var(--text)', lineHeight: 1.7, margin: 0 }}>
+          <strong style={{ color: 'var(--text-bright)', fontWeight: 500 }}>What you{'\u2019'}re seeing:</strong> On the left, a spring stretches under the weight of a hanging mass. On the right, the <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>F</span>-vs-<span style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>x</span> graph plots this relationship as a straight line. The slope of that line IS the spring constant <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>k</span> {'\u2014'} it tells you how stiff the spring is. As you increase mass with the slider, watch the spring extend and the plotted point climb along the line. The rise-over-run triangle on the graph shows <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>k</span> directly.
+        </p>
+      </div>
+      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+        {/* Spring visualization */}
+        <div style={{ flex: '0 0 100px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <svg width="100" height={Math.max(svgHeight, 180)} viewBox={`0 0 100 ${Math.max(svgHeight, 180)}`} style={{ overflow: 'visible' }}>
+            {/* Ceiling */}
+            <line x1="20" y1={springTop} x2="80" y2={springTop} stroke="var(--text-dim)" strokeWidth="2"/>
+            <line x1="25" y1={springTop - 6} x2="30" y2={springTop} stroke="var(--text-dim)" strokeWidth="1"/>
+            <line x1="35" y1={springTop - 6} x2="40" y2={springTop} stroke="var(--text-dim)" strokeWidth="1"/>
+            <line x1="45" y1={springTop - 6} x2="50" y2={springTop} stroke="var(--text-dim)" strokeWidth="1"/>
+            <line x1="55" y1={springTop - 6} x2="60" y2={springTop} stroke="var(--text-dim)" strokeWidth="1"/>
+            <line x1="65" y1={springTop - 6} x2="70" y2={springTop} stroke="var(--text-dim)" strokeWidth="1"/>
+            {/* Spring coil */}
+            <path d={springPath} fill="none" stroke="var(--cyan)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            {/* Weight */}
+            <rect
+              x={50 - weightWidth / 2} y={springTop + springLength}
+              width={weightWidth} height={weightHeight} rx="4"
+              fill="var(--violet-dim)" stroke="var(--violet)" strokeWidth="1.5"
+            />
+            <text x="50" y={springTop + springLength + weightHeight / 2 + 4} textAnchor="middle" fill="var(--violet)" fontSize="11" fontFamily="var(--font-mono)" fontWeight="500">
+              {mass.toFixed(0)} kg
+            </text>
+            {/* Extension arrow */}
+            {extPx > 10 && (
+              <g>
+                <line x1="88" y1={springTop + restLength} x2="88" y2={springTop + springLength} stroke="var(--amber)" strokeWidth="1" strokeDasharray="3,2"/>
+                <text x="94" y={springTop + restLength + extPx / 2 + 3} fill="var(--amber)" fontSize="9" fontFamily="var(--font-mono)">x</text>
+              </g>
+            )}
+          </svg>
+        </div>
+
+        {/* Graph */}
+        <div style={{ flex: 1, minWidth: 200 }}>
+          <canvas ref={graphCanvasRef} style={{ width: '100%', display: 'block', borderRadius: 6, border: '1px solid var(--bg4)' }}/>
+        </div>
+      </div>
+
+      {/* Slider */}
+      <div style={{ marginTop: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-dim)' }}>Mass (kg)</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--violet)', fontWeight: 500 }}>{mass.toFixed(1)} kg</span>
+        </div>
+        <input type="range" min={0} max={maxMass} step={0.5} value={mass}
+          onChange={e => setMass(parseFloat(e.target.value))}
+          style={{ width: '100%', accentColor: 'var(--violet)', cursor: 'pointer' }}
+        />
+      </div>
+
+      {/* Values display */}
+      <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
+        <div style={{ flex: 1, minWidth: 80, padding: '8px 10px', background: 'var(--bg3)', borderRadius: 6, textAlign: 'center' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-dim)', marginBottom: 2 }}>SPRING CONST</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, fontWeight: 600, color: 'var(--cyan)' }}>k = {k} N/m</div>
+        </div>
+        <div style={{ flex: 1, minWidth: 80, padding: '8px 10px', background: 'var(--bg3)', borderRadius: 6, textAlign: 'center' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-dim)', marginBottom: 2 }}>FORCE</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, fontWeight: 600, color: 'var(--violet)' }}>F = {force.toFixed(1)} N</div>
+        </div>
+        <div style={{ flex: 1, minWidth: 80, padding: '8px 10px', background: 'var(--bg3)', borderRadius: 6, textAlign: 'center' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-dim)', marginBottom: 2 }}>EXTENSION</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, fontWeight: 600, color: 'var(--amber)' }}>x = {extension.toFixed(1)} m</div>
+        </div>
+      </div>
+
+      {/* Historical note */}
+      <div style={{ marginTop: 14, padding: '10px 14px', background: 'var(--bg3)', borderRadius: 6, borderLeft: '3px solid var(--cyan)', fontSize: 12, color: 'var(--text-dim)', lineHeight: 1.6 }}>
+        <strong style={{ color: 'var(--text-bright)' }}>Robert Hooke, 1660</strong> {'\u2014'} <em>{'\u201C'}Ut tensio, sic vis{'\u201D'}</em> (as the extension, so the force). The slope of the line <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>k = {k} N/m</span> is the spring constant, telling us how stiff the spring is.
+      </div>
+      <p style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-dim)', lineHeight: 1.7, maxWidth: 600, marginTop: 16 }}>
+        <strong style={{ color: 'var(--text-bright)', fontWeight: 500 }}>Why it matters:</strong> Engineers choose springs by their <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>k</span> value. A car suspension spring needs a high <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>k</span> (stiff) to support a heavy car, while a pen click spring needs a tiny <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>k</span> (soft) for comfortable pressing. When Hooke{'\u2019'}s Law breaks {'\u2014'} the spring is stretched too far {'\u2014'} the relationship stops being linear. That{'\u2019'}s called the <strong style={{ color: 'var(--text-bright)', fontWeight: 500 }}>elastic limit</strong>, and beyond it, the spring deforms permanently.
+      </p>
+    </div>
+  );
 }
 
 /* ═══════════════════════════════════════════════
@@ -815,6 +1480,10 @@ function StepSlope({onPrev, onNext}) {
         <strong style={{color:'var(--text-bright)'}}>Real-world analogy:</strong> A slope of 2 is like a steep hill; you climb 2 meters for every 1 meter forward. A slope of 0.5 is a gentle ramp. A slope of 0 is flat ground. Negative slope means going downhill.
       </InfoCard>
 
+      <RealWorldPanel examples={[
+        { title: 'Elevation Grade', content: <ElevationProfileExample /> },
+      ]} />
+
       <NavButtons current={3} total={TOTAL_STEPS} onPrev={onPrev} onNext={onNext}/>
     </div>
   );
@@ -1025,6 +1694,10 @@ function StepSlopeIntercept({onPrev, onNext}) {
           </div>
         </div>
       </div>
+
+      <RealWorldPanel examples={[
+        { title: "Hooke's Law", content: <HookesLawExample /> },
+      ]} />
 
       <NavButtons current={5} total={TOTAL_STEPS} onPrev={onPrev} onNext={onNext}/>
     </div>

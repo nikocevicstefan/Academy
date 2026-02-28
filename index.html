@@ -73,6 +73,14 @@ const LESSONS = [
     desc: 'Distance, midpoints, line equations, and circles on the plane.' },
   { id: 10, title: 'Trigonometry', file: '10-trigonometry.html',
     desc: 'Right triangles, SOH-CAH-TOA, the unit circle, and trig waves.' },
+  { id: 11, title: 'Rational Expressions', file: '11-rational-expressions.html',
+    desc: 'Polynomial fractions, simplifying, asymptotes, and solving.' , draft: true },
+  { id: 12, title: 'Logarithms & Exponentials', file: '12-logarithms.html',
+    desc: 'Inverse of exponents. Growth, decay, compound interest, and e.' , draft: true },
+  { id: 13, title: 'Sequences & Series', file: '13-sequences-series.html',
+    desc: 'Patterns in numbers. Arithmetic, geometric, sigma notation, limits.' , draft: true },
+  { id: 14, title: 'Probability & Combinatorics', file: '14-probability.html',
+    desc: 'Counting, permutations, combinations, and measuring chance.' , draft: true },
 ];
 
 function useProgress() {
@@ -383,6 +391,72 @@ function LessonIcon({ id, active }) {
           ctx.setLineDash([]);
           break;
         }
+        case 11: { // Fraction bar with polynomials
+          ctx.beginPath();
+          ctx.moveTo(8, cy);
+          ctx.lineTo(S - 8, cy);
+          ctx.stroke();
+          // numerator wiggle
+          const nx = cx + Math.sin(t * 0.03) * 4;
+          ctx.fillStyle = colBright;
+          ctx.font = `${10}px serif`;
+          ctx.textAlign = 'center';
+          ctx.fillText('x+1', nx, cy - 5);
+          ctx.fillText('x\u00b2', nx, cy + 13);
+          break;
+        }
+        case 12: { // Exponential curve
+          ctx.beginPath();
+          for (let i = 0; i < S - 12; i++) {
+            const x = 6 + i;
+            const y = cy + 10 - Math.pow(1.08, i) * 0.5;
+            i === 0 ? ctx.moveTo(x, Math.max(6, y)) : ctx.lineTo(x, Math.max(6, y));
+          }
+          ctx.strokeStyle = colBright;
+          ctx.stroke();
+          // "log" label
+          ctx.fillStyle = col;
+          ctx.font = `${9}px monospace`;
+          ctx.textAlign = 'center';
+          ctx.fillText('log', cx, cy + 14);
+          break;
+        }
+        case 13: { // Dots in a pattern (sequence)
+          for (let i = 0; i < 5; i++) {
+            const x = 8 + i * 7.5;
+            const y = cy + 2 - i * 2.5 + Math.sin(t * 0.02 + i) * 2;
+            ctx.fillStyle = i < 3 ? colBright : col;
+            ctx.beginPath();
+            ctx.arc(x, y, 2.2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          // sigma
+          ctx.fillStyle = col;
+          ctx.font = `${13}px serif`;
+          ctx.textAlign = 'center';
+          ctx.fillText('\u03a3', cx + 8, cy + 14);
+          break;
+        }
+        case 14: { // Dice / probability
+          const sz = 14;
+          const dx = cx - sz/2, dy = cy - sz/2;
+          ctx.strokeStyle = col;
+          ctx.strokeRect(dx, dy, sz, sz);
+          // dots on die face
+          const dots = [[0.5,0.5],[0.2,0.2],[0.8,0.8]];
+          ctx.fillStyle = colBright;
+          dots.forEach(([px,py]) => {
+            ctx.beginPath();
+            ctx.arc(dx + px * sz, dy + py * sz, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+          });
+          // P(x) label
+          ctx.fillStyle = col;
+          ctx.font = `${8}px monospace`;
+          ctx.textAlign = 'center';
+          ctx.fillText('P(x)', cx, cy + 16);
+          break;
+        }
       }
       t++;
       raf.current = requestAnimationFrame(draw);
@@ -460,6 +534,14 @@ function LessonRow({ lesson, index, isVisited, onNavigate }) {
           }}>
             {lesson.desc}
           </div>
+          {lesson.draft && (
+            <span style={{
+              display: 'inline-block', marginTop: 4,
+              fontFamily: 'var(--font-mono)', fontSize: 10,
+              color: 'var(--accent)', opacity: 0.7,
+              letterSpacing: '0.08em', textTransform: 'uppercase',
+            }}>Draft</span>
+          )}
         </div>
 
         {/* Arrow */}
@@ -507,7 +589,7 @@ function App() {
           maxWidth: 440,
           marginBottom: 28,
         }}>
-          Ten lessons from linear equations to trigonometry.
+          Fourteen lessons from linear equations to probability.
           Interactive visualizations, step-by-step problem solving.
         </p>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

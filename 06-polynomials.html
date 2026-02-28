@@ -255,6 +255,696 @@ function NavButtons({ step, setStep, canProceed = true }) {
 }
 
 /* ====================================================================
+   REAL-WORLD PANEL (collapsible)
+   ==================================================================== */
+function RealWorldPanel({ examples }) {
+  const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState(0);
+  const contentRef = useRef(null);
+  const [contentHeight, setContentHeight] = useState(0);
+
+  useEffect(() => {
+    if (contentRef.current) setContentHeight(contentRef.current.scrollHeight);
+  }, [open, tab]);
+
+  return (
+    <div style={{
+      margin: '24px 0', borderRadius: 12,
+      border: '1px solid ' + (open ? 'var(--accent-dim)' : 'var(--border-subtle)'),
+      background: 'var(--bg-card)', overflow: 'hidden', transition: 'border-color 0.3s',
+    }}>
+      <button onClick={() => setOpen(!open)} style={{
+        width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+        padding: '14px 18px', background: 'none', border: 'none',
+        cursor: 'pointer', color: 'var(--text-primary)', fontFamily: 'var(--font-body)',
+        fontSize: 14, fontWeight: 500, textAlign: 'left',
+      }}>
+        <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.3s', transform: open ? 'rotate(90deg)' : 'rotate(0deg)', flexShrink: 0 }}>
+          <path d="M9 18l6-6-6-6" />
+        </svg>
+        <span>Real-World Applications</span>
+        <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)' }}>
+          {examples.length} example{examples.length !== 1 ? 's' : ''}
+        </span>
+      </button>
+      <div style={{
+        maxHeight: open ? contentHeight + 40 : 0,
+        overflow: 'hidden',
+        transition: 'max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+      }}>
+        <div ref={contentRef} style={{ padding: '0 18px 18px' }}>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
+            {examples.map((ex, i) => (
+              <button key={i} onClick={() => setTab(i)} style={{
+                padding: '6px 14px', borderRadius: 6, border: '1px solid',
+                borderColor: tab === i ? 'var(--accent-dim)' : 'var(--border-subtle)',
+                background: tab === i ? 'var(--accent-glow)' : 'transparent',
+                color: tab === i ? 'var(--accent)' : 'var(--text-tertiary)',
+                fontFamily: 'var(--font-mono)', fontSize: 12,
+                cursor: 'pointer', transition: 'all 0.2s',
+              }}>{ex.title}</button>
+            ))}
+          </div>
+          <div style={{ animation: 'fadeIn 0.3s' }}>
+            {examples[tab] && examples[tab].content}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ====================================================================
+   ROLLER COASTER EXAMPLE
+   ==================================================================== */
+function RollerCoasterExample() {
+  const canvasRef = useRef(null);
+  const animRef = useRef(null);
+  const [a, setA] = useState(0.5);
+  const [b, setB] = useState(-1.2);
+  const [c, setC] = useState(0.0);
+  const [d, setD] = useState(3.0);
+  const [playing, setPlaying] = useState(true);
+  const tRef = useRef(0);
+  const coeffRef = useRef({ a, b, c, d });
+  const playingRef = useRef(playing);
+
+  useEffect(() => { coeffRef.current = { a, b, c, d }; }, [a, b, c, d]);
+  useEffect(() => { playingRef.current = playing; }, [playing]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const W = canvas.parentElement.offsetWidth || 500;
+    const H = 300;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.scale(dpr, dpr);
+
+    const padL = 40, padR = 20, padT = 30, padB = 40;
+    const gw = W - padL - padR;
+    const gh = H - padT - padB;
+
+    function poly(x) {
+      const { a, b, c, d } = coeffRef.current;
+      return a * x * x * x + b * x * x + c * x + d;
+    }
+
+    function xToCanvas(x) { return padL + ((x + 3) / 6) * gw; }
+    function yToCanvas(y) {
+      const minY = -6, maxY = 8;
+      return padT + gh - ((y - minY) / (maxY - minY)) * gh;
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      // Sky gradient
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, H);
+      skyGrad.addColorStop(0, '#0a0f2e');
+      skyGrad.addColorStop(0.7, '#141833');
+      skyGrad.addColorStop(1, '#1a2040');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, W, H);
+
+      // Stars
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      for (let i = 0; i < 20; i++) {
+        const sx = ((i * 137 + 47) % W);
+        const sy = ((i * 89 + 23) % (H * 0.5));
+        ctx.beginPath();
+        ctx.arc(sx, sy, 0.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Ground
+      ctx.fillStyle = '#1a2a1a';
+      const groundY = yToCanvas(-6);
+      ctx.fillRect(0, groundY, W, H - groundY);
+
+      // Grid lines (subtle)
+      ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+      ctx.lineWidth = 1;
+      for (let y = -4; y <= 8; y += 2) {
+        const cy = yToCanvas(y);
+        ctx.beginPath(); ctx.moveTo(padL, cy); ctx.lineTo(W - padR, cy); ctx.stroke();
+      }
+
+      // Support beams
+      ctx.strokeStyle = 'rgba(226,184,74,0.15)';
+      ctx.lineWidth = 1.5;
+      for (let x = -2.5; x <= 2.5; x += 0.5) {
+        const cx = xToCanvas(x);
+        const yVal = poly(x);
+        const cy = yToCanvas(yVal);
+        const baseY = yToCanvas(-6);
+        if (yVal > -6) {
+          ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, baseY); ctx.stroke();
+        }
+      }
+
+      // Track (thick curve)
+      ctx.strokeStyle = '#e2b84a';
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      let first = true;
+      for (let px = 0; px <= gw; px += 1) {
+        const x = (px / gw) * 6 - 3;
+        const y = poly(x);
+        const cx = padL + px;
+        const cy = yToCanvas(y);
+        if (first) { ctx.moveTo(cx, cy); first = false; }
+        else ctx.lineTo(cx, cy);
+      }
+      ctx.stroke();
+
+      // Track outline (thinner, lighter)
+      ctx.strokeStyle = 'rgba(245,204,90,0.3)';
+      ctx.lineWidth = 7;
+      ctx.beginPath();
+      first = true;
+      for (let px = 0; px <= gw; px += 2) {
+        const x = (px / gw) * 6 - 3;
+        const y = poly(x);
+        const cx = padL + px;
+        const cy = yToCanvas(y);
+        if (first) { ctx.moveTo(cx, cy); first = false; }
+        else ctx.lineTo(cx, cy);
+      }
+      ctx.stroke();
+
+      // Redraw main track on top
+      ctx.strokeStyle = '#e2b84a';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      first = true;
+      for (let px = 0; px <= gw; px += 1) {
+        const x = (px / gw) * 6 - 3;
+        const y = poly(x);
+        const cx = padL + px;
+        const cy = yToCanvas(y);
+        if (first) { ctx.moveTo(cx, cy); first = false; }
+        else ctx.lineTo(cx, cy);
+      }
+      ctx.stroke();
+
+      // Car
+      const carX = tRef.current;
+      const carY = poly(carX);
+      const cx = xToCanvas(carX);
+      const cy = yToCanvas(carY);
+
+      // Derivative for rotation
+      const { a: ca, b: cb, c: cc } = coeffRef.current;
+      const slope = 3 * ca * carX * carX + 2 * cb * carX + cc;
+      const angle = Math.atan(slope);
+
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(-angle);
+      // Car body
+      ctx.fillStyle = '#ff6b6b';
+      ctx.beginPath();
+      ctx.roundRect(-14, -16, 28, 12, 4);
+      ctx.fill();
+      // Car top
+      ctx.fillStyle = '#ff5252';
+      ctx.beginPath();
+      ctx.roundRect(-10, -24, 20, 10, 3);
+      ctx.fill();
+      // Wheels
+      ctx.fillStyle = '#333';
+      ctx.beginPath(); ctx.arc(-8, -4, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(8, -4, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#666';
+      ctx.beginPath(); ctx.arc(-8, -4, 2, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(8, -4, 2, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+
+      // Animate car position
+      if (playingRef.current) {
+        tRef.current += 0.012;
+        if (tRef.current > 3) tRef.current = -3;
+      }
+
+      animRef.current = requestAnimationFrame(draw);
+    }
+
+    draw();
+    return () => { if (animRef.current) cancelAnimationFrame(animRef.current); };
+  }, []);
+
+  const sliders = [
+    { label: 'a', value: a, set: setA, min: -1, max: 1, step: 0.1, color: 'var(--term-x3)' },
+    { label: 'b', value: b, set: setB, min: -2, max: 2, step: 0.1, color: 'var(--term-x2)' },
+    { label: 'c', value: c, set: setC, min: -3, max: 3, step: 0.1, color: 'var(--term-x)' },
+    { label: 'd', value: d, set: setD, min: -4, max: 6, step: 0.1, color: 'var(--term-const)' },
+  ];
+
+  return (
+    <div>
+      <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.7, marginBottom: 12 }}>
+        A roller coaster's profile is a polynomial curve brought to life. The track's height at each point along the ride can be described by a polynomial like{' '}
+        <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>ax{'\u00B3'} + bx{'\u00B2'} + cx + d</span>.
+        {' '}The <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>cubic term</span> creates the dramatic rises and plunges,
+        the <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>quadratic term</span> shapes the broad hills,
+        the <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>linear term</span> adds tilt,
+        and the <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>constant</span> shifts everything up or down.
+        Real coaster designers use polynomials with dozens of terms to craft smooth, thrilling profiles that keep riders safe while maximizing the sensation of speed.
+      </p>
+      <div style={{
+        background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)',
+        borderRadius: 10, padding: '12px 14px', marginBottom: 14,
+        fontSize: 13, fontFamily: 'var(--font-body)', color: 'var(--text-secondary)', lineHeight: 1.7,
+      }}>
+        <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>What you're seeing: </span>
+        The curve below is a cubic polynomial with four adjustable coefficients. A tiny car rides along the track, tilting with the slope at each point. The vertical beams show the support structure. Try making{' '}
+        <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>'a'</span> negative to flip the coaster's direction, increase{' '}
+        <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>'b'</span> to add a big hill, or zero out all but{' '}
+        <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>'d'</span> to see a flat line — the simplest polynomial.
+      </div>
+      <div style={{ position: 'relative', marginBottom: 12 }}>
+        <canvas ref={canvasRef} style={{ width: '100%', borderRadius: 10, display: 'block' }} />
+        <button onClick={() => setPlaying(!playing)} style={{
+          position: 'absolute', top: 8, right: 8, width: 32, height: 32,
+          borderRadius: 8, border: '1px solid var(--border-subtle)',
+          background: 'rgba(10,10,18,0.7)', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          {playing ? (
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="var(--accent)" stroke="none">
+              <rect x="6" y="4" width="4" height="16" rx="1" />
+              <rect x="14" y="4" width="4" height="16" rx="1" />
+            </svg>
+          ) : (
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="var(--accent)" stroke="none">
+              <polygon points="6,4 20,12 6,20" />
+            </svg>
+          )}
+        </button>
+      </div>
+      {/* Equation display */}
+      <div style={{
+        fontFamily: 'var(--font-mono)', fontSize: 13, textAlign: 'center',
+        marginBottom: 12, padding: '8px 12px', borderRadius: 8,
+        background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)',
+      }}>
+        <span style={{ color: 'var(--text-tertiary)' }}>y = </span>
+        <span style={{ color: 'var(--term-x3)' }}>{a.toFixed(1)}</span>
+        <span style={{ color: 'var(--text-tertiary)' }}>x{'\u00B3'} + </span>
+        <span style={{ color: 'var(--term-x2)' }}>{b.toFixed(1)}</span>
+        <span style={{ color: 'var(--text-tertiary)' }}>x{'\u00B2'} + </span>
+        <span style={{ color: 'var(--term-x)' }}>{c.toFixed(1)}</span>
+        <span style={{ color: 'var(--text-tertiary)' }}>x + </span>
+        <span style={{ color: 'var(--term-const)' }}>{d.toFixed(1)}</span>
+      </div>
+      {/* Sliders */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px' }}>
+        {sliders.map(s => (
+          <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: s.color, width: 14 }}>{s.label}</span>
+            <input type="range" min={s.min} max={s.max} step={s.step} value={s.value}
+              onChange={e => s.set(parseFloat(e.target.value))}
+              style={{ flex: 1, accentColor: '#e2b84a', height: 4 }}
+            />
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-tertiary)', width: 32, textAlign: 'right' }}>{s.value.toFixed(1)}</span>
+          </div>
+        ))}
+      </div>
+      <p style={{ marginTop: 16, fontSize: 13, fontFamily: 'var(--font-body)', color: 'rgba(232, 230, 240, 0.45)', lineHeight: 1.7 }}>
+        <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Why it matters: </span>
+        Polynomial curves are used far beyond amusement parks. Road engineers design highway curves as polynomials to ensure smooth transitions between straight sections. Animators use{' '}
+        <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>cubic polynomials</span> (called splines) to make characters move fluidly between keyframes. Font designers define every letter as a series of polynomial curves. The smooth, controllable nature of polynomials makes them the universal language of curves.
+      </p>
+    </div>
+  );
+}
+
+/* ====================================================================
+   OPEN-TOP BOX VOLUME EXAMPLE
+   ==================================================================== */
+function OpenTopBoxExample() {
+  const canvasRef = useRef(null);
+  const [x, setX] = useState(4);
+
+  const sheetW = 30, sheetH = 20;
+
+  function volume(t) {
+    return t * (sheetH - 2 * t) * (sheetW - 2 * t);
+  }
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const W = canvas.parentElement.offsetWidth || 500;
+    const H = 350;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.scale(dpr, dpr);
+
+    const halfW = W / 2;
+    const flatH = 155;
+    const boxH = 155;
+    const graphH = H - flatH - 20;
+
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#0a0a12';
+    ctx.fillRect(0, 0, W, H);
+
+    // ---- LEFT: flat sheet ----
+    const fScale = Math.min((halfW - 30) / sheetW, (flatH - 20) / sheetH);
+    const fLeft = 15 + ((halfW - 30) - sheetW * fScale) / 2;
+    const fTop = 10 + ((flatH - 20) - sheetH * fScale) / 2;
+    const fw = sheetW * fScale;
+    const fh = sheetH * fScale;
+    const cx = x * fScale;
+
+    // Full sheet
+    ctx.fillStyle = 'rgba(226,184,74,0.08)';
+    ctx.strokeStyle = 'rgba(226,184,74,0.4)';
+    ctx.lineWidth = 1.5;
+    ctx.fillRect(fLeft, fTop, fw, fh);
+    ctx.strokeRect(fLeft, fTop, fw, fh);
+
+    // Cut corners (colored)
+    ctx.fillStyle = 'rgba(255,107,107,0.25)';
+    ctx.strokeStyle = 'rgba(255,107,107,0.6)';
+    ctx.lineWidth = 1;
+    // Top-left
+    ctx.fillRect(fLeft, fTop, cx, cx);
+    ctx.strokeRect(fLeft, fTop, cx, cx);
+    // Top-right
+    ctx.fillRect(fLeft + fw - cx, fTop, cx, cx);
+    ctx.strokeRect(fLeft + fw - cx, fTop, cx, cx);
+    // Bottom-left
+    ctx.fillRect(fLeft, fTop + fh - cx, cx, cx);
+    ctx.strokeRect(fLeft, fTop + fh - cx, cx, cx);
+    // Bottom-right
+    ctx.fillRect(fLeft + fw - cx, fTop + fh - cx, cx, cx);
+    ctx.strokeRect(fLeft + fw - cx, fTop + fh - cx, cx, cx);
+
+    // Fold lines (dashed)
+    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = 'rgba(226,184,74,0.3)';
+    ctx.lineWidth = 1;
+    // Horizontal fold lines
+    ctx.beginPath(); ctx.moveTo(fLeft + cx, fTop + cx); ctx.lineTo(fLeft + fw - cx, fTop + cx); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(fLeft + cx, fTop + fh - cx); ctx.lineTo(fLeft + fw - cx, fTop + fh - cx); ctx.stroke();
+    // Vertical fold lines
+    ctx.beginPath(); ctx.moveTo(fLeft + cx, fTop + cx); ctx.lineTo(fLeft + cx, fTop + fh - cx); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(fLeft + fw - cx, fTop + cx); ctx.lineTo(fLeft + fw - cx, fTop + fh - cx); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Dimension labels on flat sheet
+    ctx.fillStyle = 'var(--text-secondary)';
+    ctx.font = '11px "JetBrains Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(232,230,240,0.5)';
+    ctx.fillText(sheetW.toString(), fLeft + fw / 2, fTop + fh + 14);
+    ctx.save();
+    ctx.translate(fLeft - 8, fTop + fh / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText(sheetH.toString(), 0, 0);
+    ctx.restore();
+    // x labels
+    ctx.fillStyle = '#ff6b6b';
+    ctx.font = '10px "JetBrains Mono", monospace';
+    ctx.fillText('x=' + x.toFixed(1), fLeft + cx / 2, fTop + cx / 2 + 4);
+
+    // Label
+    ctx.fillStyle = 'rgba(232,230,240,0.35)';
+    ctx.font = '11px "DM Sans", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Flat Sheet', halfW / 2, flatH + 2);
+
+    // ---- RIGHT: 3D isometric box ----
+    const boxBaseW = (sheetW - 2 * x);
+    const boxBaseH = (sheetH - 2 * x);
+    const boxDepth = x;
+    const isoScale = Math.min((halfW - 50) / 20, (boxH - 40) / 16);
+    const isoX = halfW + halfW / 2;
+    const isoY = boxH - 20;
+    const angX = 0.9;
+    const angY = 0.45;
+
+    function iso(bx, by, bz) {
+      return [
+        isoX + (bx - by * Math.cos(angX)) * isoScale,
+        isoY - (bz + by * Math.sin(angY)) * isoScale,
+      ];
+    }
+
+    if (boxBaseW > 0 && boxBaseH > 0 && boxDepth > 0) {
+      const bw = boxBaseW * 0.5;
+      const bh = boxBaseH * 0.5;
+      const bd = boxDepth * 0.8;
+
+      // Bottom face
+      const bl = iso(-bw / 2, 0, 0);
+      const br = iso(bw / 2, 0, 0);
+      const brf = iso(bw / 2, bh, 0);
+      const blf = iso(-bw / 2, bh, 0);
+      ctx.beginPath();
+      ctx.moveTo(bl[0], bl[1]); ctx.lineTo(br[0], br[1]);
+      ctx.lineTo(brf[0], brf[1]); ctx.lineTo(blf[0], blf[1]);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(226,184,74,0.12)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(226,184,74,0.4)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Left wall
+      const tl = iso(-bw / 2, 0, bd);
+      const tlf = iso(-bw / 2, bh, bd);
+      ctx.beginPath();
+      ctx.moveTo(bl[0], bl[1]); ctx.lineTo(tl[0], tl[1]);
+      ctx.lineTo(tlf[0], tlf[1]); ctx.lineTo(blf[0], blf[1]);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(226,184,74,0.06)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(226,184,74,0.3)';
+      ctx.stroke();
+
+      // Front wall
+      ctx.beginPath();
+      ctx.moveTo(blf[0], blf[1]); ctx.lineTo(tlf[0], tlf[1]);
+      const trf = iso(bw / 2, bh, bd);
+      ctx.lineTo(trf[0], trf[1]); ctx.lineTo(brf[0], brf[1]);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(226,184,74,0.1)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(226,184,74,0.35)';
+      ctx.stroke();
+
+      // Right wall
+      const tr = iso(bw / 2, 0, bd);
+      ctx.beginPath();
+      ctx.moveTo(br[0], br[1]); ctx.lineTo(tr[0], tr[1]);
+      ctx.lineTo(trf[0], trf[1]); ctx.lineTo(brf[0], brf[1]);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(226,184,74,0.08)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(226,184,74,0.3)';
+      ctx.stroke();
+
+      // Back wall
+      ctx.beginPath();
+      ctx.moveTo(bl[0], bl[1]); ctx.lineTo(tl[0], tl[1]);
+      ctx.lineTo(tr[0], tr[1]); ctx.lineTo(br[0], br[1]);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(226,184,74,0.04)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(226,184,74,0.2)';
+      ctx.stroke();
+
+      // Dimension labels on box
+      ctx.fillStyle = 'rgba(91,190,245,0.8)';
+      ctx.font = '10px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      const midBot = iso(0, bh + 1.5, 0);
+      ctx.fillText((sheetW - 2 * x).toFixed(1), midBot[0], midBot[1]);
+      ctx.fillStyle = 'rgba(91,232,160,0.8)';
+      const midSide = iso(-bw / 2 - 1.5, bh / 2, 0);
+      ctx.fillText((sheetH - 2 * x).toFixed(1), midSide[0], midSide[1]);
+      ctx.fillStyle = 'rgba(232,124,232,0.8)';
+      const midH = iso(bw / 2 + 1, 0, bd / 2);
+      ctx.fillText(x.toFixed(1), midH[0], midH[1]);
+    }
+
+    // Label
+    ctx.fillStyle = 'rgba(232,230,240,0.35)';
+    ctx.font = '11px "DM Sans", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Folded Box', halfW + halfW / 2, flatH + 2);
+
+    // ---- BOTTOM: Volume graph ----
+    const gPadL = 50, gPadR = 20, gPadT = flatH + 20, gPadB = 16;
+    const gW = W - gPadL - gPadR;
+    const gH = H - gPadT - gPadB;
+    const maxX = 10;
+
+    // Find max volume for scaling
+    let maxV = 0;
+    for (let t = 0; t <= maxX; t += 0.1) {
+      const v = volume(t);
+      if (v > maxV) maxV = v;
+    }
+    maxV = Math.max(maxV, 100);
+
+    // Axes
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(gPadL, gPadT); ctx.lineTo(gPadL, H - gPadB);
+    ctx.lineTo(W - gPadR, H - gPadB);
+    ctx.stroke();
+
+    // Y axis labels
+    ctx.fillStyle = 'rgba(232,230,240,0.3)';
+    ctx.font = '9px "JetBrains Mono", monospace';
+    ctx.textAlign = 'right';
+    for (let v = 0; v <= maxV; v += Math.ceil(maxV / 4 / 100) * 100) {
+      const gy = H - gPadB - (v / maxV) * gH;
+      ctx.fillText(Math.round(v).toString(), gPadL - 6, gy + 3);
+      ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+      ctx.beginPath(); ctx.moveTo(gPadL, gy); ctx.lineTo(W - gPadR, gy); ctx.stroke();
+    }
+
+    // X axis label
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(232,230,240,0.3)';
+    ctx.fillText('cut size (x)', gPadL + gW / 2, H - 2);
+
+    // Volume curve
+    ctx.strokeStyle = '#5be8a0';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    let firstPt = true;
+    for (let px = 0; px <= gW; px += 1) {
+      const t = (px / gW) * maxX;
+      const v = volume(t);
+      const gx = gPadL + px;
+      const gy = H - gPadB - (Math.max(0, v) / maxV) * gH;
+      if (firstPt) { ctx.moveTo(gx, gy); firstPt = false; }
+      else ctx.lineTo(gx, gy);
+    }
+    ctx.stroke();
+
+    // Find max volume point
+    let bestT = 0, bestV = 0;
+    for (let t = 0.1; t < maxX; t += 0.05) {
+      const v = volume(t);
+      if (v > bestV) { bestV = v; bestT = t; }
+    }
+
+    // Max volume dot
+    const maxDotX = gPadL + (bestT / maxX) * gW;
+    const maxDotY = H - gPadB - (bestV / maxV) * gH;
+    ctx.fillStyle = '#5be8a0';
+    ctx.beginPath(); ctx.arc(maxDotX, maxDotY, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(91,232,160,0.6)';
+    ctx.font = '9px "JetBrains Mono", monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('max ' + Math.round(bestV), maxDotX + 8, maxDotY - 4);
+
+    // Current point
+    const curV = volume(x);
+    const curDotX = gPadL + (x / maxX) * gW;
+    const curDotY = H - gPadB - (Math.max(0, curV) / maxV) * gH;
+    // Vertical line
+    ctx.strokeStyle = 'rgba(226,184,74,0.3)';
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(curDotX, H - gPadB); ctx.lineTo(curDotX, curDotY); ctx.stroke();
+    ctx.setLineDash([]);
+    // Dot
+    ctx.fillStyle = '#e2b84a';
+    ctx.beginPath(); ctx.arc(curDotX, curDotY, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(226,184,74,0.4)';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(curDotX, curDotY, 8, 0, Math.PI * 2); ctx.stroke();
+
+    // Volume label
+    ctx.fillStyle = 'rgba(232,230,240,0.7)';
+    ctx.font = '10px "JetBrains Mono", monospace';
+    ctx.textAlign = 'center';
+    const labelDir = curDotX > W / 2 ? -1 : 1;
+    ctx.fillText('V=' + Math.round(curV), curDotX + labelDir * 35, curDotY - 8);
+
+  }, [x]);
+
+  const curVolume = volume(x);
+  const bw = sheetW - 2 * x;
+  const bh = sheetH - 2 * x;
+
+  return (
+    <div>
+      <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.7, marginBottom: 12 }}>
+        Here's a classic optimization problem that requires polynomial multiplication. You have a flat{' '}
+        <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>{sheetW}{'\u00D7'}{sheetH} cm</span> sheet of cardboard. By cutting equal squares of size{' '}
+        <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>x</span> from each corner and folding up the sides, you create an open-top box. The volume is{' '}
+        <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>V = x(20 - 2x)(30 - 2x)</span> — a product of three linear factors that multiplies out to a cubic polynomial. The question every packaging engineer asks: what cut size{' '}
+        <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>x</span> maximizes the volume?
+      </p>
+      <div style={{
+        background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)',
+        borderRadius: 10, padding: '12px 14px', marginBottom: 14,
+        fontSize: 13, fontFamily: 'var(--font-body)', color: 'var(--text-secondary)', lineHeight: 1.7,
+      }}>
+        <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>What you're seeing: </span>
+        The left panel shows the flat cardboard with colored cut corners. The right panel shows the resulting 3D box after folding. Below, the volume curve plots{' '}
+        <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>V</span> against{' '}
+        <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>x</span>. Notice the curve has a peak — that's the maximum volume. At{' '}
+        <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>x = 0</span> (no cuts), the box has no height and zero volume. At{' '}
+        <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>x = 10</span> (cuts meet in the middle), the box collapses to nothing. The sweet spot is somewhere in between, and the graph reveals exactly where.
+      </div>
+      <canvas ref={canvasRef} style={{ width: '100%', borderRadius: 10, display: 'block', marginBottom: 12 }} />
+      {/* Slider */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--accent)', width: 18 }}>x</span>
+        <input type="range" min={0} max={10} step={0.1} value={x}
+          onChange={e => setX(parseFloat(e.target.value))}
+          style={{ flex: 1, accentColor: '#e2b84a', height: 4 }}
+        />
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-tertiary)', width: 32, textAlign: 'right' }}>{x.toFixed(1)}</span>
+      </div>
+      {/* Info */}
+      <div style={{
+        display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8,
+        fontFamily: 'var(--font-mono)', fontSize: 11, textAlign: 'center',
+      }}>
+        <div style={{ padding: '8px', borderRadius: 6, background: 'rgba(91,190,245,0.08)', border: '1px solid rgba(91,190,245,0.15)' }}>
+          <div style={{ color: 'rgba(91,190,245,0.6)', marginBottom: 2 }}>Width</div>
+          <div style={{ color: '#5bbef5' }}>{bw > 0 ? bw.toFixed(1) : '--'}</div>
+        </div>
+        <div style={{ padding: '8px', borderRadius: 6, background: 'rgba(91,232,160,0.08)', border: '1px solid rgba(91,232,160,0.15)' }}>
+          <div style={{ color: 'rgba(91,232,160,0.6)', marginBottom: 2 }}>Length</div>
+          <div style={{ color: '#5be8a0' }}>{bh > 0 ? bh.toFixed(1) : '--'}</div>
+        </div>
+        <div style={{ padding: '8px', borderRadius: 6, background: 'rgba(226,184,74,0.08)', border: '1px solid rgba(226,184,74,0.15)' }}>
+          <div style={{ color: 'rgba(226,184,74,0.6)', marginBottom: 2 }}>Volume</div>
+          <div style={{ color: 'var(--accent)' }}>{curVolume > 0 ? Math.round(curVolume) : '--'}</div>
+        </div>
+      </div>
+      <p style={{ marginTop: 16, fontSize: 13, fontFamily: 'var(--font-body)', color: 'rgba(232, 230, 240, 0.45)', lineHeight: 1.7 }}>
+        <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Real-world connection: </span>
+        This problem appears constantly in manufacturing. Amazon engineers optimize box dimensions to minimize cardboard waste while fitting products snugly. Food companies design cereal boxes to maximize shelf visibility (surface area) while meeting volume requirements. Every time you multiply polynomial expressions like{' '}
+        <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>(20 - 2x)(30 - 2x)</span>, you're doing exactly what packaging engineers do — turning geometric constraints into an equation they can optimize.
+      </p>
+    </div>
+  );
+}
+
+/* ====================================================================
    STEP 0: LANDING
    ==================================================================== */
 function StepLanding({ setStep }) {
@@ -506,6 +1196,10 @@ function StepWhatAre({ step, setStep }) {
           ))}
         </div>
       )}
+
+      <RealWorldPanel examples={[
+        { title: 'Roller Coaster', content: <RollerCoasterExample /> },
+      ]} />
 
       <NavButtons step={step} setStep={setStep} />
     </div>
@@ -936,6 +1630,10 @@ function StepMultiply({ step, setStep }) {
           )}
         </div>
       )}
+
+      <RealWorldPanel examples={[
+        { title: 'Box Volume', content: <OpenTopBoxExample /> },
+      ]} />
 
       <NavButtons step={step} setStep={setStep} />
     </div>

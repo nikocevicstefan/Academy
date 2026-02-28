@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Probability & Combinatorics — Math Foundations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-deep: #06060b;
+    --bg-primary: #0a0a12;
+    --bg-card: rgba(255, 255, 255, 0.03);
+    --bg-card-hover: rgba(255, 255, 255, 0.06);
+    --border-subtle: rgba(255, 255, 255, 0.06);
+    --border-hover: rgba(255, 255, 255, 0.12);
+    --text-primary: #e8e6f0;
+    --text-secondary: rgba(232, 230, 240, 0.55);
+    --text-tertiary: rgba(232, 230, 240, 0.3);
+    --font-display: 'Instrument Serif', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --accent: #f43f5e;
+    --accent-bright: #fb7185;
+    --accent-dim: #be123c;
+    --accent-glow: rgba(244, 63, 94, 0.3);
+    --accent-bg: rgba(244, 63, 94, 0.06);
+    --accent2: #e11d48;
+    --accent3: #fda4af;
+    --success: #4ade80;
+    --warning: #fbbf24;
+    --error: #f87171;
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  html {
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    min-height: 100vh;
+    overflow-x: hidden;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% -10%, rgba(244, 63, 94, 0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 50%, rgba(225, 29, 72, 0.04) 0%, transparent 50%),
+      radial-gradient(ellipse 50% 50% at 20% 80%, rgba(253, 164, 175, 0.03) 0%, transparent 50%),
+      var(--bg-deep);
+  }
+
+  #root { min-height: 100vh; }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.3;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 256px;
+  }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.14); }
+
+  ::selection { background: rgba(244, 63, 94, 0.3); color: #fff; }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulseGlow {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  @keyframes celebratePop {
+    0% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes breathe {
+    0%, 100% { box-shadow: 0 0 20px rgba(244, 63, 94, 0.1); }
+    50% { box-shadow: 0 0 30px rgba(244, 63, 94, 0.25); }
+  }
+
+  button { cursor: pointer; }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+/* ================================================================
+   CONSTANTS & HELPERS
+   ================================================================ */
+const TOTAL_STEPS = 8;
+const STEP_TITLES = [
+  'Landing',
+  'Counting Principles',
+  'Factorials & Permutations',
+  'Combinations',
+  'Basic Probability',
+  'Compound Events',
+  'Expected Value & Applications',
+  'Practice & Completion'
+];
+
+/* ================================================================
+   GRID BACKGROUND
+   ================================================================ */
+function GridBackground() {
+  return (
+    <div style={{ position:'fixed', inset:0, zIndex:0, pointerEvents:'none', opacity:0.35 }}>
+      <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+            <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(255,255,255,0.015)" strokeWidth="1"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#grid)" />
+      </svg>
+    </div>
+  );
+}
+
+/* ================================================================
+   PROGRESS BAR
+   ================================================================ */
+function ProgressBar({ step, total }) {
+  return (
+    <div style={{
+      position:'sticky', top:0, zIndex:100,
+      background:'rgba(6,6,11,0.85)', backdropFilter:'blur(16px)',
+      borderBottom:'1px solid var(--border-subtle)',
+      padding:'12px 24px',
+    }}>
+      <div style={{
+        maxWidth:900, margin:'0 auto',
+        display:'flex', alignItems:'center', gap:12,
+      }}>
+        <a href="index.html" style={{
+          fontFamily:'var(--font-mono)', fontSize:11, letterSpacing:'0.06em',
+          textTransform:'uppercase', color:'var(--text-tertiary)',
+          textDecoration:'none', whiteSpace:'nowrap',
+          transition:'color 0.3s ease',
+        }}
+        onMouseEnter={e => e.target.style.color='var(--accent)'}
+        onMouseLeave={e => e.target.style.color='var(--text-tertiary)'}
+        >
+          &larr; Lessons
+        </a>
+        <div style={{ flex:1, display:'flex', alignItems:'center', gap:4 }}>
+          {Array.from({length:total}, (_,i) => (
+            <div key={i} style={{
+              flex:1, height:3, borderRadius:2,
+              background: i < step ? 'var(--accent)' : i === step ? 'var(--accent-dim)' : 'rgba(255,255,255,0.06)',
+              transition:'background 0.5s var(--ease-out-expo)',
+              position:'relative',
+              overflow:'hidden',
+            }}>
+              {i === step && (
+                <div style={{
+                  position:'absolute', inset:0, borderRadius:2,
+                  background:'linear-gradient(90deg, var(--accent), var(--accent-bright))',
+                }}/>
+              )}
+            </div>
+          ))}
+        </div>
+        <span style={{
+          fontFamily:'var(--font-mono)', fontSize:11, color:'var(--text-tertiary)',
+          letterSpacing:'0.04em', whiteSpace:'nowrap',
+        }}>
+          {step + 1} / {total}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   NAVIGATION BUTTONS
+   ================================================================ */
+function NavButtons({ step, setStep, total }) {
+  return (
+    <div style={{
+      display:'flex', justifyContent:'space-between', alignItems:'center',
+      marginTop:48, gap:16,
+    }}>
+      {step > 0 ? (
+        <button onClick={() => setStep(step - 1)} style={{
+          display:'flex', alignItems:'center', gap:8,
+          fontFamily:'var(--font-body)', fontSize:15, fontWeight:400,
+          color:'var(--text-secondary)', background:'none',
+          border:'1px solid var(--border-subtle)', borderRadius:12,
+          padding:'12px 24px', transition:'all 0.3s var(--ease-out-expo)',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor='var(--accent-dim)'; e.currentTarget.style.color='var(--text-primary)'; }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor='var(--border-subtle)'; e.currentTarget.style.color='var(--text-secondary)'; }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          Previous
+        </button>
+      ) : <div />}
+      {step < total - 1 ? (
+        <button onClick={() => setStep(step + 1)} style={{
+          display:'flex', alignItems:'center', gap:8,
+          fontFamily:'var(--font-body)', fontSize:15, fontWeight:500,
+          color:'#fff', background:'linear-gradient(135deg, var(--accent-dim), var(--accent))',
+          border:'none', borderRadius:12,
+          padding:'12px 28px', transition:'all 0.3s var(--ease-out-expo)',
+          boxShadow:'0 4px 20px rgba(244,63,94,0.2)',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.boxShadow='0 6px 28px rgba(244,63,94,0.35)'; e.currentTarget.style.transform='translateY(-1px)'; }}
+        onMouseLeave={e => { e.currentTarget.style.boxShadow='0 4px 20px rgba(244,63,94,0.2)'; e.currentTarget.style.transform='translateY(0)'; }}
+        >
+          Next
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      ) : (
+        <button onClick={() => {
+          try {
+            const progress = JSON.parse(localStorage.getItem('math-progress') || '[]');
+            if (!progress.includes(14)) {
+              progress.push(14);
+              localStorage.setItem('math-progress', JSON.stringify(progress));
+            }
+          } catch(e) {}
+          window.location.href = 'index.html';
+        }} style={{
+          display:'flex', alignItems:'center', gap:8,
+          fontFamily:'var(--font-body)', fontSize:15, fontWeight:500,
+          color:'#fff', background:'linear-gradient(135deg, #059669, var(--success))',
+          border:'none', borderRadius:12,
+          padding:'12px 28px', transition:'all 0.3s var(--ease-out-expo)',
+          boxShadow:'0 4px 20px rgba(74,222,128,0.2)',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.boxShadow='0 6px 28px rgba(74,222,128,0.35)'; e.currentTarget.style.transform='translateY(-1px)'; }}
+        onMouseLeave={e => { e.currentTarget.style.boxShadow='0 4px 20px rgba(74,222,128,0.2)'; e.currentTarget.style.transform='translateY(0)'; }}
+        >
+          Complete Lesson
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </button>
+      )}
+    </div>
+  );
+}
+
+/* ================================================================
+   SECTION HEADER
+   ================================================================ */
+function SectionHeader({ title, subtitle }) {
+  return (
+    <div style={{ marginBottom:32, animation:'fadeInUp 0.7s var(--ease-out-expo) both' }}>
+      <h2 style={{
+        fontFamily:'var(--font-display)', fontSize:'clamp(32px, 5vw, 48px)',
+        fontWeight:400, lineHeight:1.1, letterSpacing:'-0.01em',
+        marginBottom:12,
+        background:'linear-gradient(135deg, var(--text-primary) 0%, var(--accent-bright) 100%)',
+        WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent',
+      }}>
+        {title}
+      </h2>
+      {subtitle && (
+        <p style={{
+          fontFamily:'var(--font-body)', fontSize:'clamp(15px, 1.8vw, 18px)',
+          fontWeight:300, color:'var(--text-secondary)', lineHeight:1.6,
+          maxWidth:580,
+        }}>
+          {subtitle}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/* ================================================================
+   CARD WRAPPER
+   ================================================================ */
+function Card({ children, style }) {
+  return (
+    <div style={{
+      background:'var(--bg-card)', border:'1px solid var(--border-subtle)',
+      borderRadius:16, padding:'clamp(20px, 3vw, 32px)',
+      backdropFilter:'blur(8px)', position:'relative', overflow:'hidden',
+      ...style,
+    }}>
+      {children}
+    </div>
+  );
+}
+
+/* ================================================================
+   KEY INSIGHT BOX
+   ================================================================ */
+function KeyInsight({ children }) {
+  return (
+    <div style={{
+      background:'rgba(244, 63, 94, 0.06)',
+      border:'1px solid rgba(244, 63, 94, 0.15)',
+      borderLeft:'3px solid var(--accent)',
+      borderRadius:12, padding:'20px 24px', margin:'24px 0',
+    }}>
+      <div style={{
+        fontFamily:'var(--font-mono)', fontSize:11, letterSpacing:'0.1em',
+        textTransform:'uppercase', color:'var(--accent-bright)',
+        marginBottom:10, fontWeight:500,
+      }}>
+        Key Insight
+      </div>
+      <div style={{
+        fontFamily:'var(--font-body)', fontSize:15, color:'var(--text-primary)',
+        lineHeight:1.7,
+      }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   COMMON MISTAKE BOX
+   ================================================================ */
+function CommonMistake({ children }) {
+  return (
+    <div style={{
+      background:'rgba(251, 191, 36, 0.05)',
+      border:'1px solid rgba(251, 191, 36, 0.15)',
+      borderLeft:'3px solid var(--warning)',
+      borderRadius:12, padding:'20px 24px', margin:'24px 0',
+    }}>
+      <div style={{
+        fontFamily:'var(--font-mono)', fontSize:11, letterSpacing:'0.1em',
+        textTransform:'uppercase', color:'var(--warning)',
+        marginBottom:10, fontWeight:500,
+      }}>
+        Common Mistake
+      </div>
+      <div style={{
+        fontFamily:'var(--font-body)', fontSize:15, color:'var(--text-primary)',
+        lineHeight:1.7,
+      }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   MATH BLOCK — for displayed formulas
+   ================================================================ */
+function MathBlock({ children, label }) {
+  return (
+    <div style={{
+      background:'rgba(244, 63, 94, 0.04)',
+      border:'1px solid rgba(244, 63, 94, 0.1)',
+      borderRadius:12, padding:'20px 24px', margin:'20px 0',
+      textAlign:'center',
+    }}>
+      {label && (
+        <div style={{
+          fontFamily:'var(--font-mono)', fontSize:11, letterSpacing:'0.08em',
+          textTransform:'uppercase', color:'var(--text-tertiary)',
+          marginBottom:10,
+        }}>
+          {label}
+        </div>
+      )}
+      <div style={{
+        fontFamily:'var(--font-mono)', fontSize:'clamp(16px, 2.5vw, 22px)',
+        color:'var(--accent-bright)', fontWeight:500, lineHeight:1.8,
+      }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   INLINE MATH
+   ================================================================ */
+function M({ children }) {
+  return (
+    <span style={{
+      fontFamily:'var(--font-mono)', color:'var(--accent-bright)',
+      fontSize:'0.92em', fontWeight:500,
+    }}>
+      {children}
+    </span>
+  );
+}
+
+/* ================================================================
+   TODO PLACEHOLDER
+   ================================================================ */
+function TodoPlaceholder({ description }) {
+  return (
+    <div style={{
+      background:'rgba(255,255,255,0.02)',
+      border:'1px dashed rgba(255,255,255,0.1)',
+      borderRadius:12, padding:'32px 24px', margin:'24px 0',
+      textAlign:'center',
+    }}>
+      <div style={{
+        fontFamily:'var(--font-mono)', fontSize:13,
+        color:'var(--text-tertiary)', lineHeight:1.6,
+      }}>
+        {'{'}/* TODO: {description} */{'}'}
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   BODY TEXT
+   ================================================================ */
+const bodyStyle = {
+  fontFamily:'var(--font-body)', fontSize:16, color:'var(--text-secondary)',
+  lineHeight:1.75, marginBottom:16, fontWeight:300,
+};
+
+const strongStyle = {
+  color:'var(--text-primary)', fontWeight:500,
+};
+
+/* ================================================================
+   ROUGH DRAFT BANNER
+   ================================================================ */
+function DraftBanner() {
+  return (
+    <div style={{
+      position:'fixed', top:56, right:20, zIndex:200,
+      background:'rgba(244, 63, 94, 0.12)',
+      border:'1px solid rgba(244, 63, 94, 0.25)',
+      borderRadius:8, padding:'6px 14px',
+      animation:'slideDown 0.6s var(--ease-out-expo) 0.3s both',
+    }}>
+      <span style={{
+        fontFamily:'var(--font-mono)', fontSize:10, letterSpacing:'0.12em',
+        textTransform:'uppercase', color:'var(--accent-bright)', fontWeight:500,
+      }}>
+        Rough Draft
+      </span>
+    </div>
+  );
+}
+
+
+/* ================================================================
+   STEP 0 — LANDING
+   ================================================================ */
+function StepLanding({ onStart }) {
+  return (
+    <div style={{
+      minHeight:'85vh', display:'flex', flexDirection:'column',
+      alignItems:'center', justifyContent:'center', textAlign:'center',
+      padding:'80px 24px 40px',
+    }}>
+      <div style={{
+        fontFamily:'var(--font-mono)', fontSize:11, letterSpacing:'0.12em',
+        textTransform:'uppercase', color:'var(--accent)',
+        marginBottom:16, animation:'slideDown 0.8s var(--ease-out-expo) both',
+      }}>
+        Lesson 14 &mdash; Rough Draft
+      </div>
+
+      <h1 style={{
+        fontFamily:'var(--font-display)', fontSize:'clamp(48px, 9vw, 84px)',
+        fontWeight:400, lineHeight:1, letterSpacing:'-0.02em',
+        marginBottom:16, animation:'fadeInUp 1s var(--ease-out-expo) 0.1s both',
+      }}>
+        <span style={{
+          background:'linear-gradient(135deg, var(--accent3) 0%, var(--accent) 40%, var(--accent2) 100%)',
+          WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent',
+        }}>Probability &amp;</span>
+        <br />
+        <span style={{
+          background:'linear-gradient(135deg, var(--accent-bright) 0%, var(--accent2) 100%)',
+          WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent',
+        }}>Combinatorics</span>
+      </h1>
+
+      <p style={{
+        fontFamily:'var(--font-display)', fontStyle:'italic',
+        fontSize:'clamp(18px, 2.5vw, 24px)', color:'var(--text-secondary)',
+        maxWidth:500, lineHeight:1.5, marginBottom:48,
+        animation:'fadeInUp 1s var(--ease-out-expo) 0.25s both',
+      }}>
+        Counting what's possible, measuring what's likely.
+      </p>
+
+      <button onClick={onStart} style={{
+        fontFamily:'var(--font-body)', fontSize:17, fontWeight:500,
+        color:'#fff', background:'linear-gradient(135deg, var(--accent), var(--accent2))',
+        border:'none', borderRadius:12, padding:'14px 44px',
+        cursor:'pointer', transition:'all 0.3s',
+        boxShadow:'0 4px 24px rgba(244,63,94,0.3)',
+        animation:'fadeInUp 1s var(--ease-out-expo) 0.4s both',
+      }}
+      onMouseEnter={e => e.target.style.boxShadow='0 6px 36px rgba(244,63,94,0.5)'}
+      onMouseLeave={e => e.target.style.boxShadow='0 4px 24px rgba(244,63,94,0.3)'}
+      >
+        Begin &rarr;
+      </button>
+    </div>
+  );
+}
+
+
+/* ================================================================
+   STEP 1 — COUNTING PRINCIPLES
+   ================================================================ */
+function StepCounting() {
+  return (
+    <div style={{ paddingTop:80 }}>
+      <SectionHeader
+        title="Counting Principles"
+        subtitle="Before we can measure probability, we need to count outcomes systematically."
+      />
+
+      <Card style={{ marginBottom:24, animation:'fadeInUp 0.7s var(--ease-out-expo) 0.1s both' }}>
+        <p style={bodyStyle}>
+          At the heart of combinatorics lies a deceptively simple question: <span style={strongStyle}>how many ways can something happen?</span> When problems involve small numbers, we can list every possibility by hand. But real-world scenarios -- license plates, passwords, tournament brackets -- involve so many outcomes that listing them all would take lifetimes. We need systematic rules for counting.
+        </p>
+        <p style={bodyStyle}>
+          The <span style={strongStyle}>Fundamental Counting Principle</span> (also called the multiplication principle) gives us our first powerful tool. If one event can occur in <M>m</M> ways, and a second independent event can occur in <M>n</M> ways, then the two events together can occur in <M>m {'\u00D7'} n</M> ways. This generalizes to any number of sequential choices: multiply the number of options at each stage.
+        </p>
+
+        <MathBlock label="Fundamental Counting Principle">
+          If event A has m outcomes and event B has n outcomes,<br/>
+          then A followed by B has m {'\u00D7'} n total outcomes.
+        </MathBlock>
+
+        <p style={bodyStyle}>
+          Consider a simple example: you have <M>3</M> shirts and <M>4</M> pairs of pants. How many distinct outfits can you create? Each shirt can be paired with each pair of pants, giving <M>3 {'\u00D7'} 4 = 12</M> outfits. You can verify this by drawing a tree diagram -- three branches at the first level (one per shirt), each splitting into four branches (one per pair of pants), yielding 12 leaves (one per outfit).
+        </p>
+        <p style={bodyStyle}>
+          The principle scales to larger problems effortlessly. How many license plates can be made with 3 letters followed by 4 digits? There are 26 choices for each letter and 10 choices for each digit, so the total is <M>26{'\u00B3'} {'\u00D7'} 10{'\u2074'} = 17,576 {'\u00D7'} 10,000 = 175,760,000</M> possible plates. That single multiplication replaces the need to enumerate over 175 million combinations.
+        </p>
+      </Card>
+
+      <Card style={{ marginBottom:24, animation:'fadeInUp 0.7s var(--ease-out-expo) 0.2s both' }}>
+        <h3 style={{
+          fontFamily:'var(--font-display)', fontSize:22, fontWeight:400,
+          color:'var(--text-primary)', marginBottom:16,
+        }}>
+          The Addition Principle
+        </h3>
+        <p style={bodyStyle}>
+          While the multiplication principle handles sequences of choices (this AND that), the <span style={strongStyle}>Addition Principle</span> handles alternatives (this OR that). If two events are <span style={strongStyle}>mutually exclusive</span> -- meaning they cannot happen at the same time -- then the total number of outcomes is the sum of the individual counts.
+        </p>
+        <p style={bodyStyle}>
+          For example, suppose a cafe offers 5 hot drinks and 8 cold drinks. If you want exactly one drink, you have <M>5 + 8 = 13</M> choices. The events "choose a hot drink" and "choose a cold drink" are mutually exclusive -- no single drink is both hot and cold -- so we add.
+        </p>
+        <p style={bodyStyle}>
+          <span style={strongStyle}>Tree diagrams</span> make these principles visual. Each level of branching represents a decision point, and each leaf represents a unique outcome. For the multiplication principle, the tree branches multiply. For the addition principle, separate trees (or separate root branches) combine. Tree diagrams are especially helpful when the number of options changes depending on earlier choices -- something we will revisit when we discuss dependent events.
+        </p>
+
+        <KeyInsight>
+          Multiplication counts sequences (A then B). Addition counts alternatives (A or B). The key question is always: are these events happening together in sequence, or am I choosing between them?
+        </KeyInsight>
+      </Card>
+
+      <TodoPlaceholder description="Interactive -- tree diagram builder, outfit combiner" />
+    </div>
+  );
+}
+
+
+/* ================================================================
+   STEP 2 — FACTORIALS & PERMUTATIONS
+   ================================================================ */
+function StepPermutations() {
+  return (
+    <div style={{ paddingTop:80 }}>
+      <SectionHeader
+        title="Factorials & Permutations"
+        subtitle="When order matters, factorials do the heavy lifting."
+      />
+
+      <Card style={{ marginBottom:24, animation:'fadeInUp 0.7s var(--ease-out-expo) 0.1s both' }}>
+        <p style={bodyStyle}>
+          How many ways can you arrange a collection of distinct objects? Imagine placing 5 different books on a shelf. For the first slot, you have 5 choices. Once a book is placed, 4 remain for the second slot, then 3 for the third, 2 for the fourth, and 1 for the last. By the multiplication principle, the total number of arrangements is <M>5 {'\u00D7'} 4 {'\u00D7'} 3 {'\u00D7'} 2 {'\u00D7'} 1 = 120</M>.
+        </p>
+        <p style={bodyStyle}>
+          This product of all positive integers from 1 to n is so common that it gets its own notation: <span style={strongStyle}>n factorial</span>, written <M>n!</M>. The formal definition is:
+        </p>
+
+        <MathBlock label="Factorial">
+          n! = n {'\u00D7'} (n-1) {'\u00D7'} (n-2) {'\u00D7'} ... {'\u00D7'} 2 {'\u00D7'} 1
+        </MathBlock>
+
+        <p style={bodyStyle}>
+          A few key values to remember: <M>0! = 1</M> (by convention, which turns out to make many formulas work cleanly), <M>1! = 1</M>, <M>5! = 120</M>, and <M>10! = 3,628,800</M>. Factorials grow astonishingly fast -- <M>20!</M> is greater than 2 quadrillion (2.4 {'\u00D7'} 10{'\u00B9'}{'\u2078'}). This explosive growth reflects just how many ways there are to arrange even a modest number of objects.
+        </p>
+      </Card>
+
+      <Card style={{ marginBottom:24, animation:'fadeInUp 0.7s var(--ease-out-expo) 0.2s both' }}>
+        <h3 style={{
+          fontFamily:'var(--font-display)', fontSize:22, fontWeight:400,
+          color:'var(--text-primary)', marginBottom:16,
+        }}>
+          Permutations: Ordered Selections
+        </h3>
+        <p style={bodyStyle}>
+          A <span style={strongStyle}>permutation</span> is an ordered arrangement. When we arrange all n items, the count is simply <M>n!</M>. But what if we only want to arrange r items chosen from a set of n? This is called a "permutation of n things taken r at a time," written <M>P(n, r)</M>.
+        </p>
+
+        <MathBlock label="Permutation Formula">
+          P(n, r) = n! / (n - r)!
+        </MathBlock>
+
+        <p style={bodyStyle}>
+          For example, in a race with 8 runners, how many ways can the gold, silver, and bronze medals be awarded? We need to fill 3 ordered positions from 8 people: <M>P(8, 3) = 8! / 5! = 8 {'\u00D7'} 7 {'\u00D7'} 6 = 336</M>. Notice that the (n-r)! in the denominator cancels out the tail of the factorial, leaving us with the product of just the first r terms.
+        </p>
+        <p style={bodyStyle}>
+          The crucial insight is that <span style={strongStyle}>order matters in permutations</span>. The arrangement where Alice wins gold, Bob wins silver, and Carol wins bronze is a different outcome from Bob winning gold, Alice winning silver, and Carol winning bronze -- even though the same three people are on the podium. Every distinct ordering counts as a separate permutation.
+        </p>
+
+        <KeyInsight>
+          Permutations count arrangements where position matters. Think of podium finishes, seating arrangements, or passwords -- cases where rearranging the same items creates a genuinely different outcome.
+        </KeyInsight>
+
+        <CommonMistake>
+          Don't confuse permutations with combinations. If someone asks "how many 3-person committees can be formed from 8 people," order does not matter -- that's a combination problem, not a permutation. Always ask: does rearranging the selection change the outcome?
+        </CommonMistake>
+      </Card>
+
+      <TodoPlaceholder description="Interactive -- arrange colored blocks, count permutations" />
+    </div>
+  );
+}
+
+
+/* ================================================================
+   STEP 3 — COMBINATIONS
+   ================================================================ */
+function StepCombinations() {
+  return (
+    <div style={{ paddingTop:80 }}>
+      <SectionHeader
+        title="Combinations"
+        subtitle="When only the selection matters, not the order."
+      />
+
+      <Card style={{ marginBottom:24, animation:'fadeInUp 0.7s var(--ease-out-expo) 0.1s both' }}>
+        <p style={bodyStyle}>
+          A <span style={strongStyle}>combination</span> is a selection of items where the order does not matter. If you are choosing 3 team members from a group of 8 people, the team {'{'}Alice, Bob, Carol{'}'} is the same as {'{'}Carol, Alice, Bob{'}'}. Unlike permutations, rearranging the selection does not produce a new outcome.
+        </p>
+        <p style={bodyStyle}>
+          The combination formula, read as "n choose r," counts how many ways to select r items from n without regard to order:
+        </p>
+
+        <MathBlock label="Combination Formula">
+          C(n, r) = n! / (r! {'\u00D7'} (n - r)!)
+        </MathBlock>
+
+        <p style={bodyStyle}>
+          The binomial coefficient, also written as a column vector with n on top and r on the bottom, is one of the most important quantities in all of mathematics. For our team example: <M>C(8, 3) = 8! / (3! {'\u00D7'} 5!) = 40320 / (6 {'\u00D7'} 120) = 56</M>. Compare this with <M>P(8, 3) = 336</M> permutations. Every group of 3 people was counted <M>3! = 6</M> times in the permutation count (once for each ordering), so dividing by <M>3!</M> collapses those duplicates.
+        </p>
+        <p style={bodyStyle}>
+          The decisive question when choosing between permutations and combinations is always: <span style={strongStyle}>"Does the order of selection matter?"</span> If yes, use permutations. If no, use combinations. Committees, card hands, and lottery draws are combinations. PIN codes, race finishes, and ranked ballots are permutations.
+        </p>
+      </Card>
+
+      <Card style={{ marginBottom:24, animation:'fadeInUp 0.7s var(--ease-out-expo) 0.2s both' }}>
+        <h3 style={{
+          fontFamily:'var(--font-display)', fontSize:22, fontWeight:400,
+          color:'var(--text-primary)', marginBottom:16,
+        }}>
+          Pascal's Triangle & the Binomial Theorem
+        </h3>
+        <p style={bodyStyle}>
+          <span style={strongStyle}>Pascal's Triangle</span> is a triangular array of numbers where each entry is a binomial coefficient. Row n of Pascal's Triangle lists all values of <M>C(n, 0), C(n, 1), ..., C(n, n)</M>. The defining property is elegant: each number is the sum of the two numbers directly above it. The triangle begins 1; 1 1; 1 2 1; 1 3 3 1; 1 4 6 4 1; and so on.
+        </p>
+        <p style={bodyStyle}>
+          Pascal's Triangle connects combinatorics to algebra through the <span style={strongStyle}>Binomial Theorem</span>. This theorem tells us how to expand any power of a binomial:
+        </p>
+
+        <MathBlock label="Binomial Theorem">
+          (a + b){'\u207F'} = {'\u03A3'} C(n, k) {'\u00B7'} a{'\u207F'}{'\u207B'}{'\u1D4F'} {'\u00B7'} b{'\u1D4F'}
+          <br />
+          <span style={{ fontSize:14, color:'var(--text-tertiary)' }}>where k ranges from 0 to n</span>
+        </MathBlock>
+
+        <p style={bodyStyle}>
+          For instance, <M>(a + b){'\u00B2'} = C(2,0)a{'\u00B2'} + C(2,1)ab + C(2,2)b{'\u00B2'} = a{'\u00B2'} + 2ab + b{'\u00B2'}</M>. The coefficients 1, 2, 1 are exactly row 2 of Pascal's Triangle. This deep connection between counting and algebra appears throughout higher mathematics, from probability distributions to number theory.
+        </p>
+
+        <KeyInsight>
+          Combinations and permutations differ by exactly one factor: the r! that accounts for the ordering of the selected items. If you know the permutation count, divide by r! to get the combination count.
+        </KeyInsight>
+      </Card>
+
+      <TodoPlaceholder description="Interactive -- Pascal's triangle builder, combination calculator" />
+    </div>
+  );
+}
+
+
+/* ================================================================
+   STEP 4 — BASIC PROBABILITY
+   ================================================================ */
+function StepBasicProbability() {
+  return (
+    <div style={{ paddingTop:80 }}>
+      <SectionHeader
+        title="Basic Probability"
+        subtitle="Assigning numerical measures to chance."
+      />
+
+      <Card style={{ marginBottom:24, animation:'fadeInUp 0.7s var(--ease-out-expo) 0.1s both' }}>
+        <p style={bodyStyle}>
+          Probability quantifies uncertainty. When all outcomes of an experiment are equally likely, the probability of an event is the ratio of favorable outcomes to total outcomes:
+        </p>
+
+        <MathBlock label="Classical Probability">
+          P(event) = favorable outcomes / total outcomes
+        </MathBlock>
+
+        <p style={bodyStyle}>
+          Probability is always a number between <M>0</M> (impossible) and <M>1</M> (certain). A probability of 0.5 means the event occurs about half the time. You can also express probabilities as percentages (multiply by 100) or as fractions (often the most precise form for exact answers).
+        </p>
+        <p style={bodyStyle}>
+          Consider rolling a standard fair die. There are 6 equally likely outcomes: 1, 2, 3, 4, 5, 6. The probability of rolling a 3 is <M>P(3) = 1/6</M>, since exactly one of the six faces shows a 3. In a standard deck of 52 playing cards, there are 13 hearts, so <M>P(heart) = 13/52 = 1/4</M>. These calculations depend on the assumption that every individual outcome is equally likely -- a fair die, a well-shuffled deck.
+        </p>
+        <p style={bodyStyle}>
+          One of the most useful rules in probability is the <span style={strongStyle}>complement rule</span>. The probability that an event does NOT happen equals 1 minus the probability that it does happen:
+        </p>
+
+        <MathBlock label="Complement Rule">
+          P(not A) = 1 - P(A)
+        </MathBlock>
+
+        <p style={bodyStyle}>
+          This is surprisingly powerful. What is the probability of NOT rolling a 6? Rather than counting 5 favorable outcomes out of 6, we can compute <M>1 - 1/6 = 5/6</M>. The complement approach becomes essential when "at least one" problems arise -- it is often far easier to compute the probability of the complement ("none at all") and subtract from 1.
+        </p>
+      </Card>
+
+      <Card style={{ marginBottom:24, animation:'fadeInUp 0.7s var(--ease-out-expo) 0.2s both' }}>
+        <h3 style={{
+          fontFamily:'var(--font-display)', fontSize:22, fontWeight:400,
+          color:'var(--text-primary)', marginBottom:16,
+        }}>
+          Experimental vs. Theoretical Probability
+        </h3>
+        <p style={bodyStyle}>
+          <span style={strongStyle}>Theoretical probability</span> is what we calculate using logic and counting -- the "true" probability based on the structure of the experiment. <span style={strongStyle}>Experimental probability</span> (also called empirical probability) is what we observe by actually running the experiment many times: the relative frequency of the event.
+        </p>
+        <p style={bodyStyle}>
+          If you flip a coin 10 times, you might get 7 heads and 3 tails, giving an experimental probability of 7/10 = 0.70 for heads. That does not mean the coin is unfair. With only 10 trials, randomness creates substantial variation. The <span style={strongStyle}>Law of Large Numbers</span> guarantees that as you repeat an experiment more and more times, the experimental probability converges toward the theoretical probability. After 10,000 flips, you would expect the ratio to be very close to 0.50 for a fair coin.
+        </p>
+
+        <KeyInsight>
+          The complement rule is your best friend in probability. Whenever you see the phrase "at least one," consider computing 1 minus the probability of "none" instead. It almost always simplifies the calculation dramatically.
+        </KeyInsight>
+
+        <CommonMistake>
+          Probability applies to individual outcomes, not to what "should" happen next. If you flip heads 5 times in a row, the probability of heads on the next flip is still 1/2 for a fair coin. Coins do not have memory. This error is called the Gambler's Fallacy.
+        </CommonMistake>
+      </Card>
+
+      <TodoPlaceholder description="Interactive -- dice roller / card drawer with frequency tracking" />
+    </div>
+  );
+}
+
+
+/* ================================================================
+   STEP 5 — COMPOUND EVENTS
+   ================================================================ */
+function StepCompoundEvents() {
+  return (
+    <div style={{ paddingTop:80 }}>
+      <SectionHeader
+        title="Compound Events"
+        subtitle="Combining probabilities with AND, OR, and given-that."
+      />
+
+      <Card style={{ marginBottom:24, animation:'fadeInUp 0.7s var(--ease-out-expo) 0.1s both' }}>
+        <h3 style={{
+          fontFamily:'var(--font-display)', fontSize:22, fontWeight:400,
+          color:'var(--text-primary)', marginBottom:16,
+        }}>
+          Independent Events: "AND" with Multiplication
+        </h3>
+        <p style={bodyStyle}>
+          Two events are <span style={strongStyle}>independent</span> when the occurrence of one has no effect on the probability of the other. Flipping a coin does not affect the roll of a die. When events A and B are independent, the probability of both occurring is the product of their individual probabilities:
+        </p>
+
+        <MathBlock label="Multiplication Rule (Independent)">
+          P(A and B) = P(A) {'\u00D7'} P(B)
+        </MathBlock>
+
+        <p style={bodyStyle}>
+          Flipping two coins: <M>P(HH) = 1/2 {'\u00D7'} 1/2 = 1/4</M>. Rolling a 6 on a die AND flipping heads: <M>P = 1/6 {'\u00D7'} 1/2 = 1/12</M>. Each individual experiment does not influence the other, so we simply multiply.
+        </p>
+      </Card>
+
+      <Card style={{ marginBottom:24, animation:'fadeInUp 0.7s var(--ease-out-expo) 0.15s both' }}>
+        <h3 style={{
+          fontFamily:'var(--font-display)', fontSize:22, fontWeight:400,
+          color:'var(--text-primary)', marginBottom:16,
+        }}>
+          Dependent Events & Conditional Probability
+        </h3>
+        <p style={bodyStyle}>
+          When events are <span style={strongStyle}>dependent</span>, the outcome of the first event changes the probability of the second. Drawing cards without replacement is the classic example. The probability of drawing 2 aces in a row from a standard deck is:
+        </p>
+
+        <MathBlock label="Multiplication Rule (Dependent)">
+          P(A and B) = P(A) {'\u00D7'} P(B|A)
+        </MathBlock>
+
+        <p style={bodyStyle}>
+          Here <M>P(B|A)</M> is the <span style={strongStyle}>conditional probability</span> of B given that A has already occurred. For two aces: <M>P = (4/52) {'\u00D7'} (3/51) = 12/2652 = 1/221</M>. After removing the first ace, only 3 aces remain among 51 cards, so the second probability shifts.
+        </p>
+        <p style={bodyStyle}>
+          In general, conditional probability is defined as:
+        </p>
+
+        <MathBlock label="Conditional Probability">
+          P(A|B) = P(A and B) / P(B)
+        </MathBlock>
+
+        <p style={bodyStyle}>
+          For example, given that a card drawn is red, what is the probability it is a heart? <M>P(heart | red) = P(heart and red) / P(red) = (13/52) / (26/52) = 1/2</M>. Since all hearts are red, the "heart and red" event is just "heart." Among the 26 red cards, exactly 13 are hearts, so the conditional probability is 1/2.
+        </p>
+      </Card>
+
+      <Card style={{ marginBottom:24, animation:'fadeInUp 0.7s var(--ease-out-expo) 0.2s both' }}>
+        <h3 style={{
+          fontFamily:'var(--font-display)', fontSize:22, fontWeight:400,
+          color:'var(--text-primary)', marginBottom:16,
+        }}>
+          The Addition Rule: "OR" with Inclusion-Exclusion
+        </h3>
+        <p style={bodyStyle}>
+          To find the probability of A or B (or both), we use the <span style={strongStyle}>inclusion-exclusion principle</span>:
+        </p>
+
+        <MathBlock label="Addition Rule">
+          P(A or B) = P(A) + P(B) - P(A and B)
+        </MathBlock>
+
+        <p style={bodyStyle}>
+          We subtract <M>P(A and B)</M> because simply adding P(A) and P(B) double-counts the outcomes where both occur. For example, the probability of drawing a heart or a king from a standard deck: <M>P = 13/52 + 4/52 - 1/52 = 16/52 = 4/13</M>. The king of hearts sits in both categories, so we subtract it once to avoid counting it twice.
+        </p>
+        <p style={bodyStyle}>
+          If A and B are <span style={strongStyle}>mutually exclusive</span> (they cannot both happen), then <M>P(A and B) = 0</M>, and the formula simplifies to <M>P(A or B) = P(A) + P(B)</M>. For instance, rolling a 2 or a 5 on a single die: <M>P = 1/6 + 1/6 = 2/6 = 1/3</M>.
+        </p>
+
+        <KeyInsight>
+          The inclusion-exclusion principle prevents double-counting. Whenever two events can overlap, you must subtract the intersection once. This idea generalizes to three or more events, though the formula becomes more complex.
+        </KeyInsight>
+
+        <CommonMistake>
+          Do not confuse "independent" with "mutually exclusive." Independent events can happen at the same time -- their probabilities just don't affect each other. Mutually exclusive events can NEVER happen at the same time. If two events are mutually exclusive (and each has nonzero probability), they are never independent.
+        </CommonMistake>
+      </Card>
+
+      <TodoPlaceholder description="Interactive -- Venn diagram for compound events" />
+    </div>
+  );
+}
+
+
+/* ================================================================
+   STEP 6 — EXPECTED VALUE & APPLICATIONS
+   ================================================================ */
+function StepExpectedValue() {
+  return (
+    <div style={{ paddingTop:80 }}>
+      <SectionHeader
+        title="Expected Value & Applications"
+        subtitle="The long-run average outcome of a random process."
+      />
+
+      <Card style={{ marginBottom:24, animation:'fadeInUp 0.7s var(--ease-out-expo) 0.1s both' }}>
+        <p style={bodyStyle}>
+          The <span style={strongStyle}>expected value</span> of a random variable is the weighted average of all possible outcomes, where each outcome is weighted by its probability. It represents what you would "expect" to get on average if you repeated the experiment infinitely many times.
+        </p>
+
+        <MathBlock label="Expected Value">
+          E(X) = {'\u03A3'} x_i {'\u00B7'} P(x_i)
+        </MathBlock>
+
+        <p style={bodyStyle}>
+          For a fair six-sided die, each face has probability 1/6. The expected value is <M>E(X) = 1(1/6) + 2(1/6) + 3(1/6) + 4(1/6) + 5(1/6) + 6(1/6) = 21/6 = 3.5</M>. Notice that 3.5 is not even a possible outcome on a single roll -- the expected value is a theoretical average, not a prediction for any single trial.
+        </p>
+        <p style={bodyStyle}>
+          Expected value becomes especially revealing in gambling and decision-making. Consider a lottery ticket that costs $2. You have a 1/1000 chance of winning $500, and a 999/1000 chance of winning nothing (losing your $2). The expected value is:
+        </p>
+
+        <MathBlock>
+          E = (1/1000)(500) + (999/1000)(-2) = 0.50 - 1.998 = -$1.50
+        </MathBlock>
+
+        <p style={bodyStyle}>
+          On average, you <span style={strongStyle}>lose $1.50 per ticket</span>. This negative expected value is the mathematical certainty behind the saying "the house always wins." Every casino game, every lottery, every scratch-off ticket is designed so that the expected value for the player is negative. The expected value for the house is positive by exactly the same amount.
+        </p>
+      </Card>
+
+      <Card style={{ marginBottom:24, animation:'fadeInUp 0.7s var(--ease-out-expo) 0.2s both' }}>
+        <h3 style={{
+          fontFamily:'var(--font-display)', fontSize:22, fontWeight:400,
+          color:'var(--text-primary)', marginBottom:16,
+        }}>
+          Real-World Applications
+        </h3>
+        <p style={bodyStyle}>
+          Expected value is the backbone of rational decision-making under uncertainty. <span style={strongStyle}>Insurance companies</span> use it to set premiums: the premium must exceed the expected payout (claim amount times probability of claim) for the business to be profitable. <span style={strongStyle}>Stock portfolio analysis</span> uses expected returns weighted by market probabilities to compare investment strategies.
+        </p>
+        <p style={bodyStyle}>
+          In <span style={strongStyle}>game design</span>, expected value determines balance. If a power-up appears with probability 0.1 and gives 100 points, its expected contribution is 10 points per opportunity -- a designer can compare that against other mechanics. In <span style={strongStyle}>medical decision-making</span>, expected value helps doctors weigh the benefits and risks of treatments: a surgery with a 90% chance of curing a condition but a 10% chance of complications is evaluated by its expected outcomes.
+        </p>
+        <p style={bodyStyle}>
+          A critical nuance: two options can have the <span style={strongStyle}>same expected value but very different risks</span>. Imagine two investments, both with an expected return of $100. Investment A always returns exactly $100. Investment B returns $1,000 with probability 0.1 and $0 with probability 0.9. Same expected value, but Investment B is far riskier. This is why measures of <span style={strongStyle}>variance</span> and <span style={strongStyle}>standard deviation</span> -- which quantify spread around the expected value -- are equally important in real-world decisions.
+        </p>
+
+        <KeyInsight>
+          Expected value tells you the long-run average, but it says nothing about any single trial. A game with negative expected value will cost you money over thousands of plays, even if you occasionally win big. Understanding this distinction separates rational decision-makers from gamblers.
+        </KeyInsight>
+
+        <CommonMistake>
+          Do not ignore negative expected value because of rare large payoffs. A lottery with a $10 million jackpot and a -$9.50 expected value per ticket is still a mathematically losing proposition. The size of the prize does not change the sign of the expected value.
+        </CommonMistake>
+      </Card>
+
+      <TodoPlaceholder description="Interactive -- expected value calculator, dice betting game" />
+    </div>
+  );
+}
+
+
+/* ================================================================
+   STEP 7 — PRACTICE & COMPLETION
+   ================================================================ */
+function StepPractice() {
+  return (
+    <div style={{ paddingTop:80 }}>
+      <SectionHeader
+        title="Summary & Key Formulas"
+        subtitle="Everything you've learned, distilled."
+      />
+
+      <Card style={{ marginBottom:24, animation:'fadeInUp 0.7s var(--ease-out-expo) 0.1s both' }}>
+        <h3 style={{
+          fontFamily:'var(--font-display)', fontSize:22, fontWeight:400,
+          color:'var(--text-primary)', marginBottom:20,
+        }}>
+          Formula Reference
+        </h3>
+
+        <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+          {[
+            { label: 'Counting Principle', formula: 'm outcomes {then} n outcomes = m \u00D7 n total' },
+            { label: 'Factorial', formula: 'n! = n \u00D7 (n-1) \u00D7 ... \u00D7 2 \u00D7 1' },
+            { label: 'Permutation', formula: 'P(n, r) = n! / (n - r)!' },
+            { label: 'Combination', formula: 'C(n, r) = n! / (r! \u00D7 (n - r)!)' },
+            { label: 'Probability', formula: 'P(event) = favorable / total' },
+            { label: 'Complement', formula: 'P(not A) = 1 - P(A)' },
+            { label: 'Independent AND', formula: 'P(A and B) = P(A) \u00D7 P(B)' },
+            { label: 'Dependent AND', formula: 'P(A and B) = P(A) \u00D7 P(B|A)' },
+            { label: 'Inclusion-Exclusion', formula: 'P(A or B) = P(A) + P(B) - P(A and B)' },
+            { label: 'Conditional', formula: 'P(A|B) = P(A and B) / P(B)' },
+            { label: 'Expected Value', formula: 'E(X) = \u03A3 x_i \u00B7 P(x_i)' },
+          ].map((item, i) => (
+            <div key={i} style={{
+              display:'flex', alignItems:'baseline', gap:16,
+              padding:'12px 16px', borderRadius:10,
+              background: i % 2 === 0 ? 'rgba(244, 63, 94, 0.03)' : 'transparent',
+              border:'1px solid',
+              borderColor: i % 2 === 0 ? 'rgba(244, 63, 94, 0.06)' : 'transparent',
+            }}>
+              <span style={{
+                fontFamily:'var(--font-body)', fontSize:14, color:'var(--text-secondary)',
+                minWidth:160, fontWeight:400,
+              }}>
+                {item.label}
+              </span>
+              <span style={{
+                fontFamily:'var(--font-mono)', fontSize:14, color:'var(--accent-bright)',
+                fontWeight:500,
+              }}>
+                {item.formula}
+              </span>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card style={{ marginBottom:24, animation:'fadeInUp 0.7s var(--ease-out-expo) 0.2s both' }}>
+        <h3 style={{
+          fontFamily:'var(--font-display)', fontSize:22, fontWeight:400,
+          color:'var(--text-primary)', marginBottom:16,
+        }}>
+          Quick Decision Guide
+        </h3>
+        <p style={bodyStyle}>
+          When facing a counting or probability problem, ask yourself these questions in order:
+        </p>
+        <div style={{ display:'flex', flexDirection:'column', gap:10, marginTop:12 }}>
+          {[
+            'Am I counting arrangements or computing a probability? If probability, I need a count of favorable outcomes AND a count of total outcomes.',
+            'Does order matter? If yes, use permutations. If no, use combinations.',
+            'Am I selecting all items or just some? If all n items, the count is n!. If r items from n, use P(n,r) or C(n,r).',
+            'For compound events: are the events independent or dependent? This determines whether I multiply plain probabilities or use conditional probability.',
+            'For "or" problems: are the events mutually exclusive? If not, I must subtract the overlap (inclusion-exclusion).',
+            'For "at least one" problems: consider using the complement. P(at least one) = 1 - P(none).',
+          ].map((text, i) => (
+            <div key={i} style={{
+              display:'flex', gap:14, padding:'10px 14px',
+              borderRadius:8,
+            }}>
+              <span style={{
+                fontFamily:'var(--font-mono)', fontSize:13, color:'var(--accent)',
+                fontWeight:500, flexShrink:0, marginTop:2,
+              }}>
+                {i + 1}.
+              </span>
+              <span style={{
+                fontFamily:'var(--font-body)', fontSize:15, color:'var(--text-secondary)',
+                lineHeight:1.65, fontWeight:300,
+              }}>
+                {text}
+              </span>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* Completion celebration */}
+      <div style={{
+        textAlign:'center', padding:'40px 0',
+        animation:'fadeInUp 0.8s var(--ease-out-expo) 0.3s both',
+      }}>
+        <div style={{
+          width:80, height:80, borderRadius:'50%', margin:'0 auto 24px',
+          background:'linear-gradient(135deg, var(--accent), var(--accent2))',
+          display:'flex', alignItems:'center', justifyContent:'center',
+          boxShadow:'0 8px 40px rgba(244,63,94,0.3)',
+          animation:'celebratePop 0.6s var(--ease-spring) 0.5s both',
+        }}>
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <h3 style={{
+          fontFamily:'var(--font-display)', fontSize:28, fontWeight:400,
+          color:'var(--text-primary)', marginBottom:8,
+        }}>
+          Lesson Complete
+        </h3>
+        <p style={{
+          fontFamily:'var(--font-body)', fontSize:16, color:'var(--text-secondary)',
+          fontWeight:300, maxWidth:400, margin:'0 auto',
+        }}>
+          You now have the tools to count possibilities and measure likelihoods. These ideas underpin statistics, data science, and rational decision-making.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+
+/* ================================================================
+   MAIN APP
+   ================================================================ */
+function App() {
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [step]);
+
+  // Save progress when reaching last step
+  useEffect(() => {
+    if (step === TOTAL_STEPS - 1) {
+      try {
+        const progress = JSON.parse(localStorage.getItem('math-progress') || '[]');
+        if (!progress.includes(14)) {
+          progress.push(14);
+          localStorage.setItem('math-progress', JSON.stringify(progress));
+        }
+      } catch(e) {}
+    }
+  }, [step]);
+
+  function renderStep() {
+    switch(step) {
+      case 0: return <StepLanding onStart={() => setStep(1)} />;
+      case 1: return <StepCounting />;
+      case 2: return <StepPermutations />;
+      case 3: return <StepCombinations />;
+      case 4: return <StepBasicProbability />;
+      case 5: return <StepCompoundEvents />;
+      case 6: return <StepExpectedValue />;
+      case 7: return <StepPractice />;
+      default: return <StepLanding onStart={() => setStep(1)} />;
+    }
+  }
+
+  return (
+    <div style={{ position:'relative', zIndex:1 }}>
+      <GridBackground />
+      <DraftBanner />
+      <ProgressBar step={step} total={TOTAL_STEPS} />
+
+      <div style={{
+        maxWidth:780, margin:'0 auto',
+        padding:'clamp(24px, 4vh, 48px) 20px 60px',
+      }}>
+        <div key={step}>
+          {renderStep()}
+        </div>
+
+        {step > 0 && (
+          <NavButtons step={step} setStep={setStep} total={TOTAL_STEPS} />
+        )}
+        {step === TOTAL_STEPS - 1 && (
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:32,padding:'16px 0',borderTop:'1px solid var(--border-subtle)'}}>
+            <a href="index.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>&larr; Back to all lessons</a>
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <footer style={{
+        textAlign:'center', padding:'40px 24px 32px',
+        borderTop:'1px solid var(--border-subtle)', marginTop:20,
+      }}>
+        <p style={{
+          fontFamily:'var(--font-body)', fontSize:13, color:'var(--text-tertiary)', fontWeight:300,
+        }}>
+          Lesson 14 &mdash; Probability &amp; Combinatorics &mdash; Rough Draft
+        </p>
+      </footer>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>

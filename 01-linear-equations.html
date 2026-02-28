@@ -176,6 +176,636 @@ function MathEq({children,size,color,glow,style:extraStyle}){
 }
 
 /* =========================================================
+   REAL-WORLD PANEL (collapsible container)
+   ========================================================= */
+function RealWorldPanel({ examples }) {
+  const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState(0);
+  const contentRef = useRef(null);
+  const [contentHeight, setContentHeight] = useState(0);
+
+  useEffect(() => {
+    if (contentRef.current) {
+      setContentHeight(contentRef.current.scrollHeight);
+    }
+  }, [open, tab]);
+
+  return (
+    React.createElement('div', {style: {
+      margin: '24px 0',
+      borderRadius: 12,
+      border: '1px solid ' + (open ? 'var(--cyan-dim)' : 'var(--bg4)'),
+      background: 'var(--bg2)',
+      overflow: 'hidden',
+      transition: 'border-color 0.3s',
+    }},
+      React.createElement('button', {onClick: () => setOpen(!open), style: {
+        width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+        padding: '14px 18px', background: 'none', border: 'none',
+        cursor: 'pointer', color: 'var(--text)', fontFamily: 'var(--font-body)',
+        fontSize: 14, fontWeight: 500, textAlign: 'left',
+      }},
+        React.createElement('svg', {width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: 'var(--cyan)', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', style: {transition: 'transform 0.3s', transform: open ? 'rotate(90deg)' : 'rotate(0deg)', flexShrink: 0}},
+          React.createElement('path', {d: 'M9 18l6-6-6-6'})
+        ),
+        React.createElement('span', null, 'Real-World Applications'),
+        React.createElement('span', {style: {marginLeft: 'auto', fontSize: 11, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)'}},
+          examples.length + ' example' + (examples.length !== 1 ? 's' : '')
+        )
+      ),
+      React.createElement('div', {style: {
+        maxHeight: open ? contentHeight + 40 : 0,
+        overflow: 'hidden',
+        transition: 'max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+      }},
+        React.createElement('div', {ref: contentRef, style: {padding: '0 18px 18px'}},
+          React.createElement('div', {style: {display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap'}},
+            examples.map((ex, i) =>
+              React.createElement('button', {key: i, onClick: () => setTab(i), style: {
+                padding: '6px 14px', borderRadius: 6, border: '1px solid',
+                borderColor: tab === i ? 'var(--cyan-dim)' : 'var(--bg4)',
+                background: tab === i ? 'var(--cyan-glow)' : 'transparent',
+                color: tab === i ? 'var(--cyan)' : 'var(--text-dim)',
+                fontFamily: 'var(--font-mono)', fontSize: 12,
+                cursor: 'pointer', transition: 'all 0.2s',
+              }}, ex.title)
+            )
+          ),
+          React.createElement('div', {style: {animation: 'fadeIn 0.3s'}},
+            examples[tab] && examples[tab].content
+          )
+        )
+      )
+    )
+  );
+}
+
+/* =========================================================
+   OHM'S LAW EXAMPLE
+   ========================================================= */
+function OhmsLawExample() {
+  const canvasRef = useRef(null);
+  const animRef = useRef(null);
+  const [resistance, setResistance] = useState(10);
+  const voltage = 12;
+  const current = voltage / resistance;
+  const currentRef = useRef(current);
+  currentRef.current = current;
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const W = 400, H = 250;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.scale(dpr, dpr);
+    let t = 0;
+
+    // Circuit path points (rectangular loop)
+    const path = [
+      {x: 80, y: 60},   // top-left
+      {x: 320, y: 60},  // top-right
+      {x: 320, y: 190}, // bottom-right
+      {x: 80, y: 190},  // bottom-left
+    ];
+
+    function getPointOnPath(frac) {
+      const totalLen = 2 * (240 + 130); // perimeter
+      let d = (frac % 1) * totalLen;
+      // top edge
+      if (d < 240) return {x: 80 + d, y: 60};
+      d -= 240;
+      // right edge
+      if (d < 130) return {x: 320, y: 60 + d};
+      d -= 130;
+      // bottom edge (right to left)
+      if (d < 240) return {x: 320 - d, y: 190};
+      d -= 240;
+      // left edge (bottom to top)
+      return {x: 80, y: 190 - d};
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      const cur = currentRef.current;
+      t += 0.003 + cur * 0.003;
+
+      // Draw wires
+      ctx.beginPath();
+      ctx.moveTo(path[0].x, path[0].y);
+      for (let i = 1; i < path.length; i++) {
+        ctx.lineTo(path[i].x, path[i].y);
+      }
+      ctx.closePath();
+      ctx.strokeStyle = 'rgba(34,211,238,0.25)';
+      ctx.lineWidth = Math.max(2, 1 + cur * 1.5);
+      ctx.stroke();
+
+      // Battery (left side, centered)
+      const batX = 80, batY = 125;
+      // long line (positive)
+      ctx.beginPath();
+      ctx.moveTo(batX - 12, batY - 14);
+      ctx.lineTo(batX - 12, batY + 14);
+      ctx.strokeStyle = 'var(--amber)';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      // short line (negative)
+      ctx.beginPath();
+      ctx.moveTo(batX + 8, batY - 8);
+      ctx.lineTo(batX + 8, batY + 8);
+      ctx.strokeStyle = 'var(--amber)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      // + and - labels
+      ctx.font = '500 11px "DM Mono", monospace';
+      ctx.fillStyle = 'var(--amber)';
+      ctx.textAlign = 'center';
+      ctx.fillText('+', batX - 18, batY + 4);
+      ctx.fillText('-', batX + 16, batY + 4);
+      // label
+      ctx.font = '400 10px "DM Mono", monospace';
+      ctx.fillStyle = 'var(--text-dim)';
+      ctx.fillText('12V', batX, batY + 30);
+
+      // Resistor (top side, centered) - zigzag
+      const rX = 200, rY = 60;
+      ctx.beginPath();
+      ctx.moveTo(rX - 30, rY);
+      const zigW = 8, zigH = 12, zigCount = 5;
+      for (let i = 0; i < zigCount; i++) {
+        const bx = rX - 30 + (i + 0.5) * (60 / zigCount);
+        ctx.lineTo(bx - zigW / 2, rY + (i % 2 === 0 ? -zigH : zigH));
+        ctx.lineTo(bx + zigW / 2, rY + (i % 2 === 0 ? zigH : -zigH));
+      }
+      ctx.lineTo(rX + 30, rY);
+      ctx.strokeStyle = 'var(--rose)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      // label
+      ctx.font = '400 10px "DM Mono", monospace';
+      ctx.fillStyle = 'var(--rose)';
+      ctx.textAlign = 'center';
+      ctx.fillText(resistance + '\u03A9', rX, rY - 18);
+
+      // Current arrow indicator (bottom side)
+      const arrowX = 200, arrowY = 190;
+      ctx.beginPath();
+      ctx.moveTo(arrowX - 15, arrowY);
+      ctx.lineTo(arrowX + 10, arrowY);
+      ctx.lineTo(arrowX + 5, arrowY - 5);
+      ctx.moveTo(arrowX + 10, arrowY);
+      ctx.lineTo(arrowX + 5, arrowY + 5);
+      ctx.strokeStyle = 'var(--teal)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.font = '400 10px "DM Mono", monospace';
+      ctx.fillStyle = 'var(--teal)';
+      ctx.fillText('I = ' + cur.toFixed(2) + 'A', arrowX, arrowY + 16);
+
+      // Electron dots
+      const numElectrons = 12;
+      for (let i = 0; i < numElectrons; i++) {
+        const frac = (t + i / numElectrons) % 1;
+        const pt = getPointOnPath(frac);
+        const radius = 2.5 + cur * 0.4;
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, radius, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(34,211,238,' + (0.5 + cur * 0.15) + ')';
+        ctx.fill();
+        // glow
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, radius + 3, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(34,211,238,0.1)';
+        ctx.fill();
+      }
+
+      animRef.current = requestAnimationFrame(draw);
+    }
+    draw();
+    return () => { if (animRef.current) cancelAnimationFrame(animRef.current); };
+  }, [resistance]);
+
+  const sliderTrack = {
+    width: '100%', appearance: 'none', WebkitAppearance: 'none',
+    height: 4, borderRadius: 2, background: 'var(--bg4)',
+    outline: 'none', cursor: 'pointer',
+  };
+
+  return (
+    React.createElement('div', null,
+      React.createElement('p', {style: {fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text)', lineHeight: 1.7, marginBottom: 16}},
+        'Every electrical circuit obeys a simple linear equation. When Georg Ohm measured batteries and wires in 1827, he discovered that voltage (',
+        React.createElement('span', {style: {fontFamily: 'var(--font-mono)', color: 'var(--cyan)'}}, 'V'),
+        '), current (',
+        React.createElement('span', {style: {fontFamily: 'var(--font-mono)', color: 'var(--cyan)'}}, 'I'),
+        '), and resistance (',
+        React.createElement('span', {style: {fontFamily: 'var(--font-mono)', color: 'var(--cyan)'}}, 'R'),
+        ') are locked in a straight-line relationship: ',
+        React.createElement('strong', {style: {color: 'var(--text-bright)', fontWeight: 500}}, 'V = IR'),
+        '. This single equation lets engineers design everything from phone chargers to power grids.'
+      ),
+      React.createElement('div', {style: {background: 'var(--bg3)', borderRadius: 8, padding: '12px 16px', border: '1px solid var(--bg4)', marginBottom: 16, fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text)', lineHeight: 1.7}},
+        React.createElement('strong', {style: {color: 'var(--text-bright)', fontWeight: 500}}, 'What you\u2019re seeing: '),
+        'The animation below shows electrons flowing through a circuit. The battery (left) provides a fixed ',
+        React.createElement('span', {style: {fontFamily: 'var(--font-mono)', color: 'var(--cyan)'}}, '12 volts'),
+        '. As you increase resistance with the slider, the current drops \u2014 fewer electrons pass per second, and they slow down visually. This is exactly what happens when you dim a light with a resistor.'
+      ),
+      React.createElement('div', {style: {display: 'flex', justifyContent: 'center', marginBottom: 16}},
+        React.createElement('canvas', {ref: canvasRef, style: {borderRadius: 10, border: '1px solid var(--bg4)', background: 'var(--bg3)', maxWidth: '100%'}})
+      ),
+      React.createElement('div', {style: {
+        padding: '12px 16px', background: 'var(--bg3)', borderRadius: 8, marginBottom: 12,
+        textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 16,
+      }},
+        React.createElement('span', {style: {color: 'var(--amber)'}}, 'V'),
+        React.createElement('span', {style: {color: 'var(--text-dim)'}}, ' = '),
+        React.createElement('span', {style: {color: 'var(--teal)'}}, 'I'),
+        React.createElement('span', {style: {color: 'var(--text-dim)'}}, ' \u00D7 '),
+        React.createElement('span', {style: {color: 'var(--rose)'}}, 'R'),
+        React.createElement('span', {style: {color: 'var(--text-dim)', marginLeft: 16}}, '  '),
+        React.createElement('span', {style: {color: 'var(--amber)'}}, voltage),
+        React.createElement('span', {style: {color: 'var(--text-dim)'}}, ' = '),
+        React.createElement('span', {style: {color: 'var(--teal)'}}, current.toFixed(2)),
+        React.createElement('span', {style: {color: 'var(--text-dim)'}}, ' \u00D7 '),
+        React.createElement('span', {style: {color: 'var(--rose)'}}, resistance)
+      ),
+      React.createElement('div', {style: {display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12}},
+        React.createElement('span', {style: {fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-dim)', whiteSpace: 'nowrap'}}, 'R = ' + resistance + '\u03A9'),
+        React.createElement('input', {
+          type: 'range', min: 1, max: 100, value: resistance,
+          onChange: (e) => setResistance(Number(e.target.value)),
+          style: sliderTrack
+        }),
+      ),
+      React.createElement('p', {style: {marginTop: 16, fontSize: 13, color: 'var(--text-dim)', fontFamily: 'var(--font-body)', lineHeight: 1.7}},
+        React.createElement('strong', {style: {color: 'var(--text-bright)', fontWeight: 500}}, 'Why it matters: '),
+        'Electricians use Ohm\u2019s Law hundreds of times a day. Too much current through a thin wire creates heat and fire risk \u2014 that\u2019s why your house has circuit breakers. Too little current and a device won\u2019t power on. The equation ',
+        React.createElement('span', {style: {fontFamily: 'var(--font-mono)', color: 'var(--cyan)'}}, 'V = IR'),
+        ' is the first thing every electrical engineering student learns.'
+      ),
+      React.createElement('div', {style: {fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-dim)', lineHeight: 1.6, marginTop: 8}},
+        'Georg Ohm, 1827 \u2014 discovered the relationship between voltage, current, and resistance.'
+      )
+    )
+  );
+}
+
+/* =========================================================
+   TEMPERATURE CONVERTER EXAMPLE
+   ========================================================= */
+function TempConverterExample() {
+  const [celsius, setCelsius] = useState(20);
+  const fahrenheit = 1.8 * celsius + 32;
+
+  const thermH = 200;
+  const minC = -20, maxC = 120;
+  const fillFrac = (celsius - minC) / (maxC - minC);
+
+  function tempColor(frac) {
+    const r = Math.round(50 + frac * 200);
+    const g = Math.round(100 - frac * 60);
+    const b = Math.round(220 - frac * 180);
+    return 'rgb(' + r + ',' + g + ',' + b + ')';
+  }
+
+  const refs = [
+    {c: 0, f: 32, label: 'Freezing'},
+    {c: 37, f: 98.6, label: 'Body temp'},
+    {c: 100, f: 212, label: 'Boiling'},
+  ];
+
+  return (
+    React.createElement('div', null,
+      React.createElement('p', {style: {fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text)', lineHeight: 1.7, marginBottom: 16}},
+        'Temperature conversion is one of the most common linear equations in daily life. The equation ',
+        React.createElement('span', {style: {fontFamily: 'var(--font-mono)', color: 'var(--cyan)'}}, 'F = 1.8C + 32'),
+        ' is a perfect ',
+        React.createElement('span', {style: {fontFamily: 'var(--font-mono)', color: 'var(--cyan)'}}, 'y = mx + b'),
+        ' line: the slope ',
+        React.createElement('strong', {style: {color: 'var(--text-bright)', fontWeight: 500}}, '1.8'),
+        ' means each Celsius degree equals 1.8 Fahrenheit degrees, and the ',
+        React.createElement('strong', {style: {color: 'var(--text-bright)', fontWeight: 500}}, '+32'),
+        ' offset accounts for the different zero points. Scientists worldwide use Celsius, but the US still uses Fahrenheit \u2014 so doctors, pilots, and engineers constantly convert between the two.'
+      ),
+      React.createElement('div', {style: {background: 'var(--bg3)', borderRadius: 8, padding: '12px 16px', border: '1px solid var(--bg4)', marginBottom: 16, fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text)', lineHeight: 1.7}},
+        React.createElement('strong', {style: {color: 'var(--text-bright)', fontWeight: 500}}, 'What you\u2019re seeing: '),
+        'Drag the slider to move the mercury level. Notice how both thermometers move together but at different rates \u2014 that\u2019s the slope of ',
+        React.createElement('span', {style: {fontFamily: 'var(--font-mono)', color: 'var(--cyan)'}}, '1.8'),
+        ' in action. The reference points on the right show temperatures you can feel: 0\u00B0C is ice forming on a pond, 37\u00B0C is your body\u2019s internal temperature, and 100\u00B0C is a pot of water at full boil.'
+      ),
+      React.createElement('div', {style: {display: 'flex', justifyContent: 'center', gap: 40, marginBottom: 16, flexWrap: 'wrap', alignItems: 'flex-end'}},
+        // Celsius thermometer
+        React.createElement('div', {style: {textAlign: 'center'}},
+          React.createElement('div', {style: {fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-dim)', marginBottom: 8}}, 'CELSIUS'),
+          React.createElement('svg', {width: 60, height: thermH + 40, viewBox: '0 0 60 ' + (thermH + 40)},
+            // tube outline
+            React.createElement('rect', {x: 20, y: 10, width: 20, height: thermH, rx: 10, fill: 'var(--bg4)', stroke: 'var(--cyan-dim)', strokeWidth: 1}),
+            // fill
+            React.createElement('rect', {x: 22, y: 10 + thermH * (1 - fillFrac), width: 16, height: thermH * fillFrac, rx: 8, fill: tempColor(fillFrac)}),
+            // bulb
+            React.createElement('circle', {cx: 30, cy: thermH + 18, r: 14, fill: tempColor(fillFrac), stroke: 'var(--bg4)', strokeWidth: 1}),
+            // tick marks
+            refs.map((ref, i) => {
+              const frac = (ref.c - minC) / (maxC - minC);
+              const y = 10 + thermH * (1 - frac);
+              return React.createElement(Fragment, {key: i},
+                React.createElement('line', {x1: 42, y1: y, x2: 55, y2: y, stroke: 'var(--text-dim)', strokeWidth: 0.5, strokeDasharray: '2 2'}),
+                React.createElement('text', {x: 7, y: y + 4, fill: 'var(--text-dim)', fontFamily: 'var(--font-mono)', fontSize: 8, textAnchor: 'end'}, ref.c + '\u00B0')
+              );
+            })
+          ),
+          React.createElement('div', {style: {fontFamily: 'var(--font-mono)', fontSize: 18, color: 'var(--cyan)', marginTop: 4}}, celsius.toFixed(0) + '\u00B0C')
+        ),
+        // Fahrenheit thermometer
+        React.createElement('div', {style: {textAlign: 'center'}},
+          React.createElement('div', {style: {fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-dim)', marginBottom: 8}}, 'FAHRENHEIT'),
+          React.createElement('svg', {width: 60, height: thermH + 40, viewBox: '0 0 60 ' + (thermH + 40)},
+            React.createElement('rect', {x: 20, y: 10, width: 20, height: thermH, rx: 10, fill: 'var(--bg4)', stroke: 'var(--amber-dim)', strokeWidth: 1}),
+            React.createElement('rect', {x: 22, y: 10 + thermH * (1 - fillFrac), width: 16, height: thermH * fillFrac, rx: 8, fill: tempColor(fillFrac)}),
+            React.createElement('circle', {cx: 30, cy: thermH + 18, r: 14, fill: tempColor(fillFrac), stroke: 'var(--bg4)', strokeWidth: 1}),
+            refs.map((ref, i) => {
+              const frac = (ref.c - minC) / (maxC - minC);
+              const y = 10 + thermH * (1 - frac);
+              return React.createElement(Fragment, {key: i},
+                React.createElement('line', {x1: 42, y1: y, x2: 55, y2: y, stroke: 'var(--text-dim)', strokeWidth: 0.5, strokeDasharray: '2 2'}),
+                React.createElement('text', {x: 7, y: y + 4, fill: 'var(--text-dim)', fontFamily: 'var(--font-mono)', fontSize: 8, textAnchor: 'end'}, ref.f + '\u00B0')
+              );
+            })
+          ),
+          React.createElement('div', {style: {fontFamily: 'var(--font-mono)', fontSize: 18, color: 'var(--amber)', marginTop: 4}}, fahrenheit.toFixed(1) + '\u00B0F')
+        ),
+        // Reference labels
+        React.createElement('div', {style: {display: 'flex', flexDirection: 'column', gap: 8, justifyContent: 'center'}},
+          refs.map((ref, i) =>
+            React.createElement('div', {key: i, style: {
+              padding: '6px 10px', borderRadius: 6, background: 'var(--bg3)',
+              border: '1px solid var(--bg4)', fontFamily: 'var(--font-mono)', fontSize: 11,
+              color: 'var(--text-dim)',
+            }},
+              React.createElement('div', {style: {color: 'var(--text)', marginBottom: 2}}, ref.label),
+              ref.c + '\u00B0C / ' + ref.f + '\u00B0F'
+            )
+          )
+        )
+      ),
+      // Slider
+      React.createElement('div', {style: {display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12}},
+        React.createElement('span', {style: {fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-dim)', whiteSpace: 'nowrap'}}, '-20\u00B0C'),
+        React.createElement('input', {
+          type: 'range', min: -20, max: 120, value: celsius,
+          onChange: (e) => setCelsius(Number(e.target.value)),
+          style: {width: '100%', appearance: 'none', WebkitAppearance: 'none', height: 4, borderRadius: 2, background: 'var(--bg4)', outline: 'none', cursor: 'pointer'}
+        }),
+        React.createElement('span', {style: {fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-dim)', whiteSpace: 'nowrap'}}, '120\u00B0C')
+      ),
+      // Equation display
+      React.createElement('div', {style: {
+        padding: '12px 16px', background: 'var(--bg3)', borderRadius: 8, marginBottom: 8,
+        textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 16,
+      }},
+        React.createElement('span', {style: {color: 'var(--amber)'}}, 'F'),
+        React.createElement('span', {style: {color: 'var(--text-dim)'}}, ' = 1.8'),
+        React.createElement('span', {style: {color: 'var(--cyan)'}}, 'C'),
+        React.createElement('span', {style: {color: 'var(--text-dim)'}}, ' + 32'),
+        React.createElement('span', {style: {color: 'var(--text-dim)', marginLeft: 16}}, '  '),
+        React.createElement('span', {style: {color: 'var(--amber)'}}, fahrenheit.toFixed(1)),
+        React.createElement('span', {style: {color: 'var(--text-dim)'}}, ' = 1.8(' + celsius + ') + 32')
+      ),
+      React.createElement('p', {style: {marginTop: 16, fontSize: 13, color: 'var(--text-dim)', fontFamily: 'var(--font-body)', lineHeight: 1.7}},
+        React.createElement('strong', {style: {color: 'var(--text-bright)', fontWeight: 500}}, 'Quick mental trick: '),
+        'To roughly convert Celsius to Fahrenheit, double it and add 30. For 20\u00B0C: double is 40, plus 30 gives 70\u00B0F (actual: 68\u00B0F). Close enough for deciding what to wear.'
+      )
+    )
+  );
+}
+
+/* =========================================================
+   DISTANCE-SPEED-TIME EXAMPLE
+   ========================================================= */
+function DistanceSpeedTimeExample() {
+  const canvasRef = useRef(null);
+  const animRef = useRef(null);
+  const [speed, setSpeed] = useState(60);
+  const [time, setTime] = useState(3);
+  const distance = speed * time;
+  const distRef = useRef(distance);
+  const speedRef = useRef(speed);
+  distRef.current = distance;
+  speedRef.current = speed;
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const W = 400, H = 180;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.scale(dpr, dpr);
+
+    const maxDist = 1200; // max distance on display
+    let animT = 0;
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      animT += 0.01;
+      const curDist = distRef.current;
+      const curSpeed = speedRef.current;
+
+      const roadY = 110;
+      const roadH = 28;
+      const margin = 30;
+      const roadW = W - 2 * margin;
+
+      // Sky gradient
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, roadY);
+      skyGrad.addColorStop(0, 'rgba(10,10,20,1)');
+      skyGrad.addColorStop(1, 'rgba(16,16,40,1)');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, W, roadY);
+
+      // Ground
+      ctx.fillStyle = 'rgba(22,22,37,1)';
+      ctx.fillRect(0, roadY + roadH, W, H - roadY - roadH);
+
+      // Road
+      ctx.fillStyle = '#1a1a2e';
+      ctx.fillRect(margin, roadY, roadW, roadH);
+      // Road border lines
+      ctx.strokeStyle = 'rgba(34,211,238,0.15)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(margin, roadY);
+      ctx.lineTo(margin + roadW, roadY);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(margin, roadY + roadH);
+      ctx.lineTo(margin + roadW, roadY + roadH);
+      ctx.stroke();
+      // Dashed center line
+      ctx.setLineDash([10, 8]);
+      ctx.strokeStyle = 'rgba(251,191,36,0.3)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(margin, roadY + roadH / 2);
+      ctx.lineTo(margin + roadW, roadY + roadH / 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Milestone markers
+      for (let m = 0; m <= maxDist; m += 100) {
+        const x = margin + (m / maxDist) * roadW;
+        if (x < margin || x > margin + roadW) continue;
+        // Tick
+        ctx.beginPath();
+        ctx.moveTo(x, roadY + roadH);
+        ctx.lineTo(x, roadY + roadH + 8);
+        ctx.strokeStyle = 'rgba(34,211,238,0.2)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        // Label
+        if (m % 200 === 0) {
+          ctx.font = '400 9px "DM Mono", monospace';
+          ctx.fillStyle = 'var(--text-dim)';
+          ctx.textAlign = 'center';
+          ctx.fillText(m + 'km', x, roadY + roadH + 18);
+        }
+      }
+
+      // Car position
+      const carFrac = Math.min(curDist / maxDist, 1);
+      const carX = margin + carFrac * roadW;
+      const carY = roadY + 4;
+      const carW = 28, carH = 18;
+
+      // Car body
+      ctx.fillStyle = 'var(--cyan)';
+      ctx.beginPath();
+      ctx.roundRect(carX - carW / 2, carY, carW, carH, 3);
+      ctx.fill();
+      // Car cabin
+      ctx.fillStyle = 'rgba(34,211,238,0.6)';
+      ctx.beginPath();
+      ctx.roundRect(carX - carW / 4, carY - 6, carW / 2, 8, [3, 3, 0, 0]);
+      ctx.fill();
+      // Wheels
+      ctx.fillStyle = '#111';
+      ctx.beginPath();
+      ctx.arc(carX - 8, carY + carH, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(carX + 8, carY + carH, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Speed lines behind car (motion effect)
+      if (curSpeed > 20) {
+        const numLines = Math.min(Math.floor(curSpeed / 20), 5);
+        for (let i = 0; i < numLines; i++) {
+          const ly = carY + 4 + i * 4;
+          const lx = carX - carW / 2 - 5 - i * 6 - Math.sin(animT * 4 + i) * 3;
+          ctx.beginPath();
+          ctx.moveTo(lx, ly);
+          ctx.lineTo(lx - 8 - curSpeed * 0.05, ly);
+          ctx.strokeStyle = 'rgba(34,211,238,' + (0.15 + i * 0.03) + ')';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+      }
+
+      // Distance label at car
+      ctx.font = '500 11px "DM Mono", monospace';
+      ctx.fillStyle = 'var(--cyan)';
+      ctx.textAlign = 'center';
+      ctx.fillText(curDist + 'km', carX, carY - 14);
+
+      animRef.current = requestAnimationFrame(draw);
+    }
+    draw();
+    return () => { if (animRef.current) cancelAnimationFrame(animRef.current); };
+  }, [speed, time]);
+
+  const sliderStyle = {
+    width: '100%', appearance: 'none', WebkitAppearance: 'none',
+    height: 4, borderRadius: 2, background: 'var(--bg4)',
+    outline: 'none', cursor: 'pointer',
+  };
+
+  return (
+    React.createElement('div', null,
+      React.createElement('p', {style: {fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text)', lineHeight: 1.7, marginBottom: 16}},
+        'Galileo was the first to systematically study how distance, speed, and time relate. The equation ',
+        React.createElement('span', {style: {fontFamily: 'var(--font-mono)', color: 'var(--cyan)'}}, 'd = rt'),
+        ' is deceptively simple \u2014 distance equals rate times time \u2014 but it underlies every GPS navigation system, every speed limit sign, and every airline schedule. It\u2019s a linear equation where ',
+        React.createElement('strong', {style: {color: 'var(--text-bright)', fontWeight: 500}}, 'speed is the slope'),
+        ': double your speed, double your distance in the same time.'
+      ),
+      React.createElement('div', {style: {background: 'var(--bg3)', borderRadius: 8, padding: '12px 16px', border: '1px solid var(--bg4)', marginBottom: 16, fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text)', lineHeight: 1.7}},
+        React.createElement('strong', {style: {color: 'var(--text-bright)', fontWeight: 500}}, 'What you\u2019re seeing: '),
+        'The car below moves along a road based on your chosen speed and time. Watch how increasing speed makes the car travel farther in the same period, while increasing time extends the journey at the same pace. The milestone markers help you see that the relationship is perfectly proportional \u2014 no curves, just a straight line on a ',
+        React.createElement('span', {style: {fontFamily: 'var(--font-mono)', color: 'var(--cyan)'}}, 'd'),
+        '-vs-',
+        React.createElement('span', {style: {fontFamily: 'var(--font-mono)', color: 'var(--cyan)'}}, 't'),
+        ' graph.'
+      ),
+      React.createElement('div', {style: {display: 'flex', justifyContent: 'center', marginBottom: 16}},
+        React.createElement('canvas', {ref: canvasRef, style: {borderRadius: 10, border: '1px solid var(--bg4)', background: 'var(--bg3)', maxWidth: '100%'}})
+      ),
+      // Equation display
+      React.createElement('div', {style: {
+        padding: '12px 16px', background: 'var(--bg3)', borderRadius: 8, marginBottom: 12,
+        textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 16,
+      }},
+        React.createElement('span', {style: {color: 'var(--cyan)'}}, 'd'),
+        React.createElement('span', {style: {color: 'var(--text-dim)'}}, ' = '),
+        React.createElement('span', {style: {color: 'var(--amber)'}}, 'r'),
+        React.createElement('span', {style: {color: 'var(--text-dim)'}}, ' \u00D7 '),
+        React.createElement('span', {style: {color: 'var(--teal)'}}, 't'),
+        React.createElement('span', {style: {color: 'var(--text-dim)', marginLeft: 16}}, '  '),
+        React.createElement('span', {style: {color: 'var(--cyan)'}}, distance),
+        React.createElement('span', {style: {color: 'var(--text-dim)'}}, ' = '),
+        React.createElement('span', {style: {color: 'var(--amber)'}}, speed),
+        React.createElement('span', {style: {color: 'var(--text-dim)'}}, ' \u00D7 '),
+        React.createElement('span', {style: {color: 'var(--teal)'}}, time)
+      ),
+      // Speed slider
+      React.createElement('div', {style: {display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8}},
+        React.createElement('span', {style: {fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--amber)', whiteSpace: 'nowrap', minWidth: 90}}, 'Speed: ' + speed + ' km/h'),
+        React.createElement('input', {
+          type: 'range', min: 10, max: 120, value: speed,
+          onChange: (e) => setSpeed(Number(e.target.value)),
+          style: sliderStyle
+        })
+      ),
+      // Time slider
+      React.createElement('div', {style: {display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12}},
+        React.createElement('span', {style: {fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--teal)', whiteSpace: 'nowrap', minWidth: 90}}, 'Time: ' + time + ' hr'),
+        React.createElement('input', {
+          type: 'range', min: 0, max: 10, value: time, step: 0.5,
+          onChange: (e) => setTime(Number(e.target.value)),
+          style: sliderStyle
+        })
+      ),
+      React.createElement('p', {style: {marginTop: 16, fontSize: 13, color: 'var(--text-dim)', fontFamily: 'var(--font-body)', lineHeight: 1.7}},
+        React.createElement('strong', {style: {color: 'var(--text-bright)', fontWeight: 500}}, 'Real-world connection: '),
+        'This equation is how traffic engineers set speed limits. If a driver needs 50 meters to react and brake, and they\u2019re going 100 km/h (about 28 m/s), they\u2019ll travel 28 meters in just one second of reaction time. At 60 km/h, only 17 meters. That difference saves lives, and it\u2019s just ',
+        React.createElement('span', {style: {fontFamily: 'var(--font-mono)', color: 'var(--cyan)'}}, 'd = rt'),
+        '.'
+      ),
+      React.createElement('div', {style: {fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-dim)', lineHeight: 1.6, marginTop: 4}},
+        'Galileo Galilei \u2014 pioneered systematic measurement of motion.'
+      )
+    )
+  );
+}
+
+/* =========================================================
    STEP 0: LANDING
    ========================================================= */
 function LandingStep({onNext}){
@@ -357,6 +987,10 @@ function WhatIsEquation(){
           </div>
         ))}
       </div>
+
+      <RealWorldPanel examples={[
+        { title: "Ohm's Law", content: React.createElement(OhmsLawExample) },
+      ]} />
     </div>
   );
 }
@@ -1024,6 +1658,11 @@ function WordProblems(){
           )}
         </div>
       )}
+
+      <RealWorldPanel examples={[
+        { title: 'Temperature', content: React.createElement(TempConverterExample) },
+        { title: 'Distance', content: React.createElement(DistanceSpeedTimeExample) },
+      ]} />
     </div>
   );
 }

@@ -627,6 +627,9 @@ function DistanceStep() {
           <div>d = sqrt({roundTo(dx, 1)}<sup>2</sup> + {roundTo(dy, 1)}<sup>2</sup>) = sqrt({roundTo(dx*dx, 1)} + {roundTo(dy*dy, 1)}) = <span style={{ color: 'var(--accent)', fontWeight: 500 }}>{roundTo(distance, 3)}</span></div>
         </div>
       </div>
+      <RealWorldPanel examples={[
+        { title: 'GPS Trilateration', content: <GPSTrilaterationExample /> },
+      ]} />
     </div>
   );
 }
@@ -1299,6 +1302,9 @@ function CircleStep() {
           Expanding gives the general form. To convert back, complete the square for both x and y terms.
         </InfoBlock>
       </div>
+      <RealWorldPanel examples={[
+        { title: 'Cell Towers', content: <CellTowerCoverageExample /> },
+      ]} />
     </div>
   );
 }
@@ -1603,6 +1609,564 @@ function SliderControl({ label, value, min, max, step, onChange, color }) {
       }}>
         {value}
       </span>
+    </div>
+  );
+}
+
+/* ================================================================
+   REAL-WORLD PANEL
+   ================================================================ */
+function RealWorldPanel({ examples }) {
+  const [activeIdx, setActiveIdx] = useState(0);
+  return (
+    <div style={{
+      maxWidth: 560, margin: '32px auto 0', padding: '0 16px',
+      animation: 'fadeIn 0.6s var(--ease-out-expo) both',
+    }}>
+      <div style={{
+        background: 'rgba(232,37,124,0.03)', borderRadius: 14,
+        border: '1px solid rgba(232,37,124,0.10)',
+        overflow: 'hidden',
+      }}>
+        {/* Header */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: '14px 20px',
+          borderBottom: '1px solid rgba(232,37,124,0.08)',
+          background: 'rgba(232,37,124,0.02)',
+        }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+          </svg>
+          <span style={{
+            fontFamily: 'var(--font-mono)', fontSize: 11,
+            letterSpacing: '0.08em', textTransform: 'uppercase',
+            color: 'var(--accent)', opacity: 0.85,
+          }}>
+            Real-World Application
+          </span>
+        </div>
+        {/* Tabs */}
+        {examples.length > 1 && (
+          <div style={{
+            display: 'flex', gap: 0,
+            borderBottom: '1px solid rgba(232,37,124,0.08)',
+          }}>
+            {examples.map((ex, i) => (
+              <button key={i} onClick={() => setActiveIdx(i)} style={{
+                flex: 1, padding: '10px 16px',
+                fontFamily: 'var(--font-mono)', fontSize: 12,
+                color: activeIdx === i ? 'var(--accent)' : 'var(--text-secondary)',
+                background: activeIdx === i ? 'rgba(232,37,124,0.05)' : 'transparent',
+                border: 'none',
+                borderBottom: activeIdx === i ? '2px solid var(--accent)' : '2px solid transparent',
+                transition: 'all 0.3s ease',
+              }}>
+                {ex.title}
+              </button>
+            ))}
+          </div>
+        )}
+        {/* Content */}
+        <div style={{ padding: '20px' }}>
+          {examples[activeIdx].content}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   GPS TRILATERATION EXAMPLE
+   ================================================================ */
+function GPSTrilaterationExample() {
+  const containerRef = useRef(null);
+  const canvasRef = useRef(null);
+  const [canvasW, setCanvasW] = useState(480);
+  const CH = 320;
+  const [radii, setRadii] = useState([120, 100, 110]);
+
+  /* Responsive width */
+  useEffect(() => {
+    function measure() {
+      if (!containerRef.current) return;
+      const cw = containerRef.current.offsetWidth;
+      setCanvasW(Math.min(cw, 520));
+    }
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, []);
+
+  /* DPR setup */
+  useEffect(() => {
+    const c = canvasRef.current;
+    if (!c) return;
+    const dpr = window.devicePixelRatio || 1;
+    c.width = canvasW * dpr;
+    c.height = CH * dpr;
+    c.style.width = canvasW + 'px';
+    c.style.height = CH + 'px';
+    const ctx = c.getContext('2d');
+    ctx.scale(dpr, dpr);
+  }, [canvasW]);
+
+  const satellites = useMemo(() => {
+    const cx = canvasW / 2;
+    return [
+      { x: cx - 100, y: 90, label: 'Sat A', color: 'rgba(100,200,255,1)' },
+      { x: cx + 110, y: 110, label: 'Sat B', color: 'rgba(255,90,158,1)' },
+      { x: cx, y: 250, label: 'Sat C', color: 'rgba(160,230,80,1)' },
+    ];
+  }, [canvasW]);
+
+  /* Find approximate trilateration intersection */
+  function findIntersection(sats, rs) {
+    /* Brute-force grid search for point closest to all three circles */
+    let bestX = canvasW / 2, bestY = CH / 2, bestErr = Infinity;
+    for (let px = 20; px < canvasW - 20; px += 4) {
+      for (let py = 20; py < CH - 20; py += 4) {
+        let err = 0;
+        for (let i = 0; i < 3; i++) {
+          const d = Math.sqrt((px - sats[i].x) ** 2 + (py - sats[i].y) ** 2);
+          err += Math.abs(d - rs[i]);
+        }
+        if (err < bestErr) {
+          bestErr = err;
+          bestX = px;
+          bestY = py;
+        }
+      }
+    }
+    return { x: bestX, y: bestY, error: bestErr };
+  }
+
+  useEffect(() => {
+    const c = canvasRef.current;
+    if (!c) return;
+    const ctx = c.getContext('2d');
+    ctx.clearRect(0, 0, canvasW, CH);
+
+    /* Grid background */
+    ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < canvasW; x += 30) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, CH); ctx.stroke();
+    }
+    for (let y = 0; y < CH; y += 30) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvasW, y); ctx.stroke();
+    }
+
+    /* Draw circles with semi-transparent fills */
+    const fillColors = [
+      'rgba(100,200,255,0.06)',
+      'rgba(255,90,158,0.06)',
+      'rgba(160,230,80,0.06)',
+    ];
+    const strokeColors = [
+      'rgba(100,200,255,0.4)',
+      'rgba(255,90,158,0.4)',
+      'rgba(160,230,80,0.4)',
+    ];
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath();
+      ctx.arc(satellites[i].x, satellites[i].y, radii[i], 0, Math.PI * 2);
+      ctx.fillStyle = fillColors[i];
+      ctx.fill();
+      ctx.strokeStyle = strokeColors[i];
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    /* Draw satellite points */
+    for (let i = 0; i < 3; i++) {
+      const s = satellites[i];
+      /* Tower icon: small triangle */
+      ctx.beginPath();
+      ctx.moveTo(s.x, s.y - 8);
+      ctx.lineTo(s.x - 6, s.y + 4);
+      ctx.lineTo(s.x + 6, s.y + 4);
+      ctx.closePath();
+      ctx.fillStyle = s.color;
+      ctx.fill();
+      /* Label */
+      ctx.font = '11px "JetBrains Mono", monospace';
+      ctx.fillStyle = s.color;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText(s.label, s.x, s.y + 8);
+    }
+
+    /* Find intersection */
+    const result = findIntersection(satellites, radii);
+    if (result.error < 30) {
+      /* Draw position dot with pulse */
+      const grd = ctx.createRadialGradient(result.x, result.y, 0, result.x, result.y, 16);
+      grd.addColorStop(0, 'rgba(255,200,60,0.5)');
+      grd.addColorStop(1, 'rgba(255,200,60,0)');
+      ctx.beginPath();
+      ctx.arc(result.x, result.y, 16, 0, Math.PI * 2);
+      ctx.fillStyle = grd;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(result.x, result.y, 5, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,200,60,1)';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(result.x, result.y, 8, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255,200,60,0.4)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.font = '11px "JetBrains Mono", monospace';
+      ctx.fillStyle = 'rgba(255,200,60,0.9)';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText('Position found', result.x + 12, result.y - 4);
+
+      /* Draw distance lines from intersection to each satellite */
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        ctx.moveTo(result.x, result.y);
+        ctx.lineTo(satellites[i].x, satellites[i].y);
+        ctx.strokeStyle = strokeColors[i].replace('0.4', '0.2');
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 3]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+  }, [radii, satellites, canvasW]);
+
+  return (
+    <div ref={containerRef}>
+      <div style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--text-secondary)', marginBottom: 16 }}>
+        Your phone knows where you are because of the distance formula. GPS works through trilateration: three or more satellites each broadcast their position and signal travel time. Your phone calculates its distance from each satellite using{' '}
+        <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent-secondary)' }}>d = {'\u221A'}((x{'\u2082'}-x{'\u2081'}){'\u00B2'} + (y{'\u2082'}-y{'\u2081'}){'\u00B2'})</span>
+        {' '}{'\u2014'} the same distance formula you learn in coordinate geometry. Each distance defines a circle of possible positions. Where all three circles intersect is your exact location. The GPS system, launched in 1978 by the US military, now guides 4 billion devices worldwide.
+      </div>
+      <div style={{
+        marginBottom: 16, padding: '14px 18px', borderRadius: 10,
+        background: 'var(--bg-card)', border: '1px solid var(--border-subtle)',
+        fontSize: 13, lineHeight: 1.7, color: 'var(--text-secondary)',
+      }}>
+        <strong style={{ color: 'var(--text-primary)', fontWeight: 500 }}>What you're seeing:</strong>{' '}
+        Three satellites are plotted on a 2D map. Each has a radius slider controlling its signal range {'\u2014'} the circle of all points at that distance from the satellite. When you've dialed in the right radii, the three circles overlap at a single small region, and a golden dot appears showing the estimated position. This is exactly how your phone's GPS chip works, except in 3D with four or more satellites and nanosecond timing precision.
+      </div>
+      <canvas ref={canvasRef} style={{
+        width: '100%', borderRadius: 8,
+        border: '1px solid var(--border-subtle)',
+        background: 'rgba(0,0,0,0.25)',
+      }} />
+      <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {['Sat A', 'Sat B', 'Sat C'].map((label, i) => (
+          <SliderControl key={i} label={label + ' range'} value={radii[i]}
+            min={40} max={200} step={5}
+            onChange={v => setRadii(prev => { const n = [...prev]; n[i] = v; return n; })}
+            color={satellites[i].color} />
+        ))}
+      </div>
+      <div style={{
+        marginTop: 14, padding: '12px 16px', borderRadius: 8,
+        background: 'rgba(255,255,255,0.02)',
+        border: '1px solid var(--border-subtle)',
+      }}>
+        <div style={{
+          fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-secondary)',
+          lineHeight: 1.8,
+        }}>
+          <div>d = {'\u221A'}((x{'\u2082'}-x{'\u2081'}){'\u00B2'} + (y{'\u2082'}-y{'\u2081'}){'\u00B2'})</div>
+          <div style={{ marginTop: 4, fontSize: 11, color: 'var(--text-tertiary)' }}>
+            Adjust radii until all 3 circles converge on one point.
+          </div>
+        </div>
+      </div>
+      <div style={{
+        marginTop: 16, fontSize: 13, lineHeight: 1.7, color: 'var(--text-tertiary)',
+      }}>
+        GPS accuracy depends on geometry. If all three satellites are clustered together, the circles are nearly parallel where they intersect, giving a fuzzy position (poor {'\u2018'}dilution of precision{'\u2019'}). Spread them wide apart, and the intersection is sharp and precise. This is why GPS works better with a clear sky view {'\u2014'} more satellites at wider angles means better geometry. The distance formula isn't just academic; it's what makes ride-sharing, delivery tracking, and emergency 911 location all possible.
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   CELL TOWER COVERAGE EXAMPLE
+   ================================================================ */
+function CellTowerCoverageExample() {
+  const containerRef = useRef(null);
+  const canvasRef = useRef(null);
+  const [canvasW, setCanvasW] = useState(480);
+  const CH = 320;
+  const [towers, setTowers] = useState([]);
+  const [signalStrength, setSignalStrength] = useState(70);
+  const maxTowers = 5;
+
+  /* Responsive width */
+  useEffect(() => {
+    function measure() {
+      if (!containerRef.current) return;
+      const cw = containerRef.current.offsetWidth;
+      setCanvasW(Math.min(cw, 520));
+    }
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, []);
+
+  /* DPR setup */
+  useEffect(() => {
+    const c = canvasRef.current;
+    if (!c) return;
+    const dpr = window.devicePixelRatio || 1;
+    c.width = canvasW * dpr;
+    c.height = CH * dpr;
+    c.style.width = canvasW + 'px';
+    c.style.height = CH + 'px';
+    const ctx = c.getContext('2d');
+    ctx.scale(dpr, dpr);
+  }, [canvasW]);
+
+  /* Click to place tower */
+  useEffect(() => {
+    const c = canvasRef.current;
+    if (!c) return;
+    const onClick = (e) => {
+      if (towers.length >= maxTowers) return;
+      const rect = c.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      setTowers(prev => [...prev, { x, y }]);
+    };
+    c.addEventListener('click', onClick);
+    return () => c.removeEventListener('click', onClick);
+  }, [towers.length, canvasW]);
+
+  /* Calculate coverage percentage */
+  function calcCoverage(twrs, r) {
+    if (twrs.length === 0) return 0;
+    const gridStep = 8;
+    let total = 0;
+    let covered = 0;
+    for (let px = 0; px < canvasW; px += gridStep) {
+      for (let py = 0; py < CH; py += gridStep) {
+        total++;
+        for (let i = 0; i < twrs.length; i++) {
+          const d = Math.sqrt((px - twrs[i].x) ** 2 + (py - twrs[i].y) ** 2);
+          if (d <= r) { covered++; break; }
+        }
+      }
+    }
+    return Math.round((covered / total) * 100);
+  }
+
+  const towerColors = [
+    'rgba(100,200,255,',
+    'rgba(255,90,158,',
+    'rgba(160,230,80,',
+    'rgba(255,200,60,',
+    'rgba(180,140,255,',
+  ];
+
+  useEffect(() => {
+    const c = canvasRef.current;
+    if (!c) return;
+    const ctx = c.getContext('2d');
+    ctx.clearRect(0, 0, canvasW, CH);
+
+    /* City grid blocks */
+    const blockSize = 32;
+    const gap = 6;
+    ctx.fillStyle = 'rgba(255,255,255,0.02)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+    ctx.lineWidth = 0.5;
+    for (let x = gap; x < canvasW - gap; x += blockSize + gap) {
+      for (let y = gap; y < CH - gap; y += blockSize + gap) {
+        ctx.fillRect(x, y, blockSize, blockSize);
+        ctx.strokeRect(x, y, blockSize, blockSize);
+      }
+    }
+
+    /* Road lines */
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx.lineWidth = 1;
+    for (let x = gap + blockSize; x < canvasW; x += blockSize + gap) {
+      ctx.beginPath(); ctx.moveTo(x + gap / 2, 0); ctx.lineTo(x + gap / 2, CH); ctx.stroke();
+    }
+    for (let y = gap + blockSize; y < CH; y += blockSize + gap) {
+      ctx.beginPath(); ctx.moveTo(0, y + gap / 2); ctx.lineTo(canvasW, y + gap / 2); ctx.stroke();
+    }
+
+    /* Coverage circles with overlap detection */
+    const r = signalStrength;
+
+    /* Draw coverage heat using pixel sampling */
+    if (towers.length > 0) {
+      const imageData = ctx.getImageData(0, 0, canvasW, CH);
+      /* We'll draw via canvas circles instead for performance */
+      for (let i = 0; i < towers.length; i++) {
+        const t = towers[i];
+        const colorBase = towerColors[i % towerColors.length];
+        ctx.beginPath();
+        ctx.arc(t.x, t.y, r, 0, Math.PI * 2);
+        ctx.fillStyle = colorBase + '0.08)';
+        ctx.fill();
+        ctx.strokeStyle = colorBase + '0.35)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+
+      /* Highlight overlap regions */
+      if (towers.length >= 2) {
+        for (let i = 0; i < towers.length; i++) {
+          for (let j = i + 1; j < towers.length; j++) {
+            const d = Math.sqrt((towers[i].x - towers[j].x) ** 2 + (towers[i].y - towers[j].y) ** 2);
+            if (d < r * 2) {
+              /* Circles overlap - draw intersection highlight */
+              ctx.save();
+              ctx.beginPath();
+              ctx.arc(towers[i].x, towers[i].y, r, 0, Math.PI * 2);
+              ctx.clip();
+              ctx.beginPath();
+              ctx.arc(towers[j].x, towers[j].y, r, 0, Math.PI * 2);
+              ctx.fillStyle = 'rgba(255,255,255,0.06)';
+              ctx.fill();
+              ctx.restore();
+            }
+          }
+        }
+      }
+    }
+
+    /* Draw tower icons */
+    for (let i = 0; i < towers.length; i++) {
+      const t = towers[i];
+      const col = towerColors[i % towerColors.length];
+
+      /* Antenna shape: vertical line with small arcs */
+      ctx.strokeStyle = col + '1)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(t.x, t.y + 6);
+      ctx.lineTo(t.x, t.y - 8);
+      ctx.stroke();
+
+      /* Cross bar */
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(t.x - 5, t.y - 3);
+      ctx.lineTo(t.x + 5, t.y - 3);
+      ctx.stroke();
+
+      /* Top dot */
+      ctx.beginPath();
+      ctx.arc(t.x, t.y - 10, 2, 0, Math.PI * 2);
+      ctx.fillStyle = col + '1)';
+      ctx.fill();
+
+      /* Signal arcs */
+      ctx.strokeStyle = col + '0.3)';
+      ctx.lineWidth = 1;
+      for (let a = 1; a <= 2; a++) {
+        ctx.beginPath();
+        ctx.arc(t.x, t.y - 10, 6 * a, -Math.PI * 0.7, -Math.PI * 0.3);
+        ctx.stroke();
+      }
+    }
+
+    /* "Click to place" hint if fewer than max towers */
+    if (towers.length < maxTowers) {
+      ctx.font = '11px "DM Sans", sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.2)';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText('Click to place tower (' + towers.length + '/' + maxTowers + ')', canvasW / 2, CH - 8);
+    }
+  }, [towers, signalStrength, canvasW]);
+
+  const coverage = calcCoverage(towers, signalStrength);
+
+  return (
+    <div ref={containerRef}>
+      <div style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--text-secondary)', marginBottom: 16 }}>
+        Cell tower placement is a geometry problem. Each tower covers a circular area described by{' '}
+        <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent-secondary)' }}>(x - h){'\u00B2'} + (y - k){'\u00B2'} = r{'\u00B2'}</span>
+        , where (h, k) is the tower's position and r is its signal radius. Telecom engineers must place towers so that every building in a city falls within at least one circle {'\u2014'} ideally within overlapping circles for better reception. Too few towers leave coverage gaps; too many waste money. This is called the {'\u2018'}covering problem{'\u2019'} and it's a direct application of circle equations in coordinate geometry.
+      </div>
+      <div style={{
+        marginBottom: 16, padding: '14px 18px', borderRadius: 10,
+        background: 'var(--bg-card)', border: '1px solid var(--border-subtle)',
+        fontSize: 13, lineHeight: 1.7, color: 'var(--text-secondary)',
+      }}>
+        <strong style={{ color: 'var(--text-primary)', fontWeight: 500 }}>What you're seeing:</strong>{' '}
+        The canvas shows a bird's-eye city grid. Click anywhere to place a cell tower (up to five). Each tower creates a coverage circle whose radius you control with the slider. The coverage percentage tells you what fraction of the city is served. Overlapping regions (where circles intersect) provide stronger signal {'\u2014'} notice the brighter shading where circles overlap. Try to cover the entire city with as few towers as possible.
+      </div>
+      <canvas ref={canvasRef} style={{
+        width: '100%', borderRadius: 8,
+        border: '1px solid var(--border-subtle)',
+        background: 'rgba(0,0,0,0.25)',
+        cursor: towers.length < maxTowers ? 'crosshair' : 'default',
+      }} />
+      <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <SliderControl label="Signal range" value={signalStrength}
+          min={30} max={150} step={5}
+          onChange={v => setSignalStrength(v)} color="var(--accent)" />
+      </div>
+      <div style={{
+        marginTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      }}>
+        {/* Coverage percentage */}
+        <div style={{
+          fontFamily: 'var(--font-mono)', fontSize: 13,
+          color: 'var(--text-secondary)',
+        }}>
+          Coverage:{' '}
+          <span style={{
+            color: coverage > 75 ? 'rgba(160,230,80,0.9)' : coverage > 40 ? 'rgba(255,200,60,0.9)' : 'rgba(255,100,100,0.9)',
+            fontWeight: 500, fontSize: 15,
+          }}>
+            {coverage}%
+          </span>
+        </div>
+        {/* Reset button */}
+        <button onClick={() => setTowers([])} style={{
+          fontFamily: 'var(--font-mono)', fontSize: 11,
+          textTransform: 'uppercase', letterSpacing: '0.06em',
+          padding: '6px 14px', borderRadius: 6,
+          border: '1px solid var(--border-subtle)',
+          background: 'transparent', color: 'var(--text-secondary)',
+          transition: 'all 0.3s ease', cursor: 'pointer',
+        }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border-hover)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+        >
+          Reset
+        </button>
+      </div>
+      <div style={{
+        marginTop: 12, padding: '12px 16px', borderRadius: 8,
+        background: 'rgba(255,255,255,0.02)',
+        border: '1px solid var(--border-subtle)',
+      }}>
+        <div style={{
+          fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-secondary)',
+          lineHeight: 1.8,
+        }}>
+          <div>(x-h){'\u00B2'} + (y-k){'\u00B2'} = r{'\u00B2'}</div>
+          <div style={{ marginTop: 4, fontSize: 11, color: 'var(--text-tertiary)' }}>
+            Each tower's coverage area is a circle centered at (h, k) with radius r.
+          </div>
+        </div>
+      </div>
+      <div style={{
+        marginTop: 16, fontSize: 13, lineHeight: 1.7, color: 'var(--text-tertiary)',
+      }}>
+        Real telecom planning uses this exact math at massive scale. In Manhattan alone, there are thousands of cell sites placed using computational geometry algorithms. Engineers balance coverage area (bigger r) against interference (overlapping signals on the same frequency). The equation{' '}
+        <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent-secondary)' }}>(x-h){'\u00B2'} + (y-k){'\u00B2'} {'\u2264'} r{'\u00B2'}</span>
+        {' '}defines each tower's service area, and the union of all these circles must cover every street and building {'\u2014'} a problem that starts with the coordinate geometry you're learning here.
+      </div>
     </div>
   );
 }

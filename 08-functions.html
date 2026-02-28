@@ -440,6 +440,500 @@ function ConceptBox({ children, color }) {
 }
 
 /* ================================================================
+   REAL-WORLD PANEL
+   ================================================================ */
+function RealWorldPanel({ examples }) {
+  const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState(0);
+  const contentRef = useRef(null);
+  const [contentHeight, setContentHeight] = useState(0);
+
+  useEffect(() => {
+    if (contentRef.current) {
+      setContentHeight(contentRef.current.scrollHeight);
+    }
+  }, [open, tab]);
+
+  return (
+    <div style={{
+      marginTop: 28,
+      borderRadius: 16,
+      border: '1px solid',
+      borderColor: open ? 'var(--accent-dim)' : 'var(--border-subtle)',
+      background: 'var(--bg-card)',
+      overflow: 'hidden',
+      transition: 'border-color 0.3s var(--ease-out-expo)',
+    }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '16px 20px',
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          fontFamily: 'var(--font-display)',
+          fontSize: 18,
+          fontWeight: 400,
+          color: 'var(--accent-bright)',
+          letterSpacing: '0.01em',
+        }}
+      >
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"
+          style={{
+            transition: 'transform 0.3s var(--ease-out-expo)',
+            transform: open ? 'rotate(90deg)' : 'rotate(0deg)',
+            flexShrink: 0,
+          }}>
+          <path d="M7 4l6 6-6 6" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+        <span>Real-World Examples</span>
+        <span style={{
+          marginLeft: 'auto',
+          fontFamily: 'var(--font-mono)',
+          fontSize: 11,
+          color: 'var(--text-tertiary)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.06em',
+        }}>
+          {open ? 'collapse' : 'expand'}
+        </span>
+      </button>
+
+      <div style={{
+        maxHeight: open ? contentHeight + 20 : 0,
+        overflow: 'hidden',
+        transition: 'max-height 0.4s var(--ease-out-expo)',
+      }}>
+        <div ref={contentRef} style={{ padding: '0 20px 20px' }}>
+          {examples.length > 1 && (
+            <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+              {examples.map((ex, i) => (
+                <button key={i}
+                  onClick={() => setTab(i)}
+                  style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: 13,
+                    fontWeight: 500,
+                    padding: '7px 16px',
+                    borderRadius: 100,
+                    border: '1px solid',
+                    borderColor: tab === i ? 'var(--accent)' : 'var(--border-subtle)',
+                    background: tab === i ? 'var(--accent-bg)' : 'transparent',
+                    color: tab === i ? 'var(--accent-bright)' : 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    transition: 'all 0.25s var(--ease-out-expo)',
+                  }}
+                >
+                  {ex.title}
+                </button>
+              ))}
+            </div>
+          )}
+          <div>{examples[tab] && examples[tab].content}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   VENDING MACHINE EXAMPLE
+   ================================================================ */
+function VendingMachineExample() {
+  const [selected, setSelected] = useState(null);
+  const [broken, setBroken] = useState(false);
+  const [animArrow, setAnimArrow] = useState(null);
+
+  const buttons = ['A1','A2','A3','B1','B2','B3'];
+  const products = {
+    A1: { name: 'Candy Bar', color: '#fbbf24' },
+    A2: { name: 'Apple', color: '#34d399' },
+    A3: { name: 'Chips', color: '#fb923c' },
+    B1: { name: 'Water', color: '#22d3ee' },
+    B2: { name: 'Juice', color: '#c084fc' },
+    B3: { name: 'Cookie', color: '#f472b6' },
+  };
+  // Broken mode: B2 maps to both Juice AND Cookie
+  const brokenExtra = 'B2';
+
+  const btnPositions = {};
+  const prodPositions = {};
+  buttons.forEach((b, i) => {
+    const row = Math.floor(i / 3);
+    const col = i % 3;
+    btnPositions[b] = { x: 40 + col * 52, y: 60 + row * 56 };
+  });
+  buttons.forEach((b, i) => {
+    const row = Math.floor(i / 3);
+    const col = i % 3;
+    prodPositions[b] = { x: 290 + col * 60, y: 55 + row * 60 };
+  });
+
+  function handleClick(btn) {
+    setSelected(btn);
+    setAnimArrow(btn);
+    setTimeout(() => setAnimArrow(null), 800);
+  }
+
+  function drawProduct(name, cx, cy, color) {
+    switch(name) {
+      case 'Candy Bar':
+        return <rect x={cx-18} y={cy-8} width="36" height="16" rx="3" fill={color} opacity="0.85"/>;
+      case 'Apple':
+        return <React.Fragment>
+          <circle cx={cx} cy={cy+2} r="11" fill={color} opacity="0.85"/>
+          <line x1={cx} y1={cy-9} x2={cx+3} y2={cy-14} stroke="#166534" strokeWidth="2" strokeLinecap="round"/>
+        </React.Fragment>;
+      case 'Chips':
+        return <React.Fragment>
+          <rect x={cx-12} y={cy-14} width="24" height="28" rx="4" fill={color} opacity="0.85"/>
+          <line x1={cx-6} y1={cy-4} x2={cx+6} y2={cy-4} stroke="rgba(0,0,0,0.2)" strokeWidth="1"/>
+          <line x1={cx-6} y1={cy+2} x2={cx+6} y2={cy+2} stroke="rgba(0,0,0,0.2)" strokeWidth="1"/>
+        </React.Fragment>;
+      case 'Water':
+        return <React.Fragment>
+          <rect x={cx-8} y={cy-14} width="16" height="28" rx="3" fill={color} opacity="0.85"/>
+          <rect x={cx-6} y={cy-16} width="12" height="6" rx="2" fill="rgba(255,255,255,0.3)"/>
+        </React.Fragment>;
+      case 'Juice':
+        return <React.Fragment>
+          <rect x={cx-10} y={cy-12} width="20" height="24" rx="3" fill={color} opacity="0.85"/>
+          <circle cx={cx} cy={cy-2} r="5" fill="rgba(255,255,255,0.25)"/>
+        </React.Fragment>;
+      case 'Cookie':
+        return <React.Fragment>
+          <circle cx={cx} cy={cy} r="12" fill={color} opacity="0.85"/>
+          <circle cx={cx-4} cy={cy-3} r="2" fill="rgba(0,0,0,0.25)"/>
+          <circle cx={cx+3} cy={cy+2} r="2" fill="rgba(0,0,0,0.25)"/>
+          <circle cx={cx+1} cy={cy-5} r="1.5" fill="rgba(0,0,0,0.25)"/>
+        </React.Fragment>;
+      default:
+        return <circle cx={cx} cy={cy} r="10" fill={color} opacity="0.85"/>;
+    }
+  }
+
+  const isFunction = !broken;
+  const statusColor = isFunction ? 'var(--emerald)' : 'var(--rose)';
+  const statusText = isFunction ? 'Valid function: each input maps to exactly one output' : 'NOT a function: button B2 maps to TWO products';
+
+  return (
+    <div>
+      {/* Intro text */}
+      <p style={{ fontFamily:'var(--font-body)', fontSize:14, lineHeight:1.7, color:'var(--text-secondary)', fontWeight:300, marginBottom:14 }}>
+        A vending machine is a function you can touch. You press a button (input), and exactly one product drops out (output). Press <span style={{ fontFamily:'var(--font-mono)', color:'var(--accent)' }}>A1</span>, always get chips. Press <span style={{ fontFamily:'var(--font-mono)', color:'var(--accent)' }}>B2</span>, always get a candy bar. That's the definition of a function: each input maps to exactly one output. But what if pressing <span style={{ fontFamily:'var(--font-mono)', color:'var(--accent)' }}>A1</span> sometimes gave you chips and sometimes gave you soda? That machine would be broken — and mathematically, it would <strong style={{ color:'var(--text-primary)', fontWeight:500 }}>not</strong> be a function.
+      </p>
+
+      {/* What you're seeing */}
+      <div style={{ background:'var(--bg-card)', borderRadius:10, padding:'12px 16px', marginBottom:14, fontSize:13, fontFamily:'var(--font-body)', color:'var(--text-secondary)', lineHeight:1.7, fontWeight:300 }}>
+        <strong style={{ color:'var(--text-primary)', fontWeight:500 }}>What you're seeing:</strong> The machine below has six buttons on the left (inputs) and six product slots on the right (outputs). Click any button to see the mapping arrow. In normal mode, each button connects to exactly one product — a valid function. Toggle <span style={{ fontFamily:'var(--font-mono)', color:'var(--accent)' }}>'Broken Machine'</span> mode to see what happens when one input tries to map to two outputs: the crossing red arrows show the violation. This is the <span style={{ fontFamily:'var(--font-mono)', color:'var(--accent)' }}>vertical line test</span> in physical form — a function can never give two answers for the same input.
+      </div>
+
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+        <span style={{ fontFamily:'var(--font-mono)', fontSize:12, color:'var(--text-tertiary)', textTransform:'uppercase', letterSpacing:'0.06em' }}>
+          Input (button) {'\u2192'} Output (product)
+        </span>
+        <button onClick={() => { setBroken(!broken); setSelected(null); setAnimArrow(null); }} style={{
+          fontFamily:'var(--font-mono)', fontSize:11, padding:'5px 12px',
+          borderRadius:8, border:'1px solid',
+          borderColor: broken ? 'var(--rose)' : 'var(--border-subtle)',
+          background: broken ? 'rgba(251,113,133,0.1)' : 'transparent',
+          color: broken ? 'var(--rose)' : 'var(--text-secondary)',
+          cursor:'pointer', transition:'all 0.2s ease',
+        }}>
+          {broken ? 'Broken ON' : 'Break Machine'}
+        </button>
+      </div>
+
+      <svg viewBox="0 0 480 180" width="100%" style={{ display:'block', maxWidth:480, margin:'0 auto' }}>
+        {/* Machine body left */}
+        <rect x="10" y="20" width="190" height="150" rx="12" fill="rgba(15,36,36,0.8)" stroke="rgba(45,212,191,0.2)" strokeWidth="1.5"/>
+        <text x="105" y="42" textAnchor="middle" fill="var(--text-tertiary)" fontFamily="'JetBrains Mono', monospace" fontSize="10" fontWeight="500">BUTTONS</text>
+
+        {/* Machine body right */}
+        <rect x="260" y="20" width="210" height="150" rx="12" fill="rgba(15,36,36,0.8)" stroke="rgba(45,212,191,0.2)" strokeWidth="1.5"/>
+        <text x="365" y="42" textAnchor="middle" fill="var(--text-tertiary)" fontFamily="'JetBrains Mono', monospace" fontSize="10" fontWeight="500">PRODUCTS</text>
+
+        {/* Buttons */}
+        {buttons.map(b => {
+          const pos = btnPositions[b];
+          const isSelected = selected === b;
+          return (
+            <g key={b} onClick={() => handleClick(b)} style={{ cursor:'pointer' }}>
+              <rect x={pos.x - 20} y={pos.y - 16} width="40" height="32" rx="6"
+                fill={isSelected ? 'rgba(45,212,191,0.2)' : 'rgba(255,255,255,0.04)'}
+                stroke={isSelected ? 'var(--accent)' : 'rgba(255,255,255,0.1)'}
+                strokeWidth={isSelected ? 2 : 1}
+                style={{ transition:'all 0.2s ease' }}
+              />
+              <text x={pos.x} y={pos.y + 5} textAnchor="middle"
+                fill={isSelected ? 'var(--accent-bright)' : 'var(--text-secondary)'}
+                fontFamily="'JetBrains Mono', monospace" fontSize="12" fontWeight="500"
+                style={{ transition:'fill 0.2s ease', pointerEvents:'none' }}>
+                {b}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Products */}
+        {buttons.map(b => {
+          const pos = prodPositions[b];
+          const prod = products[b];
+          const isTarget = selected === b || (broken && selected === brokenExtra && b === 'B3');
+          return (
+            <g key={'p'+b} style={{ opacity: isTarget ? 1 : 0.5, transition:'opacity 0.3s ease' }}>
+              {drawProduct(prod.name, pos.x, pos.y, prod.color)}
+              <text x={pos.x} y={pos.y + 22} textAnchor="middle" fill="var(--text-tertiary)"
+                fontFamily="'JetBrains Mono', monospace" fontSize="8">
+                {prod.name}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Arrow from selected button to product */}
+        {selected && (
+          <React.Fragment>
+            <line
+              x1={btnPositions[selected].x + 22} y1={btnPositions[selected].y}
+              x2={prodPositions[selected].x - 22} y2={prodPositions[selected].y}
+              stroke={isFunction ? 'var(--emerald)' : 'var(--emerald)'}
+              strokeWidth="2" strokeDasharray={animArrow ? '6 4' : 'none'}
+              style={{ animation: animArrow ? 'conveyorMove 0.4s linear infinite' : 'none' }}
+              markerEnd="url(#arrowGreen)"
+            />
+            {/* Broken: extra arrow from B2 to B3 product */}
+            {broken && selected === brokenExtra && (
+              <line
+                x1={btnPositions[brokenExtra].x + 22} y1={btnPositions[brokenExtra].y}
+                x2={prodPositions['B3'].x - 22} y2={prodPositions['B3'].y}
+                stroke="var(--rose)" strokeWidth="2" strokeDasharray="4 3"
+                style={{ animation: animArrow ? 'conveyorMove 0.4s linear infinite' : 'none' }}
+                markerEnd="url(#arrowRed)"
+              />
+            )}
+          </React.Fragment>
+        )}
+
+        {/* Arrow markers */}
+        <defs>
+          <marker id="arrowGreen" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+            <path d="M0,0 L8,4 L0,8 Z" fill="var(--emerald)"/>
+          </marker>
+          <marker id="arrowRed" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+            <path d="M0,0 L8,4 L0,8 Z" fill="var(--rose)"/>
+          </marker>
+        </defs>
+      </svg>
+
+      {/* Status bar */}
+      <div style={{
+        marginTop:12, padding:'8px 14px', borderRadius:8,
+        background: isFunction ? 'rgba(52,211,153,0.06)' : 'rgba(251,113,133,0.06)',
+        border: `1px solid ${isFunction ? 'rgba(52,211,153,0.15)' : 'rgba(251,113,133,0.15)'}`,
+        fontFamily:'var(--font-mono)', fontSize:12, color: statusColor, textAlign:'center',
+        transition:'all 0.3s ease',
+      }}>
+        {statusText}
+      </div>
+
+      {/* Deeper connection */}
+      <p style={{ marginTop:16, fontFamily:'var(--font-body)', fontSize:13, lineHeight:1.7, color:'var(--text-tertiary)', fontWeight:300 }}>
+        Functions are everywhere once you recognize them. A <span style={{ fontFamily:'var(--font-mono)', color:'var(--accent)' }}>barcode scanner</span> is a function: scan a code (input), get a price (output). A <span style={{ fontFamily:'var(--font-mono)', color:'var(--accent)' }}>dictionary</span> is a function: look up a word (input), get a definition (output). Your phone's <span style={{ fontFamily:'var(--font-mono)', color:'var(--accent)' }}>contacts list</span> is a function: tap a name (input), dial a number (output). If any of these gave you two different results for the same input, the system would be broken — just like the <strong style={{ color:'var(--text-primary)', fontWeight:500 }}>'broken'</strong> vending machine above.
+      </p>
+    </div>
+  );
+}
+
+/* ================================================================
+   PHOTO FILTERS (COMPOSITION) EXAMPLE
+   ================================================================ */
+function PhotoFiltersExample() {
+  const canvasRef = useRef(null);
+  const containerRef = useRef(null);
+  const [brightness, setBrightness] = useState(30);
+  const [contrast, setContrast] = useState(1.5);
+  const [dims, setDims] = useState({ w: 460, h: 300 });
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const obs = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const w = Math.min(entry.contentRect.width, 460);
+        setDims({ w, h: 300 });
+      }
+    });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const dpr = window.devicePixelRatio || 1;
+    const W = dims.w;
+    const H = dims.h;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, W, H);
+
+    const b = brightness;
+    const c = contrast;
+
+    // f(x) = x + b   (brightness)
+    // g(x) = c * x   (contrast)
+    function fBright(x) { return clamp(x + b, 0, 255); }
+    function gContrast(x) { return clamp(c * (x - 128) + 128, 0, 255); }
+
+    const barH = 32;
+    const barY0 = 60;
+    const barGap = 20;
+    const barW = W - 40;
+    const barX = 20;
+
+    const labels = [
+      'Original',
+      'f(g(x)): Contrast then Brightness',
+      'g(f(x)): Brightness then Contrast',
+    ];
+    const transforms = [
+      function(x) { return x; },
+      function(x) { return fBright(gContrast(x)); },
+      function(x) { return gContrast(fBright(x)); },
+    ];
+
+    // Title area
+    ctx.fillStyle = 'rgba(232,230,240,0.55)';
+    ctx.font = '11px "JetBrains Mono", monospace';
+    ctx.textAlign = 'left';
+
+    // Draw notation
+    ctx.fillStyle = 'rgba(45,212,191,0.9)';
+    ctx.font = '12px "JetBrains Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('f(x) = x + ' + b + '  (brightness)', W / 2 - 10, 20);
+    ctx.fillStyle = 'rgba(34,211,238,0.9)';
+    ctx.fillText('g(x) = ' + c.toFixed(1) + '(x - 128) + 128  (contrast)', W / 2 - 10, 38);
+
+    for (let row = 0; row < 3; row++) {
+      const yTop = barY0 + row * (barH + barGap + 18);
+
+      // Label
+      ctx.fillStyle = row === 0 ? 'rgba(232,230,240,0.5)' : row === 1 ? 'rgba(45,212,191,0.7)' : 'rgba(167,139,250,0.7)';
+      ctx.font = '10px "JetBrains Mono", monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText(labels[row], barX, yTop - 4);
+
+      // Gradient bar
+      const tfn = transforms[row];
+      for (let px = 0; px < barW; px++) {
+        const inputVal = Math.round((px / barW) * 255);
+        const outVal = Math.round(tfn(inputVal));
+        const gray = clamp(outVal, 0, 255);
+        ctx.fillStyle = `rgb(${gray},${gray},${gray})`;
+        ctx.fillRect(barX + px, yTop, 1, barH);
+      }
+
+      // Border around bar
+      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(barX, yTop, barW, barH);
+    }
+
+    // Highlight difference
+    const y1 = barY0 + 1 * (barH + barGap + 18);
+    const y2 = barY0 + 2 * (barH + barGap + 18);
+    let diffSum = 0;
+    for (let px = 0; px < barW; px++) {
+      const inputVal = Math.round((px / barW) * 255);
+      const out1 = transforms[1](inputVal);
+      const out2 = transforms[2](inputVal);
+      diffSum += Math.abs(out1 - out2);
+    }
+
+    // Difference indicator
+    const diffAvg = (diffSum / barW).toFixed(1);
+    const diffY = y2 + barH + 16;
+    ctx.fillStyle = diffAvg > 5 ? 'rgba(251,113,133,0.8)' : 'rgba(52,211,153,0.8)';
+    ctx.font = '11px "JetBrains Mono", monospace';
+    ctx.textAlign = 'center';
+    const diffMsg = diffAvg > 5
+      ? 'Order matters! Average pixel difference: ' + diffAvg
+      : 'Results are similar (avg diff: ' + diffAvg + ')';
+    ctx.fillText(diffMsg, W / 2, diffY);
+
+  }, [dims, brightness, contrast]);
+
+  return (
+    <div ref={containerRef} style={{ width:'100%' }}>
+      {/* Intro text */}
+      <p style={{ fontFamily:'var(--font-body)', fontSize:14, lineHeight:1.7, color:'var(--text-secondary)', fontWeight:300, marginBottom:14 }}>
+        Photo editing apps chain filters together — and the order matters. Brightness adjustment is a function <span style={{ fontFamily:'var(--font-mono)', color:'var(--accent)' }}>f(x) = x + b</span> that shifts every pixel value up or down. Contrast adjustment is a function <span style={{ fontFamily:'var(--font-mono)', color:'var(--accent)' }}>g(x) = cx</span> that stretches pixel values away from or toward middle gray. Applying brightness first, then contrast gives <span style={{ fontFamily:'var(--font-mono)', color:'var(--accent)' }}>f(g(x))</span>. Applying contrast first, then brightness gives <span style={{ fontFamily:'var(--font-mono)', color:'var(--accent)' }}>g(f(x))</span>. These are different compositions, and they produce visibly different results — proving that <strong style={{ color:'var(--text-primary)', fontWeight:500 }}>function composition is not commutative</strong>.
+      </p>
+
+      {/* What you're seeing */}
+      <div style={{ background:'var(--bg-card)', borderRadius:10, padding:'12px 16px', marginBottom:14, fontSize:13, fontFamily:'var(--font-body)', color:'var(--text-secondary)', lineHeight:1.7, fontWeight:300 }}>
+        <strong style={{ color:'var(--text-primary)', fontWeight:500 }}>What you're seeing:</strong> The three gradient bars represent a photo's tonal range from dark to light. The top bar is the original. The middle bar shows <span style={{ fontFamily:'var(--font-mono)', color:'var(--accent)' }}>f(g(x))</span> — contrast applied first, then brightness. The bottom bar shows <span style={{ fontFamily:'var(--font-mono)', color:'var(--accent)' }}>g(f(x))</span> — brightness first, then contrast. Adjust the sliders to change the brightness offset and contrast multiplier, and watch how the two orderings diverge. The difference is most dramatic with extreme settings.
+      </div>
+
+      <canvas ref={canvasRef} style={{ width:'100%', maxWidth:460, display:'block', margin:'0 auto', borderRadius:10 }} />
+
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginTop:16 }}>
+        <div>
+          <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
+            <span style={{ fontFamily:'var(--font-mono)', fontSize:11, color:'var(--accent)' }}>
+              Brightness (b)
+            </span>
+            <span style={{ fontFamily:'var(--font-mono)', fontSize:13, color:'var(--text-primary)' }}>
+              {brightness}
+            </span>
+          </div>
+          <input type="range" min="-100" max="100" step="5" value={brightness}
+            onChange={e => setBrightness(Number(e.target.value))}
+          />
+        </div>
+        <div>
+          <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
+            <span style={{ fontFamily:'var(--font-mono)', fontSize:11, color:'var(--cyan)' }}>
+              Contrast (c)
+            </span>
+            <span style={{ fontFamily:'var(--font-mono)', fontSize:13, color:'var(--text-primary)' }}>
+              {contrast.toFixed(1)}
+            </span>
+          </div>
+          <input type="range" min="0.2" max="3.0" step="0.1" value={contrast}
+            onChange={e => setContrast(Number(e.target.value))}
+          />
+        </div>
+      </div>
+
+      <div style={{
+        marginTop:12, padding:'10px 14px', borderRadius:8,
+        background:'rgba(167,139,250,0.06)', border:'1px solid rgba(167,139,250,0.15)',
+        fontFamily:'var(--font-body)', fontSize:13, color:'var(--text-secondary)', lineHeight:1.6, fontWeight:300,
+      }}>
+        Applying brightness then contrast gives a different result than contrast then brightness.
+        This shows that <span style={{ fontFamily:'var(--font-mono)', color:'var(--accent-bright)', fontSize:12 }}>f(g(x)) {'\u2260'} g(f(x))</span> in general -- composition order matters!
+      </div>
+
+      {/* Why order matters */}
+      <p style={{ marginTop:16, fontFamily:'var(--font-body)', fontSize:13, lineHeight:1.7, color:'var(--text-tertiary)', fontWeight:300 }}>
+        This isn't just about photos. In cooking, adding salt before vs. after reducing a sauce produces different results (the function <span style={{ fontFamily:'var(--font-mono)', color:'var(--accent)' }}>'reduce'</span> concentrates the salt). In math, squaring then adding 1 (<span style={{ fontFamily:'var(--font-mono)', color:'var(--accent)' }}>x{'\u00B2'} + 1</span>) is different from adding 1 then squaring (<span style={{ fontFamily:'var(--font-mono)', color:'var(--accent)' }}>(x+1){'\u00B2'}</span>). Function composition order matters in cryptography, signal processing, and machine learning pipelines. Understanding <span style={{ fontFamily:'var(--font-mono)', color:'var(--accent)' }}>f(g(x))</span> vs <span style={{ fontFamily:'var(--font-mono)', color:'var(--accent)' }}>g(f(x))</span> is fundamental to working with any multi-step process.
+      </p>
+    </div>
+  );
+}
+
+/* ================================================================
    EQUATION DISPLAY
    ================================================================ */
 function Equation({ children, glow }) {
@@ -935,6 +1429,10 @@ function Step2Function() {
           </div>
         )}
       </Card>
+
+      <RealWorldPanel examples={[
+        { title: 'Vending Machine', content: <VendingMachineExample /> },
+      ]} />
     </div>
   );
 }
@@ -1618,6 +2116,10 @@ function Step7Composition() {
           (f \u2218 g)(x) = f(g(x)) = {fChoice.replace(/x/g, `(${gChoice})`)}
         </div>
       </Card>
+
+      <RealWorldPanel examples={[
+        { title: 'Photo Filters', content: <PhotoFiltersExample /> },
+      ]} />
     </div>
   );
 }

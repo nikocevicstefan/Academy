@@ -620,6 +620,11 @@ function StepRepeatedMult({ step, setStep }) {
         </div>
       </div>
 
+      <RealWorldPanel examples={[
+        { title: 'Carbon-14 Dating', content: React.createElement(RadioactiveDecayExample) },
+        { title: 'Richter Scale', content: React.createElement(RichterScaleExample) },
+      ]} />
+
       <Navigation step={step} setStep={setStep} />
     </div>
   );
@@ -1294,6 +1299,10 @@ function StepSquareRoots({ step, setStep }) {
         </div>
       </div>
 
+      <RealWorldPanel examples={[
+        { title: 'Screen Diagonal', content: React.createElement(ScreenDiagonalExample) },
+      ]} />
+
       <Navigation step={step} setStep={setStep} />
     </div>
   );
@@ -1911,6 +1920,781 @@ function StepPractice({ step, setStep }) {
       )}
 
       <Navigation step={step} setStep={setStep} />
+    </div>
+  );
+}
+
+// ===================== REAL-WORLD PANEL =====================
+function RealWorldPanel({ examples }) {
+  const [open, setOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState(0);
+
+  return (
+    <div style={{
+      marginTop: 32, marginBottom: 8,
+      background: 'var(--bg-card)',
+      border: '1px solid var(--border)',
+      borderRadius: 'var(--radius)',
+      overflow: 'hidden',
+      transition: 'var(--transition)'
+    }}>
+      <button onClick={() => setOpen(!open)} style={{
+        width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+        padding: '16px 20px', background: 'transparent', border: 'none',
+        cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 13,
+        fontWeight: 600, color: 'var(--accent)', textTransform: 'uppercase',
+        letterSpacing: '0.1em', textAlign: 'left'
+      }}>
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={{ flexShrink: 0 }}>
+          <circle cx="9" cy="9" r="8" stroke="currentColor" strokeWidth="1.5" />
+          <path d="M9 5v4l2.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <span style={{ flex: 1 }}>Real-World Applications</span>
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
+          style={{
+            transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+            transition: 'transform 0.3s ease'
+          }}>
+          <path d="M3 5l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+      {open && (
+        <div style={{ padding: '0 20px 20px', animation: 'fadeIn 0.3s ease-out' }}>
+          {examples.length > 1 && (
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+              {examples.map((ex, i) => (
+                <button key={i} onClick={() => setActiveTab(i)} style={{
+                  background: activeTab === i ? 'var(--accent-soft)' : 'var(--bg-elevated)',
+                  border: activeTab === i ? '1px solid var(--border-accent)' : '1px solid var(--border)',
+                  color: activeTab === i ? 'var(--accent)' : 'var(--text-secondary)',
+                  padding: '8px 16px', borderRadius: 'var(--radius-sm)',
+                  cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12,
+                  fontWeight: 600, transition: 'var(--transition)'
+                }}>
+                  {ex.title}
+                </button>
+              ))}
+            </div>
+          )}
+          <div>{examples[activeTab].content}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ===================== RADIOACTIVE DECAY EXAMPLE =====================
+function RadioactiveDecayExample() {
+  const canvasRef = useRef(null);
+  const animRef = useRef(null);
+  const [time, setTime] = useState(0);
+  const HALF_LIFE = 5730;
+  const MAX_TIME = 30000;
+  const N0 = 1000;
+
+  const remaining = N0 * Math.pow(0.5, time / HALF_LIFE);
+  const pct = (remaining / N0) * 100;
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    let W, H = 280;
+
+    function resize() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      W = rect.width;
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
+      canvas.style.width = W + 'px';
+      canvas.style.height = H + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    // Particle pool
+    const particles = [];
+    for (let i = 0; i < 200; i++) {
+      particles.push({
+        x: 0, y: 0,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: (Math.random() - 0.5) * 0.3,
+        angle: Math.random() * Math.PI * 2,
+        radius: 60 + Math.random() * 40,
+        speed: 0.002 + Math.random() * 0.004,
+        size: 1.5 + Math.random() * 2
+      });
+    }
+
+    let frameT = 0;
+    function draw(ts) {
+      if (!W) { animRef.current = requestAnimationFrame(draw); return; }
+      frameT = ts * 0.001;
+      ctx.clearRect(0, 0, W, H);
+
+      const margin = { left: 60, right: 30, top: 40, bottom: 60 };
+      const plotW = W - margin.left - margin.right;
+      const plotH = H - margin.top - margin.bottom;
+
+      // Draw timeline axis
+      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(margin.left, margin.top + plotH);
+      ctx.lineTo(margin.left + plotW, margin.top + plotH);
+      ctx.stroke();
+
+      // Y axis
+      ctx.beginPath();
+      ctx.moveTo(margin.left, margin.top);
+      ctx.lineTo(margin.left, margin.top + plotH);
+      ctx.stroke();
+
+      // Tick marks and labels
+      ctx.fillStyle = 'rgba(155,149,168,0.7)';
+      ctx.font = "500 10px 'JetBrains Mono', monospace";
+      ctx.textAlign = 'center';
+      for (let yr = 0; yr <= MAX_TIME; yr += 5000) {
+        const tx = margin.left + (yr / MAX_TIME) * plotW;
+        ctx.beginPath();
+        ctx.moveTo(tx, margin.top + plotH);
+        ctx.lineTo(tx, margin.top + plotH + 5);
+        ctx.stroke();
+        ctx.fillText(yr >= 1000 ? (yr / 1000) + 'k' : yr, tx, margin.top + plotH + 18);
+      }
+      ctx.fillText('years', margin.left + plotW / 2, margin.top + plotH + 34);
+
+      // Y-axis labels
+      ctx.textAlign = 'right';
+      for (let p = 0; p <= 100; p += 25) {
+        const ty = margin.top + plotH - (p / 100) * plotH;
+        ctx.fillText(p + '%', margin.left - 8, ty + 4);
+        if (p > 0 && p < 100) {
+          ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+          ctx.beginPath();
+          ctx.moveTo(margin.left, ty);
+          ctx.lineTo(margin.left + plotW, ty);
+          ctx.stroke();
+        }
+      }
+
+      // Decay curve
+      ctx.strokeStyle = 'rgba(232,68,58,0.8)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = 0; i <= 200; i++) {
+        const t = (i / 200) * MAX_TIME;
+        const frac = Math.pow(0.5, t / HALF_LIFE);
+        const px = margin.left + (t / MAX_TIME) * plotW;
+        const py = margin.top + plotH - frac * plotH;
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+
+      // Fill under curve up to current time
+      ctx.fillStyle = 'rgba(232,68,58,0.08)';
+      ctx.beginPath();
+      ctx.moveTo(margin.left, margin.top + plotH);
+      for (let i = 0; i <= 100; i++) {
+        const t = (i / 100) * time;
+        const frac = Math.pow(0.5, t / HALF_LIFE);
+        const px = margin.left + (t / MAX_TIME) * plotW;
+        const py = margin.top + plotH - frac * plotH;
+        ctx.lineTo(px, py);
+      }
+      ctx.lineTo(margin.left + (time / MAX_TIME) * plotW, margin.top + plotH);
+      ctx.closePath();
+      ctx.fill();
+
+      // Current position marker
+      const curFrac = Math.pow(0.5, time / HALF_LIFE);
+      const curX = margin.left + (time / MAX_TIME) * plotW;
+      const curY = margin.top + plotH - curFrac * plotH;
+
+      ctx.fillStyle = '#e8443a';
+      ctx.beginPath();
+      ctx.arc(curX, curY, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Glow around marker
+      const grd = ctx.createRadialGradient(curX, curY, 0, curX, curY, 15);
+      grd.addColorStop(0, 'rgba(232,68,58,0.4)');
+      grd.addColorStop(1, 'rgba(232,68,58,0)');
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      ctx.arc(curX, curY, 15, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Historical markers
+      const markers = [
+        { yr: 4500, label: 'Pyramids', color: '#f0b429' },
+        { yr: 12000, label: 'Ice Age', color: '#5ba8f7' }
+      ];
+      markers.forEach(m => {
+        const mx = margin.left + (m.yr / MAX_TIME) * plotW;
+        ctx.strokeStyle = m.color + '40';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        ctx.moveTo(mx, margin.top);
+        ctx.lineTo(mx, margin.top + plotH);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = m.color;
+        ctx.font = "500 9px 'JetBrains Mono', monospace";
+        ctx.textAlign = 'center';
+        ctx.fillText(m.label, mx, margin.top - 6);
+        ctx.fillText('~' + (m.yr / 1000) + 'k yr', mx, margin.top + 6);
+      });
+
+      // Animated atom cloud in top-right
+      const cloudCX = W - 60;
+      const cloudCY = 60;
+      const cloudR = 20 + curFrac * 30;
+      const visibleCount = Math.floor(curFrac * particles.length);
+
+      for (let i = 0; i < visibleCount; i++) {
+        const p = particles[i];
+        p.angle += p.speed;
+        const px = cloudCX + Math.cos(p.angle + frameT * 0.2) * (p.radius * cloudR / 90);
+        const py = cloudCY + Math.sin(p.angle + frameT * 0.3) * (p.radius * cloudR / 90) * 0.7;
+        ctx.fillStyle = 'rgba(232,68,58,0.6)';
+        ctx.beginPath();
+        ctx.arc(px, py, p.size * (cloudR / 50), 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Cloud nucleus glow
+      const nucGrd = ctx.createRadialGradient(cloudCX, cloudCY, 0, cloudCX, cloudCY, cloudR * 0.4);
+      nucGrd.addColorStop(0, 'rgba(232,68,58,0.3)');
+      nucGrd.addColorStop(1, 'rgba(232,68,58,0)');
+      ctx.fillStyle = nucGrd;
+      ctx.beginPath();
+      ctx.arc(cloudCX, cloudCY, cloudR * 0.4, 0, Math.PI * 2);
+      ctx.fill();
+
+      animRef.current = requestAnimationFrame(draw);
+    }
+    animRef.current = requestAnimationFrame(draw);
+
+    return () => {
+      cancelAnimationFrame(animRef.current);
+      window.removeEventListener('resize', resize);
+    };
+  }, [time]);
+
+  return (
+    <div>
+      <div style={{
+        fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-secondary)',
+        lineHeight: 1.7, marginBottom: 16
+      }}>
+        <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>Radioactive decay is repeated multiplication by one-half</span> — the most natural example of exponents in nature. Every 5,730 years, half of a Carbon-14 sample decays. After one half-life, you have <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>(1/2)</span> left. After two, <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>(1/2){'\u00B2'} = 1/4</span>. After three, <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>(1/2){'\u00B3'} = 1/8</span>. The formula <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>N = N{'\u2080'} {'\u00D7'} (1/2)^(t/5730)</span> is pure exponential decay, and it's how archaeologists date ancient artifacts. Willard Libby won the 1960 Nobel Prize for developing this technique.
+      </div>
+
+      <div style={{
+        background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)',
+        padding: '10px 16px', marginBottom: 12, textAlign: 'center',
+        fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--text-primary)',
+        border: '1px solid var(--border)'
+      }}>
+        N = N{'\u2080'} {'\u00D7'} (1/2)<sup style={{ fontSize: 10 }}>t/5730</sup>
+      </div>
+
+      <div style={{
+        background: 'rgba(232,68,58,0.06)', borderRadius: 'var(--radius-sm)',
+        padding: '12px 16px', marginBottom: 12,
+        border: '1px solid rgba(232,68,58,0.12)'
+      }}>
+        <div style={{
+          fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent)',
+          textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6
+        }}>What you're seeing</div>
+        <div style={{
+          fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-secondary)',
+          lineHeight: 1.7
+        }}>
+          The timeline shows how a sample of Carbon-14 shrinks over thousands of years. The atom cloud on the right visually represents the remaining atoms. Drag the slider to travel through time — watch the decay curve drop steeply at first, then flatten out. This <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>"fast then slow" pattern is the signature of exponential decay</span>. The archaeological markers show that Egyptian pyramids contain carbon with about 55% remaining, while Ice Age artifacts are down to about 23%.
+        </div>
+      </div>
+
+      <div style={{ position: 'relative', width: '100%' }}>
+        <canvas ref={canvasRef} style={{ width: '100%', borderRadius: 'var(--radius-sm)', display: 'block' }} />
+      </div>
+
+      <div style={{
+        background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)',
+        padding: 16, marginTop: 12, border: '1px solid var(--border)'
+      }}>
+        <label style={{
+          fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent)',
+          textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: 8
+        }}>Time: {time.toLocaleString()} years</label>
+        <input type="range" min={0} max={MAX_TIME} step={100} value={time}
+          onChange={e => setTime(Number(e.target.value))}
+          style={{ width: '100%', accentColor: 'var(--accent)' }} />
+        <div style={{
+          display: 'flex', justifyContent: 'space-between',
+          fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-dim)', marginTop: 4
+        }}>
+          <span>0</span><span>30,000 yr</span>
+        </div>
+      </div>
+
+      <div style={{
+        display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 12
+      }}>
+        <div style={{
+          background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)',
+          padding: '10px 14px', border: '1px solid var(--border)', textAlign: 'center'
+        }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: 4 }}>Remaining</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 18, fontWeight: 700, color: 'var(--accent)' }}>{pct.toFixed(1)}%</div>
+        </div>
+        <div style={{
+          background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)',
+          padding: '10px 14px', border: '1px solid var(--border)', textAlign: 'center'
+        }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: 4 }}>Atoms</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 18, fontWeight: 700, color: 'var(--success)' }}>{Math.round(remaining)}</div>
+        </div>
+      </div>
+
+      <div style={{
+        fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-dim)',
+        lineHeight: 1.7, marginTop: 14
+      }}>
+        <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Why it matters:</span> Carbon dating has rewritten human history. It proved that cave paintings in France are 36,000 years old, that agriculture began around 10,000 BC, and that the Shroud of Turin dates to medieval times, not antiquity. The same exponential math governs <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>uranium decay</span> (for dating rocks), medical isotope treatments (calculating safe dosages), and nuclear waste storage (predicting how long waste stays dangerous).
+      </div>
+    </div>
+  );
+}
+
+// ===================== RICHTER SCALE EXAMPLE =====================
+function RichterScaleExample() {
+  const canvasRef = useRef(null);
+  const animRef = useRef(null);
+  const [magA, setMagA] = useState(5);
+  const [magB, setMagB] = useState(7);
+
+  const factor = Math.pow(10, Math.abs(magB - magA));
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    let W, H = 280;
+
+    function resize() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      W = rect.width;
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
+      canvas.style.width = W + 'px';
+      canvas.style.height = H + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    let frameT = 0;
+    function draw(ts) {
+      if (!W) { animRef.current = requestAnimationFrame(draw); return; }
+      frameT = ts * 0.001;
+      ctx.clearRect(0, 0, W, H);
+
+      const margin = { left: 40, right: 20, top: 50, bottom: 40 };
+      const plotW = W - margin.left - margin.right;
+      const plotH = H - margin.top - margin.bottom;
+
+      // Seismograph line at top
+      ctx.strokeStyle = 'rgba(232,68,58,0.6)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      const seismoY = 22;
+      for (let i = 0; i < W; i++) {
+        const t = i * 0.05 + frameT * 4;
+        const amplitude = 8 * Math.sin(t * 0.7) * Math.sin(t * 2.1) * Math.cos(t * 0.3);
+        const y = seismoY + amplitude;
+        if (i === 0) ctx.moveTo(i, y); else ctx.lineTo(i, y);
+      }
+      ctx.stroke();
+
+      // Draw bars for magnitudes 3-9
+      const magnitudes = [3, 4, 5, 6, 7, 8, 9];
+      const barCount = magnitudes.length;
+      const barGap = 8;
+      const barW = (plotW - (barCount - 1) * barGap) / barCount;
+
+      // Max log height = log10(10^9) = 9, but we use relative scale
+      // Use log scale for display: height proportional to log of (10^mag)
+      // Actually show the exponential nature: each bar 10x taller
+      const maxLogVal = 9;
+
+      magnitudes.forEach((mag, i) => {
+        const x = margin.left + i * (barW + barGap);
+        const relHeight = (mag - 2) / (9 - 2); // normalized 0..1
+        const barH = relHeight * plotH;
+        const y = margin.top + plotH - barH;
+
+        // Color gradient: green to red
+        const t = (mag - 3) / 6;
+        const r = Math.round(61 + t * (232 - 61));
+        const g = Math.round(214 - t * (214 - 68));
+        const b = Math.round(140 - t * (140 - 58));
+        const color = `rgb(${r},${g},${b})`;
+
+        // Bar
+        ctx.fillStyle = color + '90';
+        ctx.fillRect(x, y, barW, barH);
+
+        // Highlight selected magnitudes
+        if (mag === magA || mag === magB) {
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(x, y, barW, barH);
+        }
+
+        // Magnitude label
+        ctx.fillStyle = 'rgba(240,237,245,0.9)';
+        ctx.font = "600 12px 'JetBrains Mono', monospace";
+        ctx.textAlign = 'center';
+        ctx.fillText(mag.toString(), x + barW / 2, margin.top + plotH + 16);
+
+        // Multiplier label on bar
+        ctx.fillStyle = 'rgba(240,237,245,0.6)';
+        ctx.font = "500 9px 'JetBrains Mono', monospace";
+        const mult = Math.pow(10, mag - 3);
+        if (barH > 20) {
+          ctx.fillText(mult >= 1000 ? (mult / 1000) + 'k' : mult + 'x', x + barW / 2, y + 14);
+        }
+      });
+
+      // Historical earthquake labels
+      const histQuakes = [
+        { mag: 7.9, label: 'SF 1906', color: '#f0b429' },
+        { mag: 9.1, label: 'Japan 2011', color: '#5ba8f7' },
+        { mag: 9.5, label: 'Chile 1960', color: '#c084fc' }
+      ];
+      histQuakes.forEach(q => {
+        const idx = q.mag - 3;
+        const x = margin.left + idx * (barW + barGap) / 1 + barW * 0.5;
+        const relH = (q.mag - 2) / (9 - 2);
+        const y = margin.top + plotH - relH * plotH - 8;
+        ctx.fillStyle = q.color;
+        ctx.font = "500 8px 'JetBrains Mono', monospace";
+        ctx.textAlign = 'center';
+        // Place near the appropriate bar
+        const barIdx = Math.round(q.mag) - 3;
+        const bx = margin.left + barIdx * (barW + barGap) + barW / 2;
+        const by = margin.top + plotH - ((Math.round(q.mag) - 2) / 7) * plotH - 10;
+        ctx.fillText(q.label, bx, by);
+      });
+
+      // X-axis label
+      ctx.fillStyle = 'rgba(155,149,168,0.7)';
+      ctx.font = "500 10px 'JetBrains Mono', monospace";
+      ctx.textAlign = 'center';
+      ctx.fillText('Magnitude', margin.left + plotW / 2, margin.top + plotH + 32);
+
+      animRef.current = requestAnimationFrame(draw);
+    }
+    animRef.current = requestAnimationFrame(draw);
+
+    return () => {
+      cancelAnimationFrame(animRef.current);
+      window.removeEventListener('resize', resize);
+    };
+  }, [magA, magB]);
+
+  return (
+    <div>
+      <div style={{
+        fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-secondary)',
+        lineHeight: 1.7, marginBottom: 16
+      }}>
+        <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>The Richter scale is logarithmic</span> — each whole number increase represents 10 times more ground shaking. A magnitude 6 earthquake is <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>10x</span> stronger than a 5, and <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>100x</span> stronger than a 4. In terms of energy, each step is about <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>31.6x</span> more energy. This is why a magnitude 9 earthquake isn't "a bit worse" than a magnitude 7 — it's 100 times more shaking and nearly 1,000 times more energy. Exponents make the enormous range of earthquake power comprehensible.
+      </div>
+
+      <div style={{
+        background: 'rgba(232,68,58,0.06)', borderRadius: 'var(--radius-sm)',
+        padding: '12px 16px', marginBottom: 12,
+        border: '1px solid rgba(232,68,58,0.12)'
+      }}>
+        <div style={{
+          fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent)',
+          textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6
+        }}>What you're seeing</div>
+        <div style={{
+          fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-secondary)',
+          lineHeight: 1.7
+        }}>
+          The bars below show earthquake magnitudes from 3 to 9 on an exponential scale. Notice how the bars grow explosively — the magnitude 9 bar towers over everything else. The seismograph trace at the top simulates the squiggly line a seismometer draws during a quake. Use the comparison sliders to select two magnitudes and see the exact multiplier between them.
+        </div>
+      </div>
+
+      <div style={{ position: 'relative', width: '100%' }}>
+        <canvas ref={canvasRef} style={{ width: '100%', borderRadius: 'var(--radius-sm)', display: 'block' }} />
+      </div>
+
+      <div style={{
+        display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 12
+      }}>
+        <div style={{
+          background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)',
+          padding: 12, border: '1px solid var(--border)'
+        }}>
+          <label style={{
+            fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--warning)',
+            textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: 8
+          }}>Magnitude A: {magA}</label>
+          <input type="range" min={3} max={9} value={magA}
+            onChange={e => setMagA(Number(e.target.value))}
+            style={{ width: '100%', accentColor: 'var(--warning)' }} />
+        </div>
+        <div style={{
+          background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)',
+          padding: 12, border: '1px solid var(--border)'
+        }}>
+          <label style={{
+            fontFamily: 'var(--font-mono)', fontSize: 11, color: '#5ba8f7',
+            textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: 8
+          }}>Magnitude B: {magB}</label>
+          <input type="range" min={3} max={9} value={magB}
+            onChange={e => setMagB(Number(e.target.value))}
+            style={{ width: '100%', accentColor: '#5ba8f7' }} />
+        </div>
+      </div>
+
+      <div style={{
+        background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)',
+        padding: '12px 16px', marginTop: 12, border: '1px solid var(--border-accent)',
+        textAlign: 'center'
+      }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-dim)', marginBottom: 4 }}>
+          Difference: magnitude {Math.abs(magB - magA)}
+        </div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 20, fontWeight: 700, color: 'var(--accent)' }}>
+          10<sup style={{ fontSize: 12 }}>{Math.abs(magB - magA)}</sup> = {factor.toLocaleString()}x
+        </div>
+        <div style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>
+          A magnitude {Math.max(magA, magB)} earthquake has {factor.toLocaleString()}x the ground motion of magnitude {Math.min(magA, magB)}
+        </div>
+      </div>
+
+      <div style={{
+        fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-dim)',
+        lineHeight: 1.7, marginTop: 14
+      }}>
+        <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Real-world note:</span> The 2011 Japan earthquake (magnitude 9.1) released more energy than all earthquakes in the previous decade combined. The 1960 Chile earthquake (<span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>9.5</span>) remains the strongest ever recorded — about <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>178x</span> more energy than San Francisco's 1906 quake (7.9). Without exponential notation, these numbers would be unwritable.
+      </div>
+    </div>
+  );
+}
+
+// ===================== SCREEN DIAGONAL EXAMPLE =====================
+function ScreenDiagonalExample() {
+  const [width, setWidth] = useState(13.6);
+  const [height, setHeight] = useState(7.6);
+  const [activePreset, setActivePreset] = useState(1);
+
+  const presets = [
+    { label: '13-inch', w: 11.3, h: 7.1 },
+    { label: '15.6-inch', w: 13.6, h: 7.6 },
+    { label: '27-inch', w: 23.5, h: 13.2 }
+  ];
+
+  const diagonal = Math.sqrt(width * width + height * height);
+
+  // SVG dimensions
+  const svgW = 400;
+  const svgH = 260;
+  const padding = 40;
+
+  // Scale monitor to fit
+  const maxMonW = svgW - padding * 2 - 60;
+  const maxMonH = svgH - padding * 2 - 40;
+  const scale = Math.min(maxMonW / width, maxMonH / height);
+  const monW = width * scale;
+  const monH = height * scale;
+  const monX = (svgW - monW) / 2;
+  const monY = padding + 10;
+
+  function selectPreset(i) {
+    setActivePreset(i);
+    setWidth(presets[i].w);
+    setHeight(presets[i].h);
+  }
+
+  return (
+    <div>
+      <div style={{
+        fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-secondary)',
+        lineHeight: 1.7, marginBottom: 16
+      }}>
+        When a store advertises a <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>"27-inch monitor,"</span> they mean the diagonal measurement — not the width or height. To find it, you need the Pythagorean theorem and a square root: <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>d = {'\u221A'}(w{'\u00B2'} + h{'\u00B2'})</span>. This is one of the most practical uses of square roots in everyday life. It's why a 27-inch 16:9 monitor has a very different viewable area than a 27-inch 4:3 monitor — same diagonal, completely different width and height.
+      </div>
+
+      <div style={{
+        background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)',
+        padding: '10px 16px', marginBottom: 12, textAlign: 'center',
+        fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--text-primary)',
+        border: '1px solid var(--border)'
+      }}>
+        d = {'\u221A'}(w{'\u00B2'} + h{'\u00B2'})
+      </div>
+
+      <div style={{
+        background: 'rgba(232,68,58,0.06)', borderRadius: 'var(--radius-sm)',
+        padding: '12px 16px', marginBottom: 12,
+        border: '1px solid rgba(232,68,58,0.12)'
+      }}>
+        <div style={{
+          fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent)',
+          textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6
+        }}>What you're seeing</div>
+        <div style={{
+          fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-secondary)',
+          lineHeight: 1.7
+        }}>
+          The monitor below shows the width, height, and diagonal as a right triangle overlay. The dashed lines form the two legs (width and height), and the solid red line is the hypotenuse (diagonal). Click the preset buttons to see common screen sizes, or use the sliders for custom dimensions. The step-by-step calculation below breaks down exactly how the square root is computed.
+        </div>
+      </div>
+
+      {/* Preset buttons */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+        {presets.map((p, i) => (
+          <button key={i} onClick={() => selectPreset(i)} style={{
+            flex: 1,
+            background: activePreset === i ? 'var(--accent-soft)' : 'var(--bg-elevated)',
+            border: activePreset === i ? '1px solid var(--border-accent)' : '1px solid var(--border)',
+            color: activePreset === i ? 'var(--accent)' : 'var(--text-secondary)',
+            padding: '8px 12px', borderRadius: 'var(--radius-sm)',
+            cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 12,
+            fontWeight: 600, transition: 'var(--transition)'
+          }}>
+            {p.label}
+          </button>
+        ))}
+      </div>
+
+      {/* SVG Monitor */}
+      <div style={{
+        background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)',
+        border: '1px solid var(--border)', padding: 8, marginBottom: 12
+      }}>
+        <svg viewBox={`0 0 ${svgW} ${svgH}`} style={{ width: '100%', display: 'block' }}>
+          {/* Monitor bezel */}
+          <rect x={monX - 8} y={monY - 8} width={monW + 16} height={monH + 16}
+            rx="6" fill="none" stroke="rgba(155,149,168,0.3)" strokeWidth="2" />
+
+          {/* Screen */}
+          <rect x={monX} y={monY} width={monW} height={monH}
+            rx="2" fill="rgba(232,68,58,0.06)" stroke="rgba(232,68,58,0.3)" strokeWidth="1" />
+
+          {/* Stand */}
+          <line x1={svgW / 2} y1={monY + monH + 8} x2={svgW / 2} y2={monY + monH + 28}
+            stroke="rgba(155,149,168,0.3)" strokeWidth="3" />
+          <ellipse cx={svgW / 2} cy={monY + monH + 30} rx="25" ry="4"
+            fill="none" stroke="rgba(155,149,168,0.3)" strokeWidth="1.5" />
+
+          {/* Dashed right triangle */}
+          {/* Bottom edge (width) */}
+          <line x1={monX} y1={monY + monH} x2={monX + monW} y2={monY + monH}
+            stroke="#3dd68c" strokeWidth="2" strokeDasharray="4,4" opacity="0.8" />
+          {/* Right edge (height) */}
+          <line x1={monX + monW} y1={monY} x2={monX + monW} y2={monY + monH}
+            stroke="#5ba8f7" strokeWidth="2" strokeDasharray="4,4" opacity="0.8" />
+          {/* Diagonal */}
+          <line x1={monX} y1={monY + monH} x2={monX + monW} y2={monY}
+            stroke="#e8443a" strokeWidth="2.5" />
+          {/* Right angle square */}
+          <rect x={monX + monW - 10} y={monY + monH - 10} width="10" height="10"
+            fill="none" stroke="rgba(240,237,245,0.4)" strokeWidth="1" />
+
+          {/* Width label */}
+          <text x={monX + monW / 2} y={monY + monH + 20}
+            fill="#3dd68c" fontSize="11" fontFamily="JetBrains Mono" fontWeight="600"
+            textAnchor="middle">
+            w = {width}"
+          </text>
+          {/* Height label */}
+          <text x={monX + monW + 22} y={monY + monH / 2 + 4}
+            fill="#5ba8f7" fontSize="11" fontFamily="JetBrains Mono" fontWeight="600"
+            textAnchor="start">
+            h = {height}"
+          </text>
+          {/* Diagonal label */}
+          <text x={monX + monW / 2 - 20} y={monY + monH / 2 - 10}
+            fill="#e8443a" fontSize="13" fontFamily="JetBrains Mono" fontWeight="700"
+            textAnchor="middle"
+            transform={`rotate(${-Math.atan2(monH, monW) * 180 / Math.PI}, ${monX + monW / 2 - 20}, ${monY + monH / 2 - 10})`}>
+            d = {diagonal.toFixed(1)}"
+          </text>
+        </svg>
+      </div>
+
+      {/* Sliders */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
+        <div style={{
+          background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)',
+          padding: 12, border: '1px solid var(--border)'
+        }}>
+          <label style={{
+            fontFamily: 'var(--font-mono)', fontSize: 11, color: '#3dd68c',
+            textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: 8
+          }}>Width: {width}"</label>
+          <input type="range" min={5} max={30} step={0.1} value={width}
+            onChange={e => { setWidth(Number(e.target.value)); setActivePreset(-1); }}
+            style={{ width: '100%', accentColor: '#3dd68c' }} />
+        </div>
+        <div style={{
+          background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)',
+          padding: 12, border: '1px solid var(--border)'
+        }}>
+          <label style={{
+            fontFamily: 'var(--font-mono)', fontSize: 11, color: '#5ba8f7',
+            textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: 8
+          }}>Height: {height}"</label>
+          <input type="range" min={3} max={20} step={0.1} value={height}
+            onChange={e => { setHeight(Number(e.target.value)); setActivePreset(-1); }}
+            style={{ width: '100%', accentColor: '#5ba8f7' }} />
+        </div>
+      </div>
+
+      {/* Step-by-step calculation */}
+      <div style={{
+        background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)',
+        padding: 14, border: '1px solid var(--border)'
+      }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>
+          Calculation
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text-secondary)' }}>
+            w{'\u00B2'} = {width}{'\u00B2'} = {(width * width).toFixed(2)}
+          </div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text-secondary)' }}>
+            h{'\u00B2'} = {height}{'\u00B2'} = {(height * height).toFixed(2)}
+          </div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text-secondary)' }}>
+            w{'\u00B2'} + h{'\u00B2'} = {(width * width + height * height).toFixed(2)}
+          </div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 15, fontWeight: 700, color: 'var(--accent)', marginTop: 4 }}>
+            d = {'\u221A'}{(width * width + height * height).toFixed(2)} = {diagonal.toFixed(2)}"
+          </div>
+        </div>
+      </div>
+
+      <div style={{
+        fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-dim)',
+        lineHeight: 1.7, marginTop: 14
+      }}>
+        <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Practical note:</span> This same formula applies whenever you need to find a straight-line distance: the length of a ramp, the reach of a ladder leaning against a wall, or the size of fabric to cover a picture frame diagonally. Anytime you see two perpendicular measurements and need the shortcut between them, you're using <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>{'\u221A'}(a{'\u00B2'} + b{'\u00B2'})</span>.
+      </div>
     </div>
   );
 }

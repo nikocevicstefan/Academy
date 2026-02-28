@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Logarithms & Exponentials — Math Foundations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-deep: #06060b;
+    --bg-primary: #0a0a12;
+    --bg-card: rgba(255, 255, 255, 0.03);
+    --bg-card-hover: rgba(255, 255, 255, 0.06);
+    --border-subtle: rgba(255, 255, 255, 0.06);
+    --border-hover: rgba(255, 255, 255, 0.12);
+    --text-primary: #e8e6f0;
+    --text-secondary: rgba(232, 230, 240, 0.55);
+    --text-tertiary: rgba(232, 230, 240, 0.3);
+    --font-display: 'Instrument Serif', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --accent: #10b981;
+    --accent-bright: #34d399;
+    --accent-dim: #047857;
+    --accent-glow: rgba(16, 185, 129, 0.3);
+    --accent-bg: rgba(16, 185, 129, 0.06);
+    --accent2: #06b6d4;
+    --accent3: #14b8a6;
+    --success: #4ade80;
+    --warning: #fbbf24;
+    --error: #f87171;
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  html {
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    min-height: 100vh;
+    overflow-x: hidden;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% -10%, rgba(16, 185, 129, 0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 50%, rgba(6, 182, 212, 0.04) 0%, transparent 50%),
+      radial-gradient(ellipse 50% 50% at 20% 80%, rgba(20, 184, 166, 0.03) 0%, transparent 50%),
+      var(--bg-deep);
+  }
+
+  #root { min-height: 100vh; }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.3;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 256px;
+  }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.14); }
+
+  ::selection { background: rgba(16, 185, 129, 0.3); color: #fff; }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulseGlow {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  @keyframes celebratePop {
+    0% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes confettiFall {
+    0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+  @keyframes breathe {
+    0%, 100% { box-shadow: 0 0 20px rgba(16,185,129,0.1); }
+    50% { box-shadow: 0 0 30px rgba(16,185,129,0.25); }
+  }
+
+  button { cursor: pointer; }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+/* ================================================================
+   CONSTANTS & HELPERS
+   ================================================================ */
+const TOTAL_STEPS = 8;
+const STEP_TITLES = [
+  'Landing',
+  'Exponential Functions',
+  'What Is a Logarithm?',
+  'Properties of Logarithms',
+  'Solving Exponential Equations',
+  'The Number e',
+  'Logarithmic Scales',
+  'Practice'
+];
+
+/* ================================================================
+   GRID BACKGROUND
+   ================================================================ */
+function GridBackground() {
+  return (
+    <div style={{ position:'fixed', inset:0, zIndex:0, pointerEvents:'none', opacity:0.35 }}>
+      <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+            <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(255,255,255,0.015)" strokeWidth="1"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#grid)" />
+      </svg>
+    </div>
+  );
+}
+
+/* ================================================================
+   PROGRESS BAR
+   ================================================================ */
+function ProgressBar({ step, total }) {
+  return (
+    <div style={{
+      position:'sticky', top:0, zIndex:100,
+      background:'rgba(6,6,11,0.85)', backdropFilter:'blur(16px)',
+      borderBottom:'1px solid var(--border-subtle)',
+      padding:'12px 24px',
+    }}>
+      <div style={{
+        maxWidth:900, margin:'0 auto',
+        display:'flex', alignItems:'center', gap:12,
+      }}>
+        <a href="index.html" style={{
+          fontFamily:'var(--font-mono)', fontSize:11, letterSpacing:'0.06em',
+          textTransform:'uppercase', color:'var(--text-tertiary)',
+          textDecoration:'none', whiteSpace:'nowrap',
+          transition:'color 0.3s ease',
+        }}
+        onMouseEnter={e => e.target.style.color='var(--accent)'}
+        onMouseLeave={e => e.target.style.color='var(--text-tertiary)'}
+        >
+          &larr; Lessons
+        </a>
+        <div style={{ flex:1, display:'flex', alignItems:'center', gap:4 }}>
+          {Array.from({length:total}, (_,i) => (
+            <div key={i} style={{
+              flex:1, height:3, borderRadius:2,
+              background: i < step ? 'var(--accent)' : i === step ? 'var(--accent-dim)' : 'rgba(255,255,255,0.06)',
+              transition:'background 0.5s var(--ease-out-expo)',
+              position:'relative',
+              overflow:'hidden',
+            }}>
+              {i === step && (
+                <div style={{
+                  position:'absolute', inset:0, borderRadius:2,
+                  background:'linear-gradient(90deg, var(--accent), var(--accent-bright))',
+                  animation:'breathe 2s ease-in-out infinite',
+                  transformOrigin:'left',
+                }}/>
+              )}
+            </div>
+          ))}
+        </div>
+        <span style={{
+          fontFamily:'var(--font-mono)', fontSize:11, color:'var(--text-tertiary)',
+          letterSpacing:'0.04em', whiteSpace:'nowrap',
+        }}>
+          {step + 1} / {total}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   NAVIGATION BUTTONS
+   ================================================================ */
+function NavButtons({ step, setStep, total }) {
+  return (
+    <div style={{
+      display:'flex', justifyContent:'space-between', alignItems:'center',
+      marginTop:48, gap:16,
+    }}>
+      {step > 0 ? (
+        <button onClick={() => setStep(step - 1)} style={{
+          display:'flex', alignItems:'center', gap:8,
+          fontFamily:'var(--font-body)', fontSize:15, fontWeight:400,
+          color:'var(--text-secondary)', background:'none',
+          border:'1px solid var(--border-subtle)', borderRadius:12,
+          padding:'12px 24px', transition:'all 0.3s var(--ease-out-expo)',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor='var(--accent-dim)'; e.currentTarget.style.color='var(--text-primary)'; }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor='var(--border-subtle)'; e.currentTarget.style.color='var(--text-secondary)'; }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          Previous
+        </button>
+      ) : <div />}
+      {step < total - 1 ? (
+        <button onClick={() => setStep(step + 1)} style={{
+          display:'flex', alignItems:'center', gap:8,
+          fontFamily:'var(--font-body)', fontSize:15, fontWeight:500,
+          color:'#fff', background:'linear-gradient(135deg, var(--accent-dim), var(--accent))',
+          border:'none', borderRadius:12,
+          padding:'12px 28px', transition:'all 0.3s var(--ease-out-expo)',
+          boxShadow:'0 4px 20px rgba(16,185,129,0.2)',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.boxShadow='0 6px 28px rgba(16,185,129,0.35)'; e.currentTarget.style.transform='translateY(-1px)'; }}
+        onMouseLeave={e => { e.currentTarget.style.boxShadow='0 4px 20px rgba(16,185,129,0.2)'; e.currentTarget.style.transform='translateY(0)'; }}
+        >
+          Next
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      ) : (
+        <button onClick={() => {
+          try {
+            const progress = JSON.parse(localStorage.getItem('math-progress') || '[]');
+            if (!progress.includes(12)) {
+              progress.push(12);
+              localStorage.setItem('math-progress', JSON.stringify(progress));
+            }
+          } catch(e) {}
+          window.location.href = 'index.html';
+        }} style={{
+          display:'flex', alignItems:'center', gap:8,
+          fontFamily:'var(--font-body)', fontSize:15, fontWeight:500,
+          color:'#fff', background:'linear-gradient(135deg, var(--accent), var(--accent-bright))',
+          border:'none', borderRadius:12,
+          padding:'12px 28px', transition:'all 0.3s var(--ease-out-expo)',
+          boxShadow:'0 4px 20px rgba(16,185,129,0.2)',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.boxShadow='0 6px 28px rgba(16,185,129,0.35)'; e.currentTarget.style.transform='translateY(-1px)'; }}
+        onMouseLeave={e => { e.currentTarget.style.boxShadow='0 4px 20px rgba(16,185,129,0.2)'; e.currentTarget.style.transform='translateY(0)'; }}
+        >
+          Complete Lesson
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </button>
+      )}
+    </div>
+  );
+}
+
+/* ================================================================
+   SECTION HEADER
+   ================================================================ */
+function SectionHeader({ title, subtitle }) {
+  return (
+    <div style={{ marginBottom:32, animation:'fadeInUp 0.7s var(--ease-out-expo) both' }}>
+      <h2 style={{
+        fontFamily:'var(--font-display)', fontSize:'clamp(32px, 5vw, 48px)',
+        fontWeight:400, lineHeight:1.1, letterSpacing:'-0.01em',
+        marginBottom:12,
+        background:'linear-gradient(135deg, var(--text-primary) 0%, var(--accent-bright) 100%)',
+        WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent',
+      }}>
+        {title}
+      </h2>
+      {subtitle && (
+        <p style={{
+          fontFamily:'var(--font-body)', fontSize:'clamp(15px, 1.8vw, 18px)',
+          fontWeight:300, color:'var(--text-secondary)', lineHeight:1.6,
+          maxWidth:580,
+        }}>
+          {subtitle}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/* ================================================================
+   CARD WRAPPER
+   ================================================================ */
+function Card({ children, style }) {
+  return (
+    <div style={{
+      background:'var(--bg-card)', border:'1px solid var(--border-subtle)',
+      borderRadius:16, padding:'clamp(20px, 3vw, 32px)',
+      backdropFilter:'blur(8px)', position:'relative', overflow:'hidden',
+      ...style,
+    }}>
+      {children}
+    </div>
+  );
+}
+
+/* ================================================================
+   KEY INSIGHT BOX
+   ================================================================ */
+function KeyInsight({ children, color }) {
+  const c = color || 'var(--accent)';
+  return (
+    <div style={{
+      background:`rgba(16, 185, 129, 0.04)`,
+      border:`1px solid rgba(16, 185, 129, 0.12)`,
+      borderRadius:12,
+      padding:'20px 24px', marginTop:20, marginBottom:20, position:'relative',
+      borderLeft:`3px solid rgba(16, 185, 129, 0.5)`,
+    }}>
+      <div style={{
+        fontFamily:'var(--font-mono)', fontSize:10, letterSpacing:'0.1em',
+        textTransform:'uppercase', color:'var(--accent-bright)',
+        marginBottom:10, fontWeight:500,
+      }}>
+        Key Insight
+      </div>
+      {children}
+    </div>
+  );
+}
+
+/* ================================================================
+   MATH EXPRESSION (inline mono with accent)
+   ================================================================ */
+function M({ children }) {
+  return (
+    <span style={{
+      fontFamily:'var(--font-mono)', color:'var(--accent-bright)',
+      fontSize:'0.92em', fontWeight:500,
+    }}>
+      {children}
+    </span>
+  );
+}
+
+/* ================================================================
+   PARAGRAPH STYLE
+   ================================================================ */
+const P_STYLE = {
+  fontFamily:'var(--font-body)', fontSize:15, color:'var(--text-primary)',
+  lineHeight:1.75, fontWeight:300, marginBottom:16,
+};
+
+const P_SECONDARY = {
+  ...P_STYLE,
+  color:'var(--text-secondary)',
+};
+
+/* ================================================================
+   TODO PLACEHOLDER
+   ================================================================ */
+function TodoPlaceholder({ text }) {
+  return (
+    <div style={{
+      background:'rgba(251, 191, 36, 0.04)',
+      border:'1px dashed rgba(251, 191, 36, 0.2)',
+      borderRadius:12, padding:'24px 28px',
+      marginTop:24, marginBottom:8,
+      textAlign:'center',
+    }}>
+      <div style={{
+        fontFamily:'var(--font-mono)', fontSize:12, color:'var(--warning)',
+        letterSpacing:'0.04em', opacity:0.7,
+      }}>
+        {'{'}/* TODO: {text} */{'}'}
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   ROUGH DRAFT BANNER
+   ================================================================ */
+function DraftBanner() {
+  return (
+    <div style={{
+      background:'rgba(251, 191, 36, 0.06)',
+      border:'1px solid rgba(251, 191, 36, 0.15)',
+      borderRadius:10, padding:'10px 20px',
+      display:'flex', alignItems:'center', gap:10,
+      marginBottom:32,
+      animation:'slideDown 0.6s var(--ease-out-expo) both',
+    }}>
+      <div style={{
+        width:8, height:8, borderRadius:'50%',
+        background:'var(--warning)',
+        boxShadow:'0 0 8px rgba(251,191,36,0.5)',
+        animation:'pulseGlow 2s ease-in-out infinite',
+      }} />
+      <span style={{
+        fontFamily:'var(--font-mono)', fontSize:11, letterSpacing:'0.08em',
+        textTransform:'uppercase', color:'var(--warning)', fontWeight:500,
+      }}>
+        Rough Draft
+      </span>
+      <span style={{
+        fontFamily:'var(--font-body)', fontSize:13, color:'var(--text-tertiary)',
+        marginLeft:4,
+      }}>
+        -- Text content only. Interactive visualizations coming soon.
+      </span>
+    </div>
+  );
+}
+
+/* ================================================================
+   STEP 0 -- LANDING
+   ================================================================ */
+function StepLanding({ onStart }) {
+  return (
+    <div style={{ textAlign:'center', padding:'clamp(40px, 8vh, 80px) 0' }}>
+      {/* Floating symbols */}
+      <div style={{ position:'relative', height:0 }}>
+        {['log','e','ln','10\u00B2','2\u00B3','\u221E'].map((s,i) => (
+          <span key={i} style={{
+            position:'absolute', fontFamily:'var(--font-display)',
+            fontSize:`${16 + Math.random()*14}px`,
+            color:`rgba(16,185,129,${0.04 + Math.random()*0.06})`,
+            left:`${10 + (i*15)%80}%`, top:`${-30 + (i*23)%60}px`,
+            animation:`float ${3.5 + i*0.6}s ease-in-out infinite`,
+            animationDelay:`${i*0.3}s`, pointerEvents:'none',
+          }}>{s}</span>
+        ))}
+      </div>
+
+      {/* Draft badge */}
+      <div style={{
+        display:'inline-flex', alignItems:'center', gap:8,
+        padding:'6px 16px', borderRadius:100,
+        border:'1px solid rgba(251, 191, 36, 0.2)',
+        background:'rgba(251, 191, 36, 0.04)',
+        fontFamily:'var(--font-mono)', fontSize:12,
+        letterSpacing:'0.08em', textTransform:'uppercase',
+        color:'var(--warning)', marginBottom:16,
+        animation:'slideDown 0.8s var(--ease-out-expo) both',
+      }}>
+        <span style={{
+          width:6, height:6, borderRadius:'50%', background:'var(--warning)',
+          boxShadow:'0 0 8px rgba(251,191,36,0.5)',
+          animation:'pulseGlow 2s ease-in-out infinite',
+        }} />
+        Rough Draft
+      </div>
+
+      <br />
+
+      {/* Lesson badge */}
+      <div style={{
+        display:'inline-flex', alignItems:'center', gap:8,
+        padding:'6px 16px', borderRadius:100,
+        border:'1px solid var(--border-subtle)',
+        background:'rgba(255,255,255,0.02)',
+        fontFamily:'var(--font-mono)', fontSize:12,
+        letterSpacing:'0.08em', textTransform:'uppercase',
+        color:'var(--text-secondary)', marginBottom:36,
+        animation:'slideDown 0.8s var(--ease-out-expo) 0.1s both',
+      }}>
+        <span style={{
+          width:6, height:6, borderRadius:'50%', background:'var(--accent)',
+          boxShadow:'0 0 8px var(--accent)',
+          animation:'pulseGlow 2s ease-in-out infinite',
+        }} />
+        Lesson 12
+      </div>
+
+      <h1 style={{
+        fontFamily:'var(--font-display)',
+        fontSize:'clamp(44px, 7vw, 80px)',
+        fontWeight:400, lineHeight:1.05,
+        letterSpacing:'-0.02em', marginBottom:24,
+        animation:'fadeInUp 1s var(--ease-out-expo) 0.1s both',
+      }}>
+        <span style={{
+          background:'linear-gradient(135deg, #e8e6f0 0%, rgba(232,230,240,0.6) 100%)',
+          WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent',
+        }}>Logarithms</span>
+        <br/>
+        <span style={{
+          fontStyle:'italic',
+          background:'linear-gradient(135deg, var(--accent), var(--accent2))',
+          WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent',
+        }}>&amp; Exponentials</span>
+      </h1>
+
+      <p style={{
+        fontFamily:'var(--font-body)', fontSize:'clamp(15px, 2vw, 19px)',
+        fontWeight:300, color:'var(--text-secondary)',
+        maxWidth:480, margin:'0 auto 48px', lineHeight:1.65,
+        animation:'fadeInUp 1s var(--ease-out-expo) 0.25s both',
+      }}>
+        The inverse of powers. Growth, decay, and the number e.
+      </p>
+
+      <button onClick={onStart} style={{
+        fontFamily:'var(--font-body)', fontSize:17, fontWeight:500,
+        color:'#fff', background:'linear-gradient(135deg, var(--accent-dim), var(--accent))',
+        border:'none', borderRadius:14, padding:'16px 44px',
+        boxShadow:'0 4px 24px rgba(16,185,129,0.25)',
+        transition:'all 0.3s var(--ease-out-expo)',
+        animation:'fadeInUp 1s var(--ease-out-expo) 0.4s both',
+      }}
+      onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 8px 32px rgba(16,185,129,0.35)'; }}
+      onMouseLeave={e => { e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='0 4px 24px rgba(16,185,129,0.25)'; }}
+      >
+        Begin
+      </button>
+    </div>
+  );
+}
+
+
+/* ================================================================
+   STEP 1 -- EXPONENTIAL FUNCTIONS
+   ================================================================ */
+function Step1Exponentials() {
+  return (
+    <div style={{ animation:'fadeIn 0.5s ease both' }}>
+      <DraftBanner />
+      <SectionHeader
+        title="Exponential Functions"
+        subtitle="Functions where the variable lives in the exponent. They model everything from bank accounts to pandemics."
+      />
+
+      <Card style={{ marginBottom:24 }}>
+        <p style={P_STYLE}>
+          An <strong style={{ color:'var(--accent-bright)' }}>exponential function</strong> has the form <M>y = b^x</M>, where <M>b {'>'} 0</M> and <M>b {'\u2260'} 1</M>. The base <M>b</M> is a fixed positive number, and the variable <M>x</M> appears in the exponent. This is fundamentally different from polynomial functions like <M>x{'\u00B2'}</M> or <M>x{'\u00B3'}</M>, where the variable is in the base and the exponent is fixed.
+        </p>
+        <p style={P_STYLE}>
+          When <M>b {'>'} 1</M>, the function models <strong style={{ color:'var(--accent-bright)' }}>exponential growth</strong>. The output gets larger and larger, faster and faster. You see this pattern in population growth, compound interest, viral spread, and nuclear chain reactions. Each step multiplies the previous value by the same factor, so the curve sweeps upward with increasing steepness.
+        </p>
+        <p style={P_STYLE}>
+          When <M>0 {'<'} b {'<'} 1</M>, the function models <strong style={{ color:'var(--accent-bright)' }}>exponential decay</strong>. The output shrinks toward zero but never quite reaches it. This describes radioactive decay, depreciation of assets, Newton's law of cooling, and how medications leave your bloodstream. The curve drops steeply at first, then levels off as it approaches zero asymptotically.
+        </p>
+      </Card>
+
+      <KeyInsight>
+        <p style={{ ...P_STYLE, marginBottom:0 }}>
+          The defining property of exponential functions is a <strong style={{ color:'var(--accent-bright)' }}>constant ratio</strong> of change. A linear function adds the same amount each step (constant difference). An exponential function <em>multiplies</em> by the same amount each step (constant ratio). This is why exponentials eventually overtake any polynomial -- multiplication compounds in a way that addition cannot.
+        </p>
+      </KeyInsight>
+
+      <Card style={{ marginBottom:24 }}>
+        <p style={P_STYLE}>
+          <strong style={{ color:'var(--accent-bright)' }}>Example: Compound Interest.</strong> Suppose you invest $1,000 at 5% annual interest. Each year, the balance is multiplied by 1.05. The formula is <M>A = 1000(1.05)^t</M>, where <M>t</M> is years.
+        </p>
+        <div style={{
+          background:'var(--bg-card)', border:'1px solid var(--border-subtle)',
+          borderRadius:10, padding:'16px 20px', marginBottom:16,
+          fontFamily:'var(--font-mono)', fontSize:14, color:'var(--accent-bright)',
+          lineHeight:1.8,
+        }}>
+          At t = 0: &nbsp; A = $1,000.00<br/>
+          At t = 5: &nbsp; A = $1,276.28<br/>
+          At t = 10: A = $1,628.89<br/>
+          At t = 20: A = $2,653.30<br/>
+          At t = 30: A = $4,321.94
+        </div>
+        <p style={P_SECONDARY}>
+          Notice how the gains accelerate. The first 10 years added about $629, but the next 10 years added over $1,024. The money grows faster because the interest earns interest of its own. This compounding effect is the engine behind all exponential growth.
+        </p>
+      </Card>
+
+      <TodoPlaceholder text="Interactive -- exponential growth vs linear growth comparison graph" />
+    </div>
+  );
+}
+
+
+/* ================================================================
+   STEP 2 -- WHAT IS A LOGARITHM?
+   ================================================================ */
+function Step2WhatIsLog() {
+  return (
+    <div style={{ animation:'fadeIn 0.5s ease both' }}>
+      <DraftBanner />
+      <SectionHeader
+        title="What Is a Logarithm?"
+        subtitle="A logarithm answers the question: 'What exponent do I need?'"
+      />
+
+      <KeyInsight>
+        <p style={{ ...P_STYLE, marginBottom:0 }}>
+          <M>log_b(x)</M> answers the question: "<M>b</M> raised to <strong style={{ color:'var(--accent-bright)' }}>what power</strong> gives <M>x</M>?" A logarithm is simply the inverse of exponentiation. If <M>b^y = x</M>, then <M>log_b(x) = y</M>. These are two ways of saying exactly the same thing, just like multiplication and division are two sides of the same coin.
+        </p>
+      </KeyInsight>
+
+      <Card style={{ marginBottom:24 }}>
+        <p style={P_STYLE}>
+          Let's build intuition with concrete examples. Each logarithm below just asks "what exponent?"
+        </p>
+        <div style={{
+          background:'var(--bg-card)', border:'1px solid var(--border-subtle)',
+          borderRadius:10, padding:'20px 24px', marginBottom:16,
+          fontFamily:'var(--font-mono)', fontSize:14, color:'var(--text-primary)',
+          lineHeight:2.0,
+        }}>
+          <span style={{ color:'var(--accent-bright)' }}>log{'\u2082'}(8) = 3</span> &nbsp;&nbsp; because &nbsp; 2{'\u00B3'} = 8<br/>
+          <span style={{ color:'var(--accent-bright)' }}>log{'\u2081'}{'\u2080'}(1000) = 3</span> &nbsp;&nbsp; because &nbsp; 10{'\u00B3'} = 1000<br/>
+          <span style={{ color:'var(--accent-bright)' }}>log{'\u2085'}(25) = 2</span> &nbsp;&nbsp; because &nbsp; 5{'\u00B2'} = 25<br/>
+          <span style={{ color:'var(--accent-bright)' }}>log{'\u2083'}(81) = 4</span> &nbsp;&nbsp; because &nbsp; 3{'\u2074'} = 81<br/>
+          <span style={{ color:'var(--accent-bright)' }}>log{'\u2082'}(1) = 0</span> &nbsp;&nbsp; because &nbsp; 2{'\u2070'} = 1
+        </div>
+        <p style={P_STYLE}>
+          Notice that last example: the log of 1 is always 0, regardless of base, because any number raised to the zero power equals 1. Similarly, <M>log_b(b) = 1</M> for any valid base, because <M>b{'\u00B9'} = b</M>.
+        </p>
+      </Card>
+
+      <Card style={{ marginBottom:24 }}>
+        <p style={P_STYLE}>
+          Since a logarithm is the <strong style={{ color:'var(--accent-bright)' }}>inverse</strong> of an exponential, the graph of <M>y = log_b(x)</M> is a reflection of <M>y = b^x</M> across the line <M>y = x</M>. Where the exponential curve shoots upward, the logarithmic curve crawls to the right. Where the exponential crosses through (0, 1), the logarithm crosses through (1, 0). The exponential has a horizontal asymptote at <M>y = 0</M>; the logarithm has a vertical asymptote at <M>x = 0</M>.
+        </p>
+        <p style={P_STYLE}>
+          You will encounter two special shorthand notations constantly:
+        </p>
+        <div style={{
+          background:'var(--bg-card)', border:'1px solid var(--border-subtle)',
+          borderRadius:10, padding:'16px 20px', marginBottom:16,
+          fontFamily:'var(--font-mono)', fontSize:14, lineHeight:1.8,
+        }}>
+          <span style={{ color:'var(--accent-bright)' }}>log(x)</span> <span style={{ color:'var(--text-secondary)' }}> = log{'\u2081'}{'\u2080'}(x)</span> &nbsp;&mdash;&nbsp; <span style={{ color:'var(--text-secondary)', fontFamily:'var(--font-body)', fontSize:13 }}>the common logarithm (base 10)</span><br/>
+          <span style={{ color:'var(--accent-bright)' }}>ln(x)</span> <span style={{ color:'var(--text-secondary)' }}> = log_e(x)</span> &nbsp;&mdash;&nbsp; <span style={{ color:'var(--text-secondary)', fontFamily:'var(--font-body)', fontSize:13 }}>the natural logarithm (base e {'\u2248'} 2.71828)</span>
+        </div>
+        <p style={P_SECONDARY}>
+          The common log is used for orders of magnitude (pH, decibels, the Richter scale). The natural log appears everywhere in calculus, physics, and continuous growth models. We will explore the number <M>e</M> in depth in Step 5.
+        </p>
+      </Card>
+
+      <TodoPlaceholder text="Interactive -- type a number, see it broken down as a power of different bases" />
+    </div>
+  );
+}
+
+
+/* ================================================================
+   STEP 3 -- PROPERTIES OF LOGARITHMS
+   ================================================================ */
+function Step3Properties() {
+  return (
+    <div style={{ animation:'fadeIn 0.5s ease both' }}>
+      <DraftBanner />
+      <SectionHeader
+        title="Properties of Logarithms"
+        subtitle="Three rules that turn multiplication into addition, division into subtraction, and exponents into coefficients."
+      />
+
+      <Card style={{ marginBottom:24 }}>
+        <p style={P_STYLE}>
+          Logarithms were invented precisely because they convert hard arithmetic operations into easier ones. Before electronic calculators existed, these properties were not just theoretical niceties -- they were essential computational tools.
+        </p>
+
+        <div style={{
+          background:'rgba(16, 185, 129, 0.04)',
+          border:'1px solid rgba(16, 185, 129, 0.12)',
+          borderRadius:12, padding:'20px 24px', marginBottom:20,
+        }}>
+          <div style={{
+            fontFamily:'var(--font-mono)', fontSize:10, letterSpacing:'0.1em',
+            textTransform:'uppercase', color:'var(--accent-bright)',
+            marginBottom:14, fontWeight:500,
+          }}>
+            The Three Laws of Logarithms
+          </div>
+          <div style={{
+            fontFamily:'var(--font-mono)', fontSize:15, color:'var(--text-primary)',
+            lineHeight:2.4,
+          }}>
+            <strong style={{ color:'var(--accent-bright)' }}>Product Rule:</strong> &nbsp; log_b(M {'\u00B7'} N) = log_b(M) + log_b(N)<br/>
+            <strong style={{ color:'var(--accent-bright)' }}>Quotient Rule:</strong> &nbsp; log_b(M / N) = log_b(M) - log_b(N)<br/>
+            <strong style={{ color:'var(--accent-bright)' }}>Power Rule:</strong> &nbsp; log_b(M^p) = p {'\u00B7'} log_b(M)
+          </div>
+        </div>
+
+        <p style={P_STYLE}>
+          The <strong style={{ color:'var(--accent-bright)' }}>Product Rule</strong> says that the log of a product equals the sum of the logs. Multiplication becomes addition. For example, <M>log(50 {'\u00B7'} 200) = log(50) + log(200)</M>. This is exactly what slide rules exploited: by adding physical lengths (representing logarithms), engineers could multiply numbers mechanically.
+        </p>
+        <p style={P_STYLE}>
+          The <strong style={{ color:'var(--accent-bright)' }}>Quotient Rule</strong> is the mirror image: the log of a quotient equals the difference of the logs. Division becomes subtraction. So <M>log(5000 / 25) = log(5000) - log(25)</M>.
+        </p>
+        <p style={P_STYLE}>
+          The <strong style={{ color:'var(--accent-bright)' }}>Power Rule</strong> pulls exponents down as multipliers. <M>log(x{'\u00B3'}) = 3 {'\u00B7'} log(x)</M>. This is the most powerful of the three rules for solving equations, because it lets us bring the variable down from an exponent where it is trapped.
+        </p>
+      </Card>
+
+      <KeyInsight>
+        <p style={{ ...P_STYLE, marginBottom:8 }}>
+          <strong style={{ color:'var(--accent-bright)' }}>Historical note:</strong> John Napier invented logarithms in 1614 to simplify the astronomical calculations needed for navigation. Before calculators, scientists and engineers used printed log tables to turn multiplications into additions. Henry Briggs later computed the first table of common (base-10) logarithms. For over 350 years, log tables and slide rules were the primary computational tools of science.
+        </p>
+      </KeyInsight>
+
+      <Card>
+        <p style={P_STYLE}>
+          There is one more essential formula: the <strong style={{ color:'var(--accent-bright)' }}>Change of Base</strong> rule. Your calculator has buttons for <M>log</M> (base 10) and <M>ln</M> (base e), but what if you need <M>log{'\u2082'}(50)</M>? The change of base formula lets you convert:
+        </p>
+        <div style={{
+          background:'var(--bg-card)', border:'1px solid var(--border-subtle)',
+          borderRadius:10, padding:'16px 20px', marginBottom:16,
+          fontFamily:'var(--font-mono)', fontSize:15, color:'var(--accent-bright)',
+          lineHeight:1.8, textAlign:'center',
+        }}>
+          log_b(x) = log(x) / log(b) = ln(x) / ln(b)
+        </div>
+        <p style={P_SECONDARY}>
+          For example, <M>log{'\u2082'}(50) = ln(50) / ln(2) {'\u2248'} 3.912 / 0.693 {'\u2248'} 5.64</M>. This means <M>2^5.64 {'\u2248'} 50</M>. The change of base formula works because the ratio of logarithms is the same regardless of which base you use for the computation -- the base cancels out.
+        </p>
+      </Card>
+
+      <TodoPlaceholder text="Interactive -- log property explorer, expand/condense expressions" />
+    </div>
+  );
+}
+
+
+/* ================================================================
+   STEP 4 -- SOLVING EXPONENTIAL EQUATIONS
+   ================================================================ */
+function Step4Solving() {
+  return (
+    <div style={{ animation:'fadeIn 0.5s ease both' }}>
+      <DraftBanner />
+      <SectionHeader
+        title="Solving Exponential Equations"
+        subtitle="When the unknown is in the exponent, logarithms are the tool that brings it down."
+      />
+
+      <Card style={{ marginBottom:24 }}>
+        <p style={P_STYLE}>
+          The core strategy for solving exponential equations is straightforward: <strong style={{ color:'var(--accent-bright)' }}>take the logarithm of both sides</strong>. This works because logarithms are the inverse of exponentiation -- applying a log to an exponential "undoes" it and brings the exponent down where you can work with it using ordinary algebra.
+        </p>
+
+        <div style={{
+          background:'var(--bg-card)', border:'1px solid var(--border-subtle)',
+          borderRadius:12, padding:'20px 24px', marginBottom:20,
+        }}>
+          <div style={{
+            fontFamily:'var(--font-mono)', fontSize:10, letterSpacing:'0.1em',
+            textTransform:'uppercase', color:'var(--text-tertiary)',
+            marginBottom:12,
+          }}>
+            Example 1: Clean power
+          </div>
+          <div style={{
+            fontFamily:'var(--font-mono)', fontSize:14, color:'var(--text-primary)',
+            lineHeight:2.0,
+          }}>
+            <span style={{ color:'var(--accent-bright)' }}>2^x = 32</span><br/>
+            <span style={{ color:'var(--text-secondary)' }}>x = log{'\u2082'}(32) = 5</span> &nbsp;&nbsp; <span style={{ color:'var(--text-tertiary)', fontSize:12 }}>because 2{'\u2075'} = 32</span>
+          </div>
+        </div>
+
+        <div style={{
+          background:'var(--bg-card)', border:'1px solid var(--border-subtle)',
+          borderRadius:12, padding:'20px 24px', marginBottom:20,
+        }}>
+          <div style={{
+            fontFamily:'var(--font-mono)', fontSize:10, letterSpacing:'0.1em',
+            textTransform:'uppercase', color:'var(--text-tertiary)',
+            marginBottom:12,
+          }}>
+            Example 2: Non-integer answer
+          </div>
+          <div style={{
+            fontFamily:'var(--font-mono)', fontSize:14, color:'var(--text-primary)',
+            lineHeight:2.0,
+          }}>
+            <span style={{ color:'var(--accent-bright)' }}>3^x = 50</span><br/>
+            <span style={{ color:'var(--text-secondary)' }}>x = log(50) / log(3)</span><br/>
+            <span style={{ color:'var(--text-secondary)' }}>x {'\u2248'} 1.699 / 0.477 {'\u2248'} 3.56</span>
+          </div>
+        </div>
+
+        <div style={{
+          background:'var(--bg-card)', border:'1px solid var(--border-subtle)',
+          borderRadius:12, padding:'20px 24px', marginBottom:20,
+        }}>
+          <div style={{
+            fontFamily:'var(--font-mono)', fontSize:10, letterSpacing:'0.1em',
+            textTransform:'uppercase', color:'var(--text-tertiary)',
+            marginBottom:12,
+          }}>
+            Example 3: Isolate the exponential first
+          </div>
+          <div style={{
+            fontFamily:'var(--font-mono)', fontSize:14, color:'var(--text-primary)',
+            lineHeight:2.0,
+          }}>
+            <span style={{ color:'var(--accent-bright)' }}>5 {'\u00B7'} e^(0.03t) = 20</span><br/>
+            <span style={{ color:'var(--text-secondary)' }}>e^(0.03t) = 4</span> &nbsp;&nbsp; <span style={{ color:'var(--text-tertiary)', fontSize:12 }}>divide both sides by 5</span><br/>
+            <span style={{ color:'var(--text-secondary)' }}>0.03t = ln(4)</span> &nbsp;&nbsp; <span style={{ color:'var(--text-tertiary)', fontSize:12 }}>take ln of both sides</span><br/>
+            <span style={{ color:'var(--text-secondary)' }}>t = ln(4) / 0.03 {'\u2248'} 46.2</span>
+          </div>
+        </div>
+      </Card>
+
+      <Card style={{ marginBottom:24 }}>
+        <p style={P_STYLE}>
+          <strong style={{ color:'var(--accent-bright)' }}>Real application: "When will my investment double?"</strong> Suppose you invest at 5% annual interest. You want to find when <M>1000(1.05)^t = 2000</M>.
+        </p>
+        <div style={{
+          background:'var(--bg-card)', border:'1px solid var(--border-subtle)',
+          borderRadius:10, padding:'16px 20px', marginBottom:16,
+          fontFamily:'var(--font-mono)', fontSize:14, color:'var(--text-primary)',
+          lineHeight:2.0,
+        }}>
+          (1.05)^t = 2 &nbsp;&nbsp; <span style={{ color:'var(--text-tertiary)', fontSize:12 }}>divide both sides by 1000</span><br/>
+          t {'\u00B7'} ln(1.05) = ln(2) &nbsp;&nbsp; <span style={{ color:'var(--text-tertiary)', fontSize:12 }}>take ln of both sides, apply power rule</span><br/>
+          <span style={{ color:'var(--accent-bright)' }}>t = ln(2) / ln(1.05) {'\u2248'} 14.2 years</span>
+        </div>
+        <p style={P_STYLE}>
+          At 5% interest, your money doubles in about 14.2 years. At 10%, it doubles in about 7.3 years. There is a wonderful shortcut for estimating this.
+        </p>
+      </Card>
+
+      <KeyInsight>
+        <p style={{ ...P_STYLE, marginBottom:0 }}>
+          <strong style={{ color:'var(--accent-bright)' }}>The Rule of 72:</strong> To estimate how long it takes an investment to double, divide 72 by the annual interest rate (as a percentage). At 6% interest: 72 / 6 = 12 years. At 8%: 72 / 8 = 9 years. This approximation works because <M>ln(2) {'\u2248'} 0.693</M>, and the arithmetic is simplest with 72 (which has many convenient divisors). Bankers, financial planners, and investors use this mental shortcut constantly.
+        </p>
+      </KeyInsight>
+
+      <TodoPlaceholder text="Interactive -- equation solver with step-by-step log application" />
+    </div>
+  );
+}
+
+
+/* ================================================================
+   STEP 5 -- THE NUMBER e AND NATURAL LOGARITHMS
+   ================================================================ */
+function Step5NumberE() {
+  return (
+    <div style={{ animation:'fadeIn 0.5s ease both' }}>
+      <DraftBanner />
+      <SectionHeader
+        title="The Number e"
+        subtitle="Euler's number: the base of natural growth, hiding in compound interest and every corner of mathematics."
+      />
+
+      <Card style={{ marginBottom:24 }}>
+        <p style={P_STYLE}>
+          The number <M>e {'\u2248'} 2.71828182845...</M> is one of the most important constants in mathematics, on par with <M>{'\u03C0'}</M>. It is irrational (its decimal expansion never terminates or repeats) and transcendental (it is not the root of any polynomial with integer coefficients). But where does it come from?
+        </p>
+        <p style={P_STYLE}>
+          Imagine depositing $1 in a bank that offers 100% annual interest. If interest compounds once a year, you get <M>$2</M>. But what if it compounds more frequently?
+        </p>
+        <div style={{
+          background:'var(--bg-card)', border:'1px solid var(--border-subtle)',
+          borderRadius:10, padding:'20px 24px', marginBottom:16,
+          fontFamily:'var(--font-mono)', fontSize:14, color:'var(--text-primary)',
+          lineHeight:2.0,
+        }}>
+          <span style={{ color:'var(--text-tertiary)', fontSize:12 }}>A = (1 + 1/n)^n</span><br/><br/>
+          <span style={{ color:'var(--text-secondary)' }}>Annually &nbsp;&nbsp;&nbsp;(n=1): &nbsp;&nbsp;</span> <span style={{ color:'var(--accent-bright)' }}>$2.000000</span><br/>
+          <span style={{ color:'var(--text-secondary)' }}>Monthly &nbsp;&nbsp;&nbsp;(n=12): &nbsp;</span> <span style={{ color:'var(--accent-bright)' }}>$2.613035</span><br/>
+          <span style={{ color:'var(--text-secondary)' }}>Daily &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(n=365): </span> <span style={{ color:'var(--accent-bright)' }}>$2.714567</span><br/>
+          <span style={{ color:'var(--text-secondary)' }}>Hourly &nbsp;&nbsp;&nbsp;&nbsp;(n=8760):</span> <span style={{ color:'var(--accent-bright)' }}>$2.718127</span><br/>
+          <span style={{ color:'var(--text-secondary)' }}>Per second (n=31.5M): </span> <span style={{ color:'var(--accent-bright)' }}>$2.718282</span><br/>
+          <span style={{ color:'var(--text-secondary)' }}>n {'\u2192'} {'\u221E'}: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> <span style={{ color:'var(--accent-bright)' }}>$e {'\u2248'} 2.71828...</span>
+        </div>
+        <p style={P_STYLE}>
+          As you compound more and more frequently, the amount does not grow without bound. It converges to a specific limit: the number <M>e</M>. This is the mathematical definition: <M>e = lim(n{'\u2192'}{'\u221E'}) (1 + 1/n)^n</M>. The formula for <strong style={{ color:'var(--accent-bright)' }}>continuous compounding</strong> is <M>A = P {'\u00B7'} e^(rt)</M>, where <M>P</M> is principal, <M>r</M> is the rate, and <M>t</M> is time.
+        </p>
+      </Card>
+
+      <Card style={{ marginBottom:24 }}>
+        <p style={P_STYLE}>
+          The natural logarithm <M>ln(x)</M> is the logarithm with base <M>e</M>. The "natural" in its name is not arbitrary: <M>e</M> is the most natural base for logarithms because of its deep connections to rates of change. In calculus, the derivative of <M>e^x</M> is <M>e^x</M> itself -- it is the only function that is its own rate of change. And the derivative of <M>ln(x)</M> is the beautifully simple <M>1/x</M>.
+        </p>
+        <p style={P_STYLE}>
+          The key inverse relationships to internalize are:
+        </p>
+        <div style={{
+          background:'var(--bg-card)', border:'1px solid var(--border-subtle)',
+          borderRadius:10, padding:'16px 20px', marginBottom:16,
+          fontFamily:'var(--font-mono)', fontSize:15, color:'var(--accent-bright)',
+          lineHeight:2.0, textAlign:'center',
+        }}>
+          ln(e) = 1 &nbsp;&nbsp;&nbsp; e^(ln(x)) = x &nbsp;&nbsp;&nbsp; ln(e^x) = x
+        </div>
+        <p style={P_SECONDARY}>
+          These identities say that <M>e^x</M> and <M>ln(x)</M> undo each other. Applying <M>ln</M> to <M>e^(something)</M> strips away the <M>e</M> and gives you the something. Applying <M>e^(something)</M> to <M>ln(x)</M> strips away the <M>ln</M> and gives you <M>x</M>. This is exactly how inverse functions work.
+        </p>
+      </Card>
+
+      <KeyInsight>
+        <p style={{ ...P_STYLE, marginBottom:0 }}>
+          The number <M>e</M> shows up far beyond finance. It governs radioactive decay (<M>N = N{'\u2080'} {'\u00B7'} e^(-{'\u03BB'}t)</M>), population growth in biology, the bell curve (normal distribution) in statistics, electrical signal processing, and the arrangement of leaves around a stem. Whenever a quantity changes at a rate proportional to its current value, <M>e</M> is there. It is the mathematical signature of natural growth and decay.
+        </p>
+      </KeyInsight>
+
+      <TodoPlaceholder text="Interactive -- compound interest frequency slider approaching e" />
+    </div>
+  );
+}
+
+
+/* ================================================================
+   STEP 6 -- LOGARITHMIC SCALES
+   ================================================================ */
+function Step6LogScales() {
+  return (
+    <div style={{ animation:'fadeIn 0.5s ease both' }}>
+      <DraftBanner />
+      <SectionHeader
+        title="Logarithmic Scales"
+        subtitle="When data spans millions or billions, logarithmic scales compress the incomprehensible into the manageable."
+      />
+
+      <Card style={{ marginBottom:24 }}>
+        <p style={P_STYLE}>
+          Some quantities in nature span enormous ranges. The faintest sound a human can hear carries about 0.000000000001 watts per square meter of power, while a jet engine produces about 1 watt per square meter. That is a factor of one trillion. Plotting both on the same linear graph is essentially impossible -- the quiet sounds would be invisible dots at zero.
+        </p>
+        <p style={P_STYLE}>
+          <strong style={{ color:'var(--accent-bright)' }}>Logarithmic scales</strong> solve this problem by spacing values by powers of 10 (or another base) rather than by equal increments. On a log scale, the distance from 1 to 10 is the same as from 10 to 100, which is the same as from 100 to 1000. Each step represents a multiplication, not an addition.
+        </p>
+      </Card>
+
+      <Card style={{ marginBottom:24 }}>
+        <div style={{
+          fontFamily:'var(--font-mono)', fontSize:10, letterSpacing:'0.1em',
+          textTransform:'uppercase', color:'var(--accent-bright)',
+          marginBottom:16, fontWeight:500,
+        }}>
+          Real-World Logarithmic Scales
+        </div>
+
+        <div style={{
+          background:'var(--bg-card)', border:'1px solid var(--border-subtle)',
+          borderRadius:12, padding:'20px 24px', marginBottom:20,
+        }}>
+          <p style={{ ...P_STYLE, marginBottom:8 }}>
+            <strong style={{ color:'var(--accent2)' }}>pH Scale</strong> &nbsp;&mdash;&nbsp; <M>pH = -log[H+]</M>
+          </p>
+          <p style={P_SECONDARY}>
+            The pH scale measures acidity. A pH of 3 is ten times more acidic than pH 4, and a hundred times more acidic than pH 5. Pure water sits at pH 7 (neutral). Battery acid is around pH 0, and drain cleaner is around pH 14. Each unit represents a tenfold change in hydrogen ion concentration.
+          </p>
+        </div>
+
+        <div style={{
+          background:'var(--bg-card)', border:'1px solid var(--border-subtle)',
+          borderRadius:12, padding:'20px 24px', marginBottom:20,
+        }}>
+          <p style={{ ...P_STYLE, marginBottom:8 }}>
+            <strong style={{ color:'var(--accent2)' }}>Decibels</strong> &nbsp;&mdash;&nbsp; <M>dB = 10 {'\u00B7'} log(P / P{'\u2080'})</M>
+          </p>
+          <p style={P_SECONDARY}>
+            Sound intensity is measured in decibels. A whisper is about 30 dB, normal conversation 60 dB, a rock concert 120 dB. The concert is not 4 times louder than the whisper in terms of energy -- it is 1,000,000,000 times (a billion times) the power. The 120 dB concert is actually one trillion times the reference threshold of hearing.
+          </p>
+        </div>
+
+        <div style={{
+          background:'var(--bg-card)', border:'1px solid var(--border-subtle)',
+          borderRadius:12, padding:'20px 24px', marginBottom:20,
+        }}>
+          <p style={{ ...P_STYLE, marginBottom:8 }}>
+            <strong style={{ color:'var(--accent2)' }}>Richter Scale</strong> &nbsp;&mdash;&nbsp; Each unit = 10{'\u00D7'} amplitude
+          </p>
+          <p style={P_SECONDARY}>
+            A magnitude 7 earthquake has 10 times the wave amplitude of a magnitude 6, and releases about 31.6 times more energy. The 2011 Tohoku earthquake (magnitude 9.1) released roughly 22,000 times the energy of the 1994 Northridge earthquake (magnitude 6.7). Without a logarithmic scale, comparing earthquakes of different sizes would be almost impossible to conceptualize.
+          </p>
+        </div>
+
+        <div style={{
+          background:'var(--bg-card)', border:'1px solid var(--border-subtle)',
+          borderRadius:12, padding:'20px 24px',
+        }}>
+          <p style={{ ...P_STYLE, marginBottom:8 }}>
+            <strong style={{ color:'var(--accent2)' }}>Stellar Magnitude</strong> &nbsp;&mdash;&nbsp; Each step = 2.512{'\u00D7'} brightness
+          </p>
+          <p style={P_SECONDARY}>
+            Astronomers measure star brightness on a magnitude scale where each step corresponds to a factor of about 2.512 (the fifth root of 100). A magnitude 1 star is 100 times brighter than a magnitude 6 star. The Sun, at apparent magnitude -26.7, is about 400 billion times brighter than the faintest stars visible to the naked eye.
+          </p>
+        </div>
+      </Card>
+
+      <KeyInsight>
+        <p style={{ ...P_STYLE, marginBottom:0 }}>
+          Logarithmic scales are not a mere convenience. They reflect how human perception actually works. We perceive loudness, brightness, and pitch logarithmically -- a sound must increase in power by a factor of 10 for us to perceive it as "twice as loud." Our senses are built to detect ratios, not differences. Logarithmic scales match the mathematics to the biology.
+        </p>
+      </KeyInsight>
+
+      <TodoPlaceholder text="Interactive -- log scale explorer with real-world examples" />
+    </div>
+  );
+}
+
+
+/* ================================================================
+   STEP 7 -- PRACTICE / COMPLETION
+   ================================================================ */
+function Step7Practice() {
+  const [showCelebration, setShowCelebration] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowCelebration(true), 600);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <div style={{ animation:'fadeIn 0.5s ease both' }}>
+      <DraftBanner />
+      <SectionHeader
+        title="Summary & Review"
+        subtitle="Everything you've learned about logarithms and exponential functions."
+      />
+
+      <Card style={{ marginBottom:24 }}>
+        <div style={{
+          fontFamily:'var(--font-mono)', fontSize:10, letterSpacing:'0.1em',
+          textTransform:'uppercase', color:'var(--accent-bright)',
+          marginBottom:16, fontWeight:500,
+        }}>
+          What You Covered
+        </div>
+
+        <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+          {[
+            { num:'1', title:'Exponential Functions', desc:'y = b^x models growth (b > 1) and decay (0 < b < 1) with constant ratios of change.' },
+            { num:'2', title:'Logarithm Definition', desc:'log_b(x) = y means b^y = x. Logs answer "what exponent?"' },
+            { num:'3', title:'Log Properties', desc:'Product, quotient, and power rules convert multiplication to addition, division to subtraction, exponents to coefficients.' },
+            { num:'4', title:'Solving Equations', desc:'Take the log of both sides to bring variables down from exponents. Use change of base for non-standard bases.' },
+            { num:'5', title:'The Number e', desc:'e \u2248 2.71828 emerges from continuous compounding. ln(x) is the natural log (base e). e^x is its own derivative.' },
+            { num:'6', title:'Log Scales', desc:'pH, decibels, Richter scale, stellar magnitude -- log scales compress enormous ranges into human-readable numbers.' },
+          ].map(item => (
+            <div key={item.num} style={{
+              display:'flex', gap:16, alignItems:'flex-start',
+              padding:'12px 16px', borderRadius:10,
+              background:'rgba(255,255,255,0.02)',
+              border:'1px solid var(--border-subtle)',
+            }}>
+              <div style={{
+                width:28, height:28, borderRadius:8,
+                background:'rgba(16,185,129,0.1)',
+                border:'1px solid rgba(16,185,129,0.2)',
+                display:'flex', alignItems:'center', justifyContent:'center',
+                fontFamily:'var(--font-mono)', fontSize:12, color:'var(--accent-bright)',
+                flexShrink:0, marginTop:2,
+              }}>
+                {item.num}
+              </div>
+              <div>
+                <div style={{
+                  fontFamily:'var(--font-body)', fontSize:15, fontWeight:500,
+                  color:'var(--text-primary)', marginBottom:4,
+                }}>
+                  {item.title}
+                </div>
+                <div style={{
+                  fontFamily:'var(--font-body)', fontSize:13, fontWeight:300,
+                  color:'var(--text-secondary)', lineHeight:1.5,
+                }}>
+                  {item.desc}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <KeyInsight>
+        <p style={{ ...P_STYLE, marginBottom:0 }}>
+          Logarithms and exponentials are everywhere. They describe how money grows, how diseases spread, how earthquakes are measured, and how our ears perceive sound. Mastering these functions means understanding the mathematical language of growth, decay, and scale -- concepts that appear in every branch of science and engineering.
+        </p>
+      </KeyInsight>
+
+      {/* Celebration */}
+      {showCelebration && (
+        <div style={{
+          textAlign:'center', padding:'40px 0 20px',
+          animation:'celebratePop 0.6s var(--ease-spring) both',
+        }}>
+          <div style={{
+            width:80, height:80, borderRadius:'50%',
+            background:'linear-gradient(135deg, var(--accent-dim), var(--accent))',
+            display:'flex', alignItems:'center', justifyContent:'center',
+            margin:'0 auto 20px',
+            boxShadow:'0 0 40px rgba(16,185,129,0.3)',
+          }}>
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+          <h3 style={{
+            fontFamily:'var(--font-display)', fontSize:28, fontWeight:400,
+            color:'var(--text-primary)', marginBottom:8,
+          }}>
+            Lesson Complete
+          </h3>
+          <p style={{
+            fontFamily:'var(--font-body)', fontSize:15, fontWeight:300,
+            color:'var(--text-secondary)',
+          }}>
+            You have finished the rough draft of Logarithms & Exponentials.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+/* ================================================================
+   MAIN APP
+   ================================================================ */
+function App() {
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [step]);
+
+  // Save progress when reaching last step
+  useEffect(() => {
+    if (step === TOTAL_STEPS - 1) {
+      try {
+        const progress = JSON.parse(localStorage.getItem('math-progress') || '[]');
+        if (!progress.includes(12)) {
+          progress.push(12);
+          localStorage.setItem('math-progress', JSON.stringify(progress));
+        }
+      } catch(e) {}
+    }
+  }, [step]);
+
+  function renderStep() {
+    switch(step) {
+      case 0: return <StepLanding onStart={() => setStep(1)} />;
+      case 1: return <Step1Exponentials />;
+      case 2: return <Step2WhatIsLog />;
+      case 3: return <Step3Properties />;
+      case 4: return <Step4Solving />;
+      case 5: return <Step5NumberE />;
+      case 6: return <Step6LogScales />;
+      case 7: return <Step7Practice />;
+      default: return <StepLanding onStart={() => setStep(1)} />;
+    }
+  }
+
+  return (
+    <div style={{ position:'relative', zIndex:1 }}>
+      <GridBackground />
+      <ProgressBar step={step} total={TOTAL_STEPS} />
+
+      <div style={{
+        maxWidth:780, margin:'0 auto',
+        padding:'clamp(24px, 4vh, 48px) 20px 60px',
+      }}>
+        <div key={step}>
+          {renderStep()}
+        </div>
+
+        {step > 0 && (
+          <NavButtons step={step} setStep={setStep} total={TOTAL_STEPS} />
+        )}
+        {step === TOTAL_STEPS - 1 && (
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:32,padding:'16px 0',borderTop:'1px solid var(--border-subtle)'}}>
+            <a href="10-trigonometry.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>&larr; Previous Lesson: Trigonometry</a>
+            <a href="index.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>Back to Index &rarr;</a>
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <footer style={{
+        textAlign:'center', padding:'40px 24px 32px',
+        borderTop:'1px solid var(--border-subtle)', marginTop:20,
+      }}>
+        <p style={{
+          fontFamily:'var(--font-body)', fontSize:13, color:'var(--text-tertiary)', fontWeight:300,
+        }}>
+          Lesson 12 &mdash; Logarithms &amp; Exponential Functions &mdash; Rough Draft
+        </p>
+      </footer>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>

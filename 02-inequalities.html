@@ -20,7 +20,7 @@
   --blue:#60a5fa;--blue-dim:#60a5fa25;
   --amber:#fbbf24;--amber-dim:#fbbf2425;
   --violet:#a78bfa;--violet-dim:#a78bfa25;
-  --cyan:#22d3ee;--cyan-dim:#22d3ee25;
+  --cyan:#22d3ee;--cyan-dim:#22d3ee25;--cyan-glow:#22d3ee15;
   --font-display:'Fraunces',serif;
   --font-body:'IBM Plex Sans',sans-serif;
   --font-mono:'DM Mono',monospace;
@@ -146,6 +146,509 @@ function MathEx({children,size=26}){
 
 function Panel({children,glow,border}){
   return <div style={{background:'var(--bg2)',borderRadius:12,padding:'22px 20px',border:`1px solid ${border||'var(--bg4)'}`,position:'relative',overflow:'hidden',...(glow?{boxShadow:`0 0 40px ${glow}`}:{})}}>{children}</div>;
+}
+
+
+/* ═══════════════════════════════════════
+   REAL-WORLD PANEL (collapsible)
+   ═══════════════════════════════════════ */
+
+function RealWorldPanel({ examples }) {
+  const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState(0);
+  const contentRef = useRef(null);
+  const [contentHeight, setContentHeight] = useState(0);
+  useEffect(() => {
+    if (contentRef.current) setContentHeight(contentRef.current.scrollHeight);
+  }, [open, tab]);
+  return (
+    <div style={{
+      margin: '24px 0', borderRadius: 12, border: '1px solid var(--bg4)',
+      background: 'var(--bg2)', overflow: 'hidden', transition: 'border-color 0.3s',
+      ...(open ? { borderColor: 'var(--cyan-dim)' } : {}),
+    }}>
+      <button onClick={() => setOpen(!open)} style={{
+        width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+        padding: '14px 18px', background: 'none', border: 'none',
+        cursor: 'pointer', color: 'var(--text)', fontFamily: 'var(--font-body)',
+        fontSize: 14, fontWeight: 500, textAlign: 'left',
+      }}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.3s', transform: open ? 'rotate(90deg)' : 'rotate(0deg)', flexShrink: 0 }}>
+          <path d="M9 18l6-6-6-6"/>
+        </svg>
+        <span>Real-World Applications</span>
+        <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+          {examples.length} {examples.length === 1 ? 'example' : 'examples'}
+        </span>
+      </button>
+      <div style={{
+        maxHeight: open ? contentHeight + 40 : 0, overflow: 'hidden',
+        transition: 'max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+      }}>
+        <div ref={contentRef} style={{ padding: '0 18px 18px' }}>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
+            {examples.map((ex, i) => (
+              <button key={i} onClick={() => setTab(i)} style={{
+                padding: '6px 14px', borderRadius: 6, border: '1px solid',
+                borderColor: tab === i ? 'var(--cyan-dim)' : 'var(--bg4)',
+                background: tab === i ? 'var(--cyan-glow)' : 'transparent',
+                color: tab === i ? 'var(--cyan)' : 'var(--text-dim)',
+                fontFamily: 'var(--font-mono)', fontSize: 12, cursor: 'pointer', transition: 'all 0.2s',
+              }}>{ex.title}</button>
+            ))}
+          </div>
+          <div style={{ animation: 'fadeIn 0.3s' }}>{examples[tab] && examples[tab].content}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+/* ═══════════════════════════════════════
+   REAL-WORLD EXAMPLE: Speed Limits
+   ═══════════════════════════════════════ */
+
+function SpeedLimitExample() {
+  const [speed, setSpeed] = useState(55);
+  const limit = 65;
+  const legal = speed <= limit;
+  const needleAngle = -135 + (speed / 100) * 270;
+
+  return (
+    <div style={{ animation: 'fadeIn 0.3s' }}>
+      {/* Intro text */}
+      <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text)', lineHeight: 1.7, marginBottom: 16 }}>
+        A speed limit isn't an equation — it's an inequality. The sign doesn't say <strong style={{ color: 'var(--text-bright)', fontWeight: 500 }}>"drive exactly 65 mph,"</strong> it says <strong style={{ color: 'var(--text-bright)', fontWeight: 500 }}>"drive at most 65 mph,"</strong> which means <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>v {'\u2264'} 65</span>. This is the core difference between equations and inequalities: equations have one answer, inequalities have a whole range of acceptable values. Every speed from 0 to 65 is legal — that's infinitely many solutions.
+      </p>
+
+      {/* What you're seeing block */}
+      <div style={{ background: 'var(--bg3)', borderRadius: 8, padding: '12px 16px', border: '1px solid var(--bg4)', marginBottom: 16 }}>
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text)', lineHeight: 1.7 }}>
+          <strong style={{ color: 'var(--text-bright)', fontWeight: 500 }}>What you're seeing:</strong> The speedometer below shows your current speed. The green zone represents all legal speeds (<span style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>v {'\u2264'} 65</span>), while the red zone is a violation. Notice that inequality solutions aren't a single point — they're an entire region. This is true whether you're checking speed limits, temperature ranges, or structural load ratings.
+        </p>
+      </div>
+
+      <div style={{ textAlign: 'center', marginBottom: 14 }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 15, color: 'var(--text-bright)' }}>
+          Speed limit: v {'\u2264'} {limit} mph
+        </span>
+      </div>
+
+      {/* Speedometer SVG */}
+      <svg viewBox="0 0 240 150" style={{ width: '100%', maxWidth: 280, display: 'block', margin: '0 auto 12px' }}>
+        {/* Background arc */}
+        <path d="M 30 130 A 90 90 0 0 1 210 130" fill="none" stroke="var(--bg4)" strokeWidth="10" strokeLinecap="round"/>
+        {/* Green arc (0-65) */}
+        <path d={`M 30 130 A 90 90 0 0 1 ${120 + 90 * Math.cos(Math.PI - (65 / 100) * Math.PI)} ${130 - 90 * Math.sin(Math.PI - (65 / 100) * Math.PI)}`}
+          fill="none" stroke="var(--emerald)" strokeWidth="10" strokeLinecap="round" opacity="0.4"/>
+        {/* Red arc (65-100) */}
+        <path d={`M ${120 + 90 * Math.cos(Math.PI - (65 / 100) * Math.PI)} ${130 - 90 * Math.sin(Math.PI - (65 / 100) * Math.PI)} A 90 90 0 0 1 210 130`}
+          fill="none" stroke="var(--red)" strokeWidth="10" strokeLinecap="round" opacity="0.4"/>
+        {/* Tick marks */}
+        {[0, 20, 40, 60, 80, 100].map(v => {
+          const a = Math.PI - (v / 100) * Math.PI;
+          const x1 = 120 + 78 * Math.cos(a), y1 = 130 - 78 * Math.sin(a);
+          const x2 = 120 + 90 * Math.cos(a), y2 = 130 - 90 * Math.sin(a);
+          const tx = 120 + 68 * Math.cos(a), ty = 130 - 68 * Math.sin(a);
+          return (
+            <g key={v}>
+              <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="var(--text-dim)" strokeWidth="1.5"/>
+              <text x={tx} y={ty + 4} textAnchor="middle" fill="var(--text-dim)" fontSize="8" fontFamily="var(--font-mono)">{v}</text>
+            </g>
+          );
+        })}
+        {/* Needle */}
+        <g transform={`rotate(${needleAngle}, 120, 130)`} style={{ transition: 'transform 0.3s ease' }}>
+          <line x1="120" y1="130" x2="120" y2="50" stroke={legal ? 'var(--emerald)' : 'var(--red)'} strokeWidth="2.5" strokeLinecap="round"/>
+        </g>
+        {/* Center dot */}
+        <circle cx="120" cy="130" r="6" fill={legal ? 'var(--emerald)' : 'var(--red)'}/>
+        {/* Speed readout */}
+        <text x="120" y="118" textAnchor="middle" fill={legal ? 'var(--emerald)' : 'var(--red)'} fontSize="18" fontFamily="var(--font-mono)" fontWeight="700">{speed}</text>
+        <text x="120" y="145" textAnchor="middle" fill="var(--text-dim)" fontSize="8" fontFamily="var(--font-mono)">MPH</text>
+      </svg>
+
+      {/* Road scene with speed limit sign */}
+      <svg viewBox="0 0 300 60" style={{ width: '100%', maxWidth: 300, display: 'block', margin: '0 auto 14px' }}>
+        {/* Road */}
+        <rect x="0" y="30" width="300" height="30" fill="var(--bg3)" rx="3"/>
+        <line x1="0" y1="45" x2="300" y2="45" stroke="var(--amber)" strokeWidth="1.5" strokeDasharray="12 8"/>
+        {/* Sign post */}
+        <rect x="245" y="2" width="3" height="38" fill="var(--text-dim)"/>
+        {/* Sign */}
+        <rect x="232" y="0" width="30" height="28" rx="3" fill="var(--text-bright)" stroke="var(--text-dim)" strokeWidth="1"/>
+        <text x="247" y="13" textAnchor="middle" fill="var(--bg)" fontSize="6" fontFamily="var(--font-mono)" fontWeight="700">SPEED</text>
+        <text x="247" y="12" textAnchor="middle" fill="var(--bg)" fontSize="5" fontFamily="var(--font-mono)">LIMIT</text>
+        <text x="247" y="23" textAnchor="middle" fill="var(--bg)" fontSize="12" fontFamily="var(--font-mono)" fontWeight="700">65</text>
+      </svg>
+
+      {/* Status indicator */}
+      <div style={{
+        textAlign: 'center', padding: '8px 14px', borderRadius: 8, marginBottom: 14,
+        background: legal ? 'var(--emerald-dim)' : 'var(--red-dim)',
+        border: `1px solid ${legal ? 'var(--emerald)' : 'var(--red)'}`,
+        transition: 'all 0.3s',
+      }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: legal ? 'var(--emerald)' : 'var(--red)', fontWeight: 600 }}>
+          {speed} mph {legal ? '\u2264' : '>'} {limit} mph {' \u2014 '} {legal ? 'Within limit' : 'Exceeding limit!'}
+        </span>
+      </div>
+
+      {/* Slider */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-dim)' }}>0</span>
+        <input type="range" min={0} max={100} value={speed} onChange={e => setSpeed(+e.target.value)} style={{ width: 180 }}/>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-dim)' }}>100</span>
+      </div>
+      <div style={{ textAlign: 'center', marginTop: 8, fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-dim)' }}>
+        Drag to change speed
+      </div>
+
+      {/* Practical note */}
+      <p style={{ marginTop: 16, fontSize: 13, color: 'var(--text-dim)', fontFamily: 'var(--font-body)', lineHeight: 1.7 }}>
+        Traffic engineers don't just pick speed limits arbitrarily. They calculate stopping distances, road curvature, and visibility — all inequality constraints. A highway curve might require <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>v {'\u2264'} 55</span> for safe tire grip, while a school zone uses <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>v {'\u2264'} 25</span> to protect children with shorter reaction windows.
+      </p>
+    </div>
+  );
+}
+
+
+/* ═══════════════════════════════════════
+   REAL-WORLD EXAMPLE: Engineering Tolerances
+   ═══════════════════════════════════════ */
+
+function EngineeringToleranceExample() {
+  const [diameter, setDiameter] = useState(10.0);
+  const target = 10.0;
+  const tolerance = 0.05;
+  const withinTol = Math.abs(diameter - target) <= tolerance;
+  const deviation = diameter - target;
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const W = 300, H = 180;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    // Clear
+    ctx.clearRect(0, 0, W, H);
+
+    // Cross section of bolt/shaft
+    const cx = 100, cy = 90;
+    const baseR = 40;
+    const scale = diameter / target;
+    const r = baseR * scale;
+
+    // Tolerance zone ring
+    const rMin = baseR * (9.95 / 10.0);
+    const rMax = baseR * (10.05 / 10.0);
+    ctx.beginPath();
+    ctx.arc(cx, cy, rMax, 0, Math.PI * 2);
+    ctx.arc(cx, cy, rMin, 0, Math.PI * 2, true);
+    ctx.fillStyle = withinTol ? 'rgba(52, 211, 153, 0.12)' : 'rgba(251, 113, 133, 0.12)';
+    ctx.fill();
+
+    // Tolerance zone boundary circles (dashed)
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    ctx.arc(cx, cy, rMax, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(191, 197, 210, 0.25)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(cx, cy, rMin, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Shaft circle
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = withinTol ? 'rgba(52, 211, 153, 0.2)' : 'rgba(251, 113, 133, 0.2)';
+    ctx.fill();
+    ctx.strokeStyle = withinTol ? '#34d399' : '#fb7185';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Crosshair
+    ctx.beginPath();
+    ctx.moveTo(cx - r - 8, cy);
+    ctx.lineTo(cx + r + 8, cy);
+    ctx.moveTo(cx, cy - r - 8);
+    ctx.lineTo(cx, cy + r + 8);
+    ctx.strokeStyle = 'rgba(191, 197, 210, 0.15)';
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+
+    // Dimension arrows (horizontal)
+    const arrowY = cy - r - 18;
+    ctx.beginPath();
+    ctx.moveTo(cx - r, arrowY);
+    ctx.lineTo(cx + r, arrowY);
+    ctx.strokeStyle = withinTol ? '#34d399' : '#fb7185';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+    // Arrowheads
+    [[-1, cx - r], [1, cx + r]].forEach(([dir, ax]) => {
+      ctx.beginPath();
+      ctx.moveTo(ax, arrowY);
+      ctx.lineTo(ax + dir * 5, arrowY - 3);
+      ctx.lineTo(ax + dir * 5, arrowY + 3);
+      ctx.closePath();
+      ctx.fillStyle = withinTol ? '#34d399' : '#fb7185';
+      ctx.fill();
+    });
+    // Vertical lines at ends
+    ctx.beginPath();
+    ctx.moveTo(cx - r, arrowY - 5);
+    ctx.lineTo(cx - r, arrowY + 5);
+    ctx.moveTo(cx + r, arrowY - 5);
+    ctx.lineTo(cx + r, arrowY + 5);
+    ctx.strokeStyle = withinTol ? '#34d399' : '#fb7185';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Dimension label
+    ctx.font = '500 11px "DM Mono", monospace';
+    ctx.fillStyle = withinTol ? '#34d399' : '#fb7185';
+    ctx.textAlign = 'center';
+    ctx.fillText(diameter.toFixed(2) + ' mm', cx, arrowY - 6);
+
+    // Go/No-Go gauge on the right
+    const gx = 225, gy = 50;
+    // Gauge body
+    ctx.fillStyle = '#222632';
+    ctx.strokeStyle = '#5c6370';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(gx - 25, gy, 50, 110, 6);
+    ctx.fill();
+    ctx.stroke();
+
+    // GO section
+    ctx.fillStyle = withinTol ? 'rgba(52, 211, 153, 0.25)' : 'rgba(52, 211, 153, 0.08)';
+    ctx.beginPath();
+    ctx.roundRect(gx - 20, gy + 8, 40, 42, 4);
+    ctx.fill();
+    ctx.font = '600 10px "DM Mono", monospace';
+    ctx.fillStyle = withinTol ? '#34d399' : '#5c6370';
+    ctx.textAlign = 'center';
+    ctx.fillText('GO', gx, gy + 25);
+    ctx.font = '400 8px "DM Mono", monospace';
+    ctx.fillText(withinTol ? 'PASS' : '---', gx, gy + 40);
+
+    // NO-GO section
+    ctx.fillStyle = !withinTol ? 'rgba(251, 113, 133, 0.25)' : 'rgba(251, 113, 133, 0.08)';
+    ctx.beginPath();
+    ctx.roundRect(gx - 20, gy + 58, 40, 42, 4);
+    ctx.fill();
+    ctx.font = '600 10px "DM Mono", monospace';
+    ctx.fillStyle = !withinTol ? '#fb7185' : '#5c6370';
+    ctx.fillText('NO-GO', gx, gy + 76);
+    ctx.font = '400 8px "DM Mono", monospace';
+    ctx.fillText(!withinTol ? 'FAIL' : '---', gx, gy + 91);
+
+    // Gauge title
+    ctx.font = '400 9px "DM Mono", monospace';
+    ctx.fillStyle = '#5c6370';
+    ctx.textAlign = 'center';
+    ctx.fillText('Gauge', gx, gy - 6);
+
+  }, [diameter]);
+
+  return (
+    <div style={{ animation: 'fadeIn 0.3s' }}>
+      {/* Intro text */}
+      <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text)', lineHeight: 1.7, marginBottom: 16 }}>
+        In manufacturing, nothing is made to an exact size — there's always a tiny variation. Engineers specify a compound inequality called a <strong style={{ color: 'var(--text-bright)', fontWeight: 500 }}>tolerance</strong>: the bolt diameter <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>d</span> must satisfy <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>9.95 {'\u2264'} d {'\u2264'} 10.05 mm</span>. Written as an absolute value inequality, that's <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>|d - 10.0| {'\u2264'} 0.05</span>. If the part falls outside this range, it won't fit — too loose and it rattles, too tight and it jams.
+      </p>
+
+      {/* What you're seeing block */}
+      <div style={{ background: 'var(--bg3)', borderRadius: 8, padding: '12px 16px', border: '1px solid var(--bg4)', marginBottom: 16 }}>
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text)', lineHeight: 1.7 }}>
+          <strong style={{ color: 'var(--text-bright)', fontWeight: 500 }}>What you're seeing:</strong> The cross-section shows a bolt shaft with dimension arrows. The "go/no-go gauge" on the right is a real tool machinists use: the "go" end must fit over the bolt (diameter not too large) and the "no-go" end must not fit (diameter not too small). When the bolt is within tolerance, both checks pass and the display turns green.
+        </p>
+      </div>
+
+      <div style={{ textAlign: 'center', marginBottom: 14 }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--text-bright)' }}>
+          Tolerance: |d - {target.toFixed(1)}| {'\u2264'} {tolerance}
+        </span>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-dim)', marginTop: 4 }}>
+          Acceptable range: {(target - tolerance).toFixed(2)} {'\u2264'} d {'\u2264'} {(target + tolerance).toFixed(2)} mm
+        </div>
+      </div>
+
+      <canvas ref={canvasRef} style={{ display: 'block', margin: '0 auto 14px' }}/>
+
+      {/* Status */}
+      <div style={{
+        textAlign: 'center', padding: '8px 14px', borderRadius: 8, marginBottom: 14,
+        background: withinTol ? 'var(--emerald-dim)' : 'var(--red-dim)',
+        border: `1px solid ${withinTol ? 'var(--emerald)' : 'var(--red)'}`,
+        transition: 'all 0.3s',
+      }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: withinTol ? 'var(--emerald)' : 'var(--red)', fontWeight: 600 }}>
+          d = {diameter.toFixed(2)} mm {'  \u2014  '} Deviation: {deviation >= 0 ? '+' : ''}{deviation.toFixed(3)} mm {'  \u2014  '}
+          {withinTol ? 'Within tolerance' : 'Out of tolerance!'}
+        </span>
+      </div>
+
+      {/* Slider */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-dim)' }}>9.80</span>
+        <input type="range" min={980} max={1020} value={Math.round(diameter * 100)} onChange={e => setDiameter(+e.target.value / 100)} style={{ width: 180 }}/>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-dim)' }}>10.20</span>
+      </div>
+      <div style={{ textAlign: 'center', marginTop: 8, fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-dim)' }}>
+        Drag to adjust bolt diameter
+      </div>
+
+      {/* Why it matters note */}
+      <p style={{ marginTop: 16, fontSize: 13, color: 'var(--text-dim)', fontFamily: 'var(--font-body)', lineHeight: 1.7 }}>
+        This compound inequality is everywhere in engineering. Pharmaceutical pills must weigh between 495 and 505 mg. Jet engine turbine blades must be within 0.01 mm. The tighter the tolerance, the more expensive the part — so engineers constantly balance precision against cost, all expressed as compound inequalities.
+      </p>
+    </div>
+  );
+}
+
+
+/* ═══════════════════════════════════════
+   REAL-WORLD EXAMPLE: Budget Constraints
+   ═══════════════════════════════════════ */
+
+function BudgetConstraintExample() {
+  const [items, setItems] = useState(5);
+  const fixedCost = 15;
+  const perItem = 45;
+  const budget = 500;
+  const total = fixedCost + perItem * items;
+  const withinBudget = total <= budget;
+  const maxItems = Math.floor((budget - fixedCost) / perItem); // 10
+  const maxExact = (budget - fixedCost) / perItem; // 10.777...
+
+  return (
+    <div style={{ animation: 'fadeIn 0.3s' }}>
+      {/* Intro text */}
+      <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text)', lineHeight: 1.7, marginBottom: 16 }}>
+        Budget problems are natural inequalities. If you have $500 for supplies, a $15 base cost, and each item costs $45, your spending must satisfy <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>15 + 45x {'\u2264'} 500</span>. Solving this inequality tells you the maximum number of items you can buy — not an exact number to buy, but an <strong style={{ color: 'var(--text-bright)', fontWeight: 500 }}>upper limit</strong>. This is how businesses plan inventory, families plan groceries, and students plan textbook purchases.
+      </p>
+
+      {/* What you're seeing block */}
+      <div style={{ background: 'var(--bg3)', borderRadius: 8, padding: '12px 16px', border: '1px solid var(--bg4)', marginBottom: 16 }}>
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text)', lineHeight: 1.7 }}>
+          <strong style={{ color: 'var(--text-bright)', fontWeight: 500 }}>What you're seeing:</strong> The bar chart shows your running total as you increase the number of items. The dashed amber line marks your $500 budget. As long as the bar stays below the line, you're within budget. The moment it crosses, the bar turns red. Solving the inequality algebraically: <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>45x {'\u2264'} 485</span>, so <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>x {'\u2264'} 10.78</span> — meaning you can buy at most 10 items.
+        </p>
+      </div>
+
+      <div style={{ textAlign: 'center', marginBottom: 14 }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--text-bright)' }}>
+          Budget constraint: 15 + 45x {'\u2264'} 500
+        </span>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-dim)', marginTop: 4 }}>
+          Where x = number of items purchased
+        </div>
+      </div>
+
+      {/* Bar chart */}
+      <svg viewBox="0 0 320 120" style={{ width: '100%', maxWidth: 340, display: 'block', margin: '0 auto 6px' }}>
+        {/* Background grid lines */}
+        {[0, 100, 200, 300, 400, 500].map(v => {
+          const x = 50 + (v / 600) * 250;
+          return (
+            <g key={v}>
+              <line x1={x} y1={10} x2={x} y2={95} stroke="var(--bg4)" strokeWidth="0.5"/>
+              <text x={x} y={105} textAnchor="middle" fill="var(--text-dim)" fontSize="8" fontFamily="var(--font-mono)">${v}</text>
+            </g>
+          );
+        })}
+
+        {/* Budget threshold line */}
+        {(() => {
+          const bx = 50 + (budget / 600) * 250;
+          return (
+            <g>
+              <line x1={bx} y1={6} x2={bx} y2={98} stroke="var(--amber)" strokeWidth="1.5" strokeDasharray="4 3"/>
+              <text x={bx} y={5} textAnchor="middle" fill="var(--amber)" fontSize="8" fontFamily="var(--font-mono)" fontWeight="600">Budget: $500</text>
+            </g>
+          );
+        })()}
+
+        {/* Fixed cost bar */}
+        <rect x="50" y="22" width={Math.max(0, (fixedCost / 600) * 250)} height="20" rx="3"
+          fill="var(--blue)" opacity="0.6" style={{ transition: 'width 0.3s' }}/>
+        <text x="44" y="36" textAnchor="end" fill="var(--text-dim)" fontSize="9" fontFamily="var(--font-mono)">Fixed</text>
+
+        {/* Items cost bar */}
+        {(() => {
+          const w = Math.max(0, (total / 600) * 250);
+          return (
+            <g>
+              <rect x="50" y="55" width={Math.min(w, 250)} height="20" rx="3"
+                fill={withinBudget ? 'var(--emerald)' : 'var(--red)'} opacity="0.5" style={{ transition: 'all 0.3s' }}/>
+              <text x="44" y="69" textAnchor="end" fill="var(--text-dim)" fontSize="9" fontFamily="var(--font-mono)">Total</text>
+              {/* Total label */}
+              <text x={Math.min(50 + w + 4, 296)} y={69} textAnchor="start"
+                fill={withinBudget ? 'var(--emerald)' : 'var(--red)'} fontSize="9" fontFamily="var(--font-mono)" fontWeight="600">
+                ${total}
+              </text>
+            </g>
+          );
+        })()}
+      </svg>
+
+      {/* Breakdown */}
+      <div style={{ textAlign: 'center', marginBottom: 10 }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-dim)' }}>
+          $15 + $45 {'\u00d7'} {items} = ${total}
+        </span>
+      </div>
+
+      {/* Status */}
+      <div style={{
+        textAlign: 'center', padding: '8px 14px', borderRadius: 8, marginBottom: 14,
+        background: withinBudget ? 'var(--emerald-dim)' : 'var(--red-dim)',
+        border: `1px solid ${withinBudget ? 'var(--emerald)' : 'var(--red)'}`,
+        transition: 'all 0.3s',
+      }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: withinBudget ? 'var(--emerald)' : 'var(--red)', fontWeight: 600 }}>
+          ${total} {withinBudget ? '\u2264' : '>'} ${budget} {' \u2014 '} {withinBudget ? 'Within budget' : 'Over budget!'}
+        </span>
+      </div>
+
+      {/* Solution display */}
+      <div style={{
+        textAlign: 'center', padding: '8px 14px', borderRadius: 8, marginBottom: 14,
+        background: 'var(--bg3)', border: '1px solid var(--bg4)',
+      }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text)' }}>
+          Solution: x {'\u2264'} {maxExact.toFixed(2)}, so max {maxItems} items
+        </span>
+      </div>
+
+      {/* Slider */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-dim)' }}>0</span>
+        <input type="range" min={0} max={15} value={items} onChange={e => setItems(+e.target.value)} style={{ width: 180 }}/>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-dim)' }}>15</span>
+      </div>
+      <div style={{ textAlign: 'center', marginTop: 8, fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-dim)' }}>
+        Items: {items}
+      </div>
+
+      {/* Real-world connection note */}
+      <p style={{ marginTop: 16, fontSize: 13, color: 'var(--text-dim)', fontFamily: 'var(--font-body)', lineHeight: 1.7 }}>
+        Every business operates under inequality constraints: revenue must exceed costs (<span style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>R {'>'} C</span>), inventory must stay above minimum stock (<span style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>I {'\u2265'} 100</span>), and delivery time must be under the deadline (<span style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>t {'\u2264'} 30 days</span>). Linear programming — the math behind supply chain optimization — is built entirely on systems of inequalities.
+      </p>
+    </div>
+  );
 }
 
 
@@ -347,6 +850,10 @@ function StepEqVsIneq({onPrev,onNext,step}){
         })}
       </div>
 
+      <RealWorldPanel examples={[
+        { title: 'Speed Limits', content: <SpeedLimitExample /> },
+      ]} />
+
       <NavButtons current={step} total={TOTAL_STEPS} onPrev={onPrev} onNext={onNext}/>
     </Wrap>
   );
@@ -514,6 +1021,10 @@ function StepSolving({onPrev,onNext,step}){
           </div>
         )}
       </Panel>
+
+      <RealWorldPanel examples={[
+        { title: 'Budget', content: <BudgetConstraintExample /> },
+      ]} />
 
       <NavButtons current={step} total={TOTAL_STEPS} onPrev={onPrev} onNext={onNext}/>
     </Wrap>
@@ -729,6 +1240,10 @@ function StepCompound({onPrev,onNext,step}){
           <NumberLine min={-6} max={8} height={48} regions={[{from:'-inf',to:-2,color:'var(--blue)'},{from:3,to:'inf',color:'var(--amber)'}]} points={[{value:-2,open:true,color:'var(--blue)'},{value:3,open:false,color:'var(--amber)'}]} animate compact/>
         </Panel>
       </div>
+
+      <RealWorldPanel examples={[
+        { title: 'Tolerances', content: <EngineeringToleranceExample /> },
+      ]} />
 
       <NavButtons current={step} total={TOTAL_STEPS} onPrev={onPrev} onNext={onNext}/>
     </Wrap>

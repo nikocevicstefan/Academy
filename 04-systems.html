@@ -757,6 +757,821 @@ function HeroAnimation() {
   );
 }
 
+// ─── Real-World Panel Component ───────────────────────────────
+function RealWorldPanel({ examples }) {
+  const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState(0);
+  const contentRef = useRef(null);
+  const [contentHeight, setContentHeight] = useState(0);
+
+  useEffect(() => {
+    if (contentRef.current) {
+      setContentHeight(contentRef.current.scrollHeight);
+    }
+  }, [open, tab]);
+
+  return (
+    <div style={{
+      marginTop: 28,
+      borderRadius: 'var(--radius-lg)',
+      border: '1px solid var(--border-subtle)',
+      background: 'var(--bg-surface)',
+      overflow: 'hidden',
+      transition: 'border-color 0.3s var(--transition-smooth)',
+      borderColor: open ? 'var(--accent-deep)' : 'var(--border-subtle)',
+    }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '16px 20px',
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          fontFamily: 'var(--font-display)',
+          fontSize: '1.05rem',
+          fontWeight: 600,
+          color: 'var(--accent-light)',
+          letterSpacing: '0.01em',
+        }}
+      >
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"
+          style={{
+            transition: 'transform 0.3s var(--transition-smooth)',
+            transform: open ? 'rotate(90deg)' : 'rotate(0deg)',
+            flexShrink: 0,
+          }}>
+          <path d="M7 4l6 6-6 6" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+        <span>Real-World Examples</span>
+        <span style={{
+          marginLeft: 'auto',
+          fontFamily: 'var(--font-mono)',
+          fontSize: '0.7rem',
+          color: 'var(--text-muted)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.06em',
+        }}>
+          {open ? 'collapse' : 'expand'}
+        </span>
+      </button>
+
+      <div style={{
+        maxHeight: open ? contentHeight + 20 : 0,
+        overflow: 'hidden',
+        transition: 'max-height 0.4s var(--transition-smooth)',
+      }}>
+        <div ref={contentRef} style={{ padding: '0 20px 20px' }}>
+          {examples.length > 1 && (
+            <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+              {examples.map((ex, i) => (
+                <button key={i}
+                  onClick={() => setTab(i)}
+                  style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    padding: '7px 16px',
+                    borderRadius: '100px',
+                    border: '1px solid',
+                    borderColor: tab === i ? 'var(--accent)' : 'var(--border-medium)',
+                    background: tab === i ? 'var(--accent-glow)' : 'transparent',
+                    color: tab === i ? 'var(--accent)' : 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s var(--transition-smooth)',
+                  }}
+                >
+                  {ex.title}
+                </button>
+              ))}
+            </div>
+          )}
+          {examples[tab] && examples[tab].content}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Supply & Demand Example ──────────────────────────────────
+function SupplyDemandExample() {
+  const canvasRef = useRef(null);
+  const containerRef = useRef(null);
+  const [costShift, setCostShift] = useState(0);
+  const [popShift, setPopShift] = useState(0);
+  const [canvasW, setCanvasW] = useState(500);
+  const H = 300;
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (containerRef.current) {
+        setCanvasW(containerRef.current.offsetWidth);
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const dpr = window.devicePixelRatio || 1;
+    const W = canvasW;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    const pad = { top: 30, right: 30, bottom: 50, left: 60 };
+    const gw = W - pad.left - pad.right;
+    const gh = H - pad.top - pad.bottom;
+
+    // Supply: P = 2Q + 10 + costShift  (upward sloping)
+    // Demand: P = -3Q + 60 + popShift  (downward sloping)
+    const supplyB = 10 + costShift;
+    const demandB = 60 + popShift;
+    const supplyM = 2;
+    const demandM = -3;
+
+    // Ranges
+    const qMin = 0, qMax = 20;
+    const pMin = 0, pMax = 80;
+
+    function toX(q) { return pad.left + (q - qMin) / (qMax - qMin) * gw; }
+    function toY(p) { return pad.top + (pMax - p) / (pMax - pMin) * gh; }
+
+    // Clear
+    ctx.clearRect(0, 0, W, H);
+
+    // Background
+    ctx.fillStyle = '#111119';
+    ctx.fillRect(0, 0, W, H);
+
+    // Grid lines
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx.lineWidth = 0.5;
+    for (let q = 0; q <= qMax; q += 5) {
+      ctx.beginPath();
+      ctx.moveTo(toX(q), pad.top);
+      ctx.lineTo(toX(q), pad.top + gh);
+      ctx.stroke();
+    }
+    for (let p = 0; p <= pMax; p += 10) {
+      ctx.beginPath();
+      ctx.moveTo(pad.left, toY(p));
+      ctx.lineTo(pad.left + gw, toY(p));
+      ctx.stroke();
+    }
+
+    // Axes
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(pad.left, pad.top);
+    ctx.lineTo(pad.left, pad.top + gh);
+    ctx.lineTo(pad.left + gw, pad.top + gh);
+    ctx.stroke();
+
+    // Axis labels
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = '11px "DM Sans", sans-serif';
+    ctx.textAlign = 'center';
+    for (let q = 0; q <= qMax; q += 5) {
+      ctx.fillText(q, toX(q), pad.top + gh + 18);
+    }
+    ctx.textAlign = 'right';
+    for (let p = 0; p <= pMax; p += 20) {
+      ctx.fillText('$' + p, pad.left - 8, toY(p) + 4);
+    }
+
+    // Axis titles
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.font = '12px "DM Sans", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Quantity', pad.left + gw / 2, H - 6);
+    ctx.save();
+    ctx.translate(16, pad.top + gh / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('Price ($)', 0, 0);
+    ctx.restore();
+
+    // Equilibrium calculation
+    // supplyM * Q + supplyB = demandM * Q + demandB
+    // (supplyM - demandM) * Q = demandB - supplyB
+    const eqQ = (demandB - supplyB) / (supplyM - demandM);
+    const eqP = supplyM * eqQ + supplyB;
+
+    // Shaded surplus/shortage areas (between curves)
+    if (eqQ > 0 && eqQ < qMax && eqP > 0 && eqP < pMax) {
+      // Surplus area (above equilibrium price on supply side)
+      ctx.fillStyle = 'rgba(94,170,255,0.06)';
+      ctx.beginPath();
+      ctx.moveTo(toX(0), toY(supplyB));
+      ctx.lineTo(toX(eqQ), toY(eqP));
+      ctx.lineTo(toX(0), toY(demandB));
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Supply curve (blue)
+    ctx.strokeStyle = '#5eaaff';
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = 'rgba(94,170,255,0.3)';
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    let started = false;
+    for (let q = qMin; q <= qMax; q += 0.5) {
+      const p = supplyM * q + supplyB;
+      if (p >= pMin && p <= pMax) {
+        if (!started) { ctx.moveTo(toX(q), toY(p)); started = true; }
+        else ctx.lineTo(toX(q), toY(p));
+      }
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Demand curve (pink)
+    ctx.strokeStyle = '#ff6b8a';
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = 'rgba(255,107,138,0.3)';
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    started = false;
+    for (let q = qMin; q <= qMax; q += 0.5) {
+      const p = demandM * q + demandB;
+      if (p >= pMin && p <= pMax) {
+        if (!started) { ctx.moveTo(toX(q), toY(p)); started = true; }
+        else ctx.lineTo(toX(q), toY(p));
+      }
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Equilibrium point
+    if (eqQ >= qMin && eqQ <= qMax && eqP >= pMin && eqP <= pMax) {
+      // Dashed lines to axes
+      ctx.setLineDash([4, 4]);
+      ctx.strokeStyle = 'rgba(232,145,58,0.4)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(toX(eqQ), toY(eqP));
+      ctx.lineTo(toX(eqQ), pad.top + gh);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(toX(eqQ), toY(eqP));
+      ctx.lineTo(pad.left, toY(eqP));
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Dot
+      ctx.beginPath();
+      ctx.arc(toX(eqQ), toY(eqP), 6, 0, Math.PI * 2);
+      ctx.fillStyle = '#e8913a';
+      ctx.shadowColor = 'rgba(232,145,58,0.5)';
+      ctx.shadowBlur = 12;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = '#07070c';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Label
+      ctx.fillStyle = '#e8913a';
+      ctx.font = 'bold 11px "JetBrains Mono", monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText('Equilibrium', toX(eqQ) + 10, toY(eqP) - 12);
+      ctx.fillStyle = '#f0a85c';
+      ctx.font = '10px "JetBrains Mono", monospace';
+      ctx.fillText('Q=' + roundTo(eqQ, 1) + ', P=$' + roundTo(eqP, 1), toX(eqQ) + 10, toY(eqP) + 2);
+    }
+
+    // Curve labels
+    ctx.font = 'bold 11px "DM Sans", sans-serif';
+    const sLabelQ = Math.min(qMax - 2, 15);
+    const sLabelP = supplyM * sLabelQ + supplyB;
+    if (sLabelP >= pMin && sLabelP <= pMax) {
+      ctx.fillStyle = '#5eaaff';
+      ctx.textAlign = 'left';
+      ctx.fillText('Supply', toX(sLabelQ) + 4, toY(sLabelP) - 8);
+    }
+    const dLabelQ = Math.min(qMax - 2, 2);
+    const dLabelP = demandM * dLabelQ + demandB;
+    if (dLabelP >= pMin && dLabelP <= pMax) {
+      ctx.fillStyle = '#ff6b8a';
+      ctx.textAlign = 'left';
+      ctx.fillText('Demand', toX(dLabelQ) + 4, toY(dLabelP) - 8);
+    }
+
+  }, [canvasW, costShift, popShift]);
+
+  const supplyB = 10 + costShift;
+  const demandB = 60 + popShift;
+  const eqQ = (demandB - supplyB) / (2 - (-3));
+  const eqP = 2 * eqQ + supplyB;
+
+  return (
+    <div ref={containerRef}>
+      <p style={{
+        fontSize: 14,
+        lineHeight: 1.7,
+        color: 'var(--text-secondary)',
+        marginBottom: 16,
+      }}>
+        When Adam Smith wrote about markets in 1776, he described two competing forces: sellers want high prices (<span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>supply</span>), buyers want low prices (<span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>demand</span>). Each is a <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>linear equation</span> relating price to quantity. The magic of a <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>system of equations</span> is finding where both are satisfied simultaneously {'\u2014'} the equilibrium point. Every market price, from gasoline to concert tickets, settles at this intersection.
+      </p>
+
+      <div style={{
+        background: 'rgba(94,170,255,0.06)',
+        border: '1px solid rgba(94,170,255,0.12)',
+        borderRadius: 'var(--radius-md)',
+        padding: 14,
+        marginBottom: 16,
+        fontSize: 14,
+        lineHeight: 1.7,
+        color: 'var(--text-secondary)',
+      }}>
+        <strong style={{ color: 'var(--text-primary)', fontSize: 13, fontFamily: 'var(--font-mono)', letterSpacing: '0.03em', display: 'block', marginBottom: 6 }}>What you're seeing</strong>
+        Two lines on the graph represent supply (upward: higher price motivates more production) and demand (downward: higher price discourages buyers). Their intersection is the <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>equilibrium</span> {'\u2014'} the price and quantity where the market balances. Use the sliders to simulate real events: increasing "Production Cost" shifts supply up (more expensive to make), while increasing "Popularity" shifts demand up (more people want it). Watch how the equilibrium slides to a new position each time.
+      </div>
+
+      <canvas ref={canvasRef} style={{
+        width: '100%',
+        borderRadius: 'var(--radius-md)',
+        display: 'block',
+      }} />
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 16 }}>
+        <div>
+          <div className="slider-row">
+            <span className="slider-label" style={{ color: '#5eaaff', minWidth: 100 }}>Prod. Cost</span>
+            <input type="range" className="line-a" min={-15} max={20} step={1} value={costShift}
+              onChange={e => setCostShift(Number(e.target.value))} />
+            <span className="slider-value">{costShift >= 0 ? '+' : ''}{costShift}</span>
+          </div>
+        </div>
+        <div>
+          <div className="slider-row">
+            <span className="slider-label" style={{ color: '#ff6b8a', minWidth: 100 }}>Popularity</span>
+            <input type="range" className="line-b" min={-20} max={15} step={1} value={popShift}
+              onChange={e => setPopShift(Number(e.target.value))} />
+            <span className="slider-value">{popShift >= 0 ? '+' : ''}{popShift}</span>
+          </div>
+        </div>
+      </div>
+
+      <div style={{
+        marginTop: 12,
+        display: 'flex',
+        gap: 16,
+        fontSize: '0.82rem',
+        fontFamily: 'var(--font-mono)',
+      }}>
+        <span style={{ color: '#5eaaff' }}>P = 2Q + {supplyB}</span>
+        <span style={{ color: '#ff6b8a' }}>P = -3Q + {demandB}</span>
+        {eqQ > 0 && (
+          <span style={{ color: 'var(--accent)' }}>
+            Eq: Q={roundTo(eqQ, 1)}, P=${roundTo(eqP, 1)}
+          </span>
+        )}
+      </div>
+
+      <p style={{
+        marginTop: 16,
+        fontSize: 13,
+        lineHeight: 1.7,
+        color: 'var(--text-muted)',
+        borderTop: '1px solid var(--border-subtle)',
+        paddingTop: 12,
+      }}>
+        <strong style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', fontSize: 12, letterSpacing: '0.03em' }}>Why it matters</strong><br/>
+        This isn't just theory. When a drought ruins coffee crops, the <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>supply curve</span> shifts left {'\u2014'} the new equilibrium means higher prices and less coffee sold. When a new smartphone launches, <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>demand</span> shifts right {'\u2014'} prices rise until production catches up. Economists solve these systems to predict inflation, set trade policy, and understand recessions. The intersection of two lines determines billions of dollars in global markets.
+      </p>
+
+      <p style={{
+        marginTop: 14,
+        fontSize: '0.78rem',
+        color: 'var(--text-muted)',
+        lineHeight: 1.6,
+        fontStyle: 'italic',
+        borderTop: '1px solid var(--border-subtle)',
+        paddingTop: 12,
+      }}>
+        Adam Smith, 1776 {'\u2014'} <em>The Wealth of Nations</em> introduced supply and demand
+        as the fundamental mechanism of price discovery. The equilibrium point is where
+        the system of supply and demand equations is solved simultaneously.
+      </p>
+    </div>
+  );
+}
+
+// ─── Diet Planning Example ────────────────────────────────────
+function DietPlanningExample() {
+  const canvasRef = useRef(null);
+  const containerRef = useRef(null);
+  const [proteinReq, setProteinReq] = useState(60);
+  const [calLimit, setCalLimit] = useState(600);
+  const [canvasW, setCanvasW] = useState(500);
+  const H = 300;
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (containerRef.current) {
+        setCanvasW(containerRef.current.offsetWidth);
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const dpr = window.devicePixelRatio || 1;
+    const W = canvasW;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    const pad = { top: 30, right: 30, bottom: 50, left: 60 };
+    const gw = W - pad.left - pad.right;
+    const gh = H - pad.top - pad.bottom;
+
+    // Variables: x = servings of chicken, y = servings of rice
+    // Constraint 1 (protein): 30x + 5y >= proteinReq  => y >= (proteinReq - 30x) / 5
+    // Constraint 2 (calories): 200x + 150y <= calLimit => y <= (calLimit - 200x) / 150
+    // Also x >= 0, y >= 0
+
+    const xMax = 5, yMax = 6;
+    function toX(v) { return pad.left + (v / xMax) * gw; }
+    function toY(v) { return pad.top + (yMax - v) / yMax * gh; }
+
+    // Clear
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#111119';
+    ctx.fillRect(0, 0, W, H);
+
+    // Grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx.lineWidth = 0.5;
+    for (let x = 0; x <= xMax; x++) {
+      ctx.beginPath();
+      ctx.moveTo(toX(x), pad.top);
+      ctx.lineTo(toX(x), pad.top + gh);
+      ctx.stroke();
+    }
+    for (let y = 0; y <= yMax; y++) {
+      ctx.beginPath();
+      ctx.moveTo(pad.left, toY(y));
+      ctx.lineTo(pad.left + gw, toY(y));
+      ctx.stroke();
+    }
+
+    // Axes
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(pad.left, pad.top);
+    ctx.lineTo(pad.left, pad.top + gh);
+    ctx.lineTo(pad.left + gw, pad.top + gh);
+    ctx.stroke();
+
+    // Axis labels
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = '11px "DM Sans", sans-serif';
+    ctx.textAlign = 'center';
+    for (let x = 0; x <= xMax; x++) {
+      ctx.fillText(x, toX(x), pad.top + gh + 18);
+    }
+    ctx.textAlign = 'right';
+    for (let y = 0; y <= yMax; y++) {
+      ctx.fillText(y, pad.left - 8, toY(y) + 4);
+    }
+
+    // Axis titles
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.font = '12px "DM Sans", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Chicken (servings)', pad.left + gw / 2, H - 6);
+    ctx.save();
+    ctx.translate(16, pad.top + gh / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('Rice (servings)', 0, 0);
+    ctx.restore();
+
+    // Protein line: 30x + 5y = proteinReq => y = (proteinReq - 30x) / 5
+    // Calorie line: 200x + 150y = calLimit => y = (calLimit - 200x) / 150
+
+    function proteinY(x) { return (proteinReq - 30 * x) / 5; }
+    function calorieY(x) { return (calLimit - 200 * x) / 150; }
+
+    // Feasible region: protein >= req (above protein line), calorie <= limit (below calorie line), x>=0, y>=0
+    // Find intersection of the two constraint lines
+    // 30x + 5y = proteinReq
+    // 200x + 150y = calLimit
+    // From first: y = (proteinReq - 30x) / 5
+    // Sub into second: 200x + 150 * (proteinReq - 30x) / 5 = calLimit
+    // 200x + 30*(proteinReq - 30x) = calLimit
+    // 200x + 30*proteinReq - 900x = calLimit
+    // -700x = calLimit - 30*proteinReq
+    // x = (30*proteinReq - calLimit) / 700
+    const intX = (30 * proteinReq - calLimit) / 700;
+    const intY = (proteinReq - 30 * intX) / 5;
+
+    // Shade feasible region
+    // Feasible: above protein line AND below calorie line AND x>=0 AND y>=0
+    ctx.fillStyle = 'rgba(74,222,128,0.08)';
+    ctx.beginPath();
+
+    // Build polygon of feasible region by scanning
+    // The vertices of the feasible polygon:
+    const polyPts = [];
+
+    // Check each boundary intersection
+    // Protein line: y = (proteinReq - 30x) / 5
+    // At x=0: y = proteinReq/5
+    // At y=0: x = proteinReq/30
+
+    // Calorie line: y = (calLimit - 200x) / 150
+    // At x=0: y = calLimit/150
+    // At y=0: x = calLimit/200
+
+    const pAtX0 = proteinReq / 5;  // protein y-intercept
+    const pAtY0 = proteinReq / 30; // protein x-intercept
+    const cAtX0 = calLimit / 150;  // calorie y-intercept
+    const cAtY0 = calLimit / 200;  // calorie x-intercept
+
+    // Feasible region vertices depend on configuration
+    // We need: y >= proteinY(x), y <= calorieY(x), x >= 0, y >= 0
+    // Walk counterclockwise
+    if (intX >= 0 && intX <= xMax && intY >= 0 && intY <= yMax) {
+      // Standard case: intersection is in the visible range
+      // From protein x-intercept, go up along protein line to intersection, then along calorie line
+      if (pAtY0 <= cAtY0 && pAtY0 >= 0 && pAtY0 <= xMax) {
+        // Start at protein x-intercept on x-axis
+        polyPts.push([pAtY0, 0]);
+      }
+      // Go along protein line up to intersection
+      if (pAtX0 <= cAtX0 && pAtX0 >= 0) {
+        // Protein y-intercept is below calorie y-intercept: add it
+        polyPts.push([0, pAtX0]);
+        // Along y-axis up to calorie y-intercept
+        if (cAtX0 >= 0 && cAtX0 <= yMax) {
+          polyPts.push([0, cAtX0]);
+        }
+      } else if (pAtX0 > cAtX0) {
+        // Protein y-intercept is above calorie y-intercept
+        // The feasible region touches y-axis between cAtX0 and pAtX0? No - above protein AND below calorie.
+        // If pAtX0 > cAtX0, there might be no feasible at x=0
+      }
+      // Intersection point
+      polyPts.push([intX, intY]);
+      // From intersection along calorie line to x-axis
+      if (cAtY0 >= 0 && cAtY0 <= xMax && cAtY0 >= pAtY0) {
+        polyPts.push([cAtY0, 0]);
+      }
+    }
+
+    if (polyPts.length >= 3) {
+      ctx.beginPath();
+      ctx.moveTo(toX(polyPts[0][0]), toY(polyPts[0][1]));
+      for (let i = 1; i < polyPts.length; i++) {
+        ctx.lineTo(toX(polyPts[i][0]), toY(polyPts[i][1]));
+      }
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(74,222,128,0.1)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(74,222,128,0.2)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    // Protein constraint line (blue)
+    ctx.strokeStyle = '#5eaaff';
+    ctx.lineWidth = 2;
+    ctx.shadowColor = 'rgba(94,170,255,0.3)';
+    ctx.shadowBlur = 6;
+    ctx.beginPath();
+    let started = false;
+    for (let x = 0; x <= xMax; x += 0.1) {
+      const y = proteinY(x);
+      if (y >= -0.5 && y <= yMax + 0.5) {
+        const py = Math.max(0, Math.min(yMax, y));
+        if (!started) { ctx.moveTo(toX(x), toY(py)); started = true; }
+        else ctx.lineTo(toX(x), toY(py));
+      }
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Calorie constraint line (pink)
+    ctx.strokeStyle = '#ff6b8a';
+    ctx.lineWidth = 2;
+    ctx.shadowColor = 'rgba(255,107,138,0.3)';
+    ctx.shadowBlur = 6;
+    ctx.beginPath();
+    started = false;
+    for (let x = 0; x <= xMax; x += 0.1) {
+      const y = calorieY(x);
+      if (y >= -0.5 && y <= yMax + 0.5) {
+        const py = Math.max(0, Math.min(yMax, y));
+        if (!started) { ctx.moveTo(toX(x), toY(py)); started = true; }
+        else ctx.lineTo(toX(x), toY(py));
+      }
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Line labels
+    ctx.font = 'bold 10px "DM Sans", sans-serif';
+    const plx = 0.5;
+    const ply = proteinY(plx);
+    if (ply >= 0 && ply <= yMax) {
+      ctx.fillStyle = '#5eaaff';
+      ctx.textAlign = 'left';
+      ctx.fillText('Protein ' + '\u2265' + ' ' + proteinReq + 'g', toX(plx) + 4, toY(ply) - 8);
+    }
+    const clx = 0.3;
+    const cly = calorieY(clx);
+    if (cly >= 0 && cly <= yMax) {
+      ctx.fillStyle = '#ff6b8a';
+      ctx.textAlign = 'left';
+      ctx.fillText('Calories ' + '\u2264' + ' ' + calLimit, toX(clx) + 4, toY(cly) + 18);
+    }
+
+    // Intersection / optimal point
+    if (intX >= 0 && intX <= xMax && intY >= 0 && intY <= yMax) {
+      // Dot
+      ctx.beginPath();
+      ctx.arc(toX(intX), toY(intY), 6, 0, Math.PI * 2);
+      ctx.fillStyle = '#e8913a';
+      ctx.shadowColor = 'rgba(232,145,58,0.5)';
+      ctx.shadowBlur = 12;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = '#07070c';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Draw small chicken icon (simple drumstick shape)
+      const iconX = toX(intX) + 14;
+      const iconY = toY(intY) - 20;
+      ctx.fillStyle = '#e8913a';
+      ctx.beginPath();
+      ctx.ellipse(iconX, iconY, 6, 4, -0.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#e8913a';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(iconX - 4, iconY + 3);
+      ctx.lineTo(iconX - 9, iconY + 10);
+      ctx.stroke();
+
+      // Draw small bowl icon (rice)
+      const bowlX = iconX + 18;
+      const bowlY = iconY;
+      ctx.strokeStyle = '#e8913a';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(bowlX, bowlY + 2, 6, 0, Math.PI);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(bowlX - 6, bowlY + 2);
+      ctx.lineTo(bowlX + 6, bowlY + 2);
+      ctx.stroke();
+      // Rice grains
+      ctx.fillStyle = '#f0a85c';
+      ctx.beginPath();
+      ctx.ellipse(bowlX - 2, bowlY - 1, 2, 1, 0.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(bowlX + 2, bowlY, 2, 1, -0.3, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Label
+      ctx.fillStyle = '#e8913a';
+      ctx.font = 'bold 11px "JetBrains Mono", monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText('Optimal', toX(intX) + 12, toY(intY) + 16);
+    }
+
+  }, [canvasW, proteinReq, calLimit]);
+
+  const intX = (30 * proteinReq - calLimit) / 700;
+  const intY = (proteinReq - 30 * intX) / 5;
+  const feasible = intX >= 0 && intY >= 0;
+
+  return (
+    <div ref={containerRef}>
+      <p style={{
+        fontSize: 14,
+        lineHeight: 1.7,
+        color: 'var(--text-secondary)',
+        marginBottom: 16,
+      }}>
+        Nutritionists face a classic system-of-equations problem: find a meal that meets protein requirements while staying under a calorie limit. Each constraint is a <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>linear equation</span> in two variables (servings of chicken and rice). The <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>feasible region</span> {'\u2014'} where both constraints are satisfied {'\u2014'} is a shape on the graph, and the optimal meal sits at the intersection of the boundary lines. This is the foundation of <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>linear programming</span>, used by hospitals, armies, and school cafeterias worldwide.
+      </p>
+
+      <div style={{
+        background: 'rgba(94,170,255,0.06)',
+        border: '1px solid rgba(94,170,255,0.12)',
+        borderRadius: 'var(--radius-md)',
+        padding: 14,
+        marginBottom: 16,
+        fontSize: 14,
+        lineHeight: 1.7,
+        color: 'var(--text-secondary)',
+      }}>
+        <strong style={{ color: 'var(--text-primary)', fontSize: 13, fontFamily: 'var(--font-mono)', letterSpacing: '0.03em', display: 'block', marginBottom: 6 }}>What you're seeing</strong>
+        The graph plots chicken servings (x-axis) against rice servings (y-axis). The blue line marks the minimum protein requirement {'\u2014'} you need to be above it. The pink line marks the maximum calorie limit {'\u2014'} you need to be below it. The shaded green region shows all valid meal combinations. The highlighted intersection point is the exact solution to the system: the meal that hits the protein target at the lowest calorie cost.
+      </div>
+
+      <canvas ref={canvasRef} style={{
+        width: '100%',
+        borderRadius: 'var(--radius-md)',
+        display: 'block',
+      }} />
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 16 }}>
+        <div>
+          <div className="slider-row">
+            <span className="slider-label" style={{ color: '#5eaaff', minWidth: 110 }}>Protein Req</span>
+            <input type="range" className="line-a" min={30} max={100} step={5} value={proteinReq}
+              onChange={e => setProteinReq(Number(e.target.value))} />
+            <span className="slider-value">{proteinReq}g</span>
+          </div>
+        </div>
+        <div>
+          <div className="slider-row">
+            <span className="slider-label" style={{ color: '#ff6b8a', minWidth: 110 }}>Calorie Limit</span>
+            <input type="range" className="line-b" min={300} max={900} step={25} value={calLimit}
+              onChange={e => setCalLimit(Number(e.target.value))} />
+            <span className="slider-value">{calLimit}</span>
+          </div>
+        </div>
+      </div>
+
+      <div style={{
+        marginTop: 12,
+        fontSize: '0.82rem',
+        fontFamily: 'var(--font-mono)',
+        lineHeight: 1.8,
+      }}>
+        <div style={{ color: '#5eaaff' }}>
+          30x + 5y {'\u2265'} {proteinReq} <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>(protein)</span>
+        </div>
+        <div style={{ color: '#ff6b8a' }}>
+          200x + 150y {'\u2264'} {calLimit} <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>(calories)</span>
+        </div>
+        {feasible && intX >= 0 && intY >= 0 ? (
+          <div style={{ color: 'var(--accent)', marginTop: 4 }}>
+            {'\u2192'} {roundTo(intX, 1)} servings chicken + {roundTo(intY, 1)} servings rice
+          </div>
+        ) : (
+          <div style={{ color: 'var(--error)', marginTop: 4 }}>
+            No feasible solution with current constraints
+          </div>
+        )}
+      </div>
+
+      <p style={{
+        marginTop: 16,
+        fontSize: 13,
+        lineHeight: 1.7,
+        color: 'var(--text-muted)',
+        borderTop: '1px solid var(--border-subtle)',
+        paddingTop: 12,
+      }}>
+        <strong style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', fontSize: 12, letterSpacing: '0.03em' }}>Real-world connection</strong><br/>
+        Airlines use exactly this approach to plan meals for thousands of passengers: minimize cost while meeting nutrition standards, respecting weight limits, and accommodating dietary restrictions. Each constraint adds another line to the graph. With 50 food items and 20 constraints, computers solve these systems in milliseconds {'\u2014'} but the core math is the same two-line intersection you see here.
+      </p>
+
+      <p style={{
+        marginTop: 14,
+        fontSize: '0.78rem',
+        color: 'var(--text-muted)',
+        lineHeight: 1.6,
+        fontStyle: 'italic',
+        borderTop: '1px solid var(--border-subtle)',
+        paddingTop: 12,
+      }}>
+        The shaded region shows all feasible meal combinations. The intersection of the constraint
+        lines (the system solution) gives the optimal balance point. Adjust the constraints to see how
+        dietary needs change the solution.
+      </p>
+    </div>
+  );
+}
+
 // ─── Step 1: Landing ──────────────────────────────────────────
 function StepLanding({ onStart }) {
   return (
@@ -843,6 +1658,10 @@ function StepWhatIsSystem() {
           </p>
         </div>
       )}
+
+      <RealWorldPanel examples={[
+        { title: 'Supply & Demand', content: <SupplyDemandExample /> },
+      ]} />
     </div>
   );
 }
@@ -938,6 +1757,10 @@ function StepGraphing() {
         <span style={{ fontSize: '1.1rem' }}>i</span>
         <span>Try making the slopes equal to see what happens! Then try making both slopes AND intercepts equal.</span>
       </div>
+
+      <RealWorldPanel examples={[
+        { title: 'Diet Planning', content: <DietPlanningExample /> },
+      ]} />
     </div>
   );
 }

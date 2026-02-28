@@ -625,6 +625,487 @@ function StepLanding({ onNext }) {
 
 
 /* ═══════════════════════════════════════════
+   REAL-WORLD PANEL + EXAMPLE COMPONENTS
+   ═══════════════════════════════════════════ */
+
+function RealWorldPanel({ examples }) {
+  const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState(0);
+  const contentRef = useRef(null);
+  const [contentHeight, setContentHeight] = useState(0);
+  useEffect(() => {
+    if (contentRef.current) setContentHeight(contentRef.current.scrollHeight);
+  }, [open, tab]);
+  return (
+    <div style={{
+      margin: '24px 0', borderRadius: 12,
+      border: '1px solid var(--border-subtle)',
+      background: 'var(--bg-card)', overflow: 'hidden',
+      transition: 'border-color 0.3s',
+      ...(open ? { borderColor: 'var(--accent-glow)' } : {}),
+    }}>
+      <button onClick={() => setOpen(!open)} style={{
+        width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+        padding: '14px 18px', background: 'none', border: 'none',
+        cursor: 'pointer', color: 'var(--text-primary)', fontFamily: 'var(--font-body)',
+        fontSize: 14, fontWeight: 500, textAlign: 'left',
+      }}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-bright)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.3s', transform: open ? 'rotate(90deg)' : 'rotate(0deg)', flexShrink: 0 }}>
+          <path d="M9 18l6-6-6-6"/>
+        </svg>
+        <span>Real-World Applications</span>
+        <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
+          {examples.length} {examples.length === 1 ? 'example' : 'examples'}
+        </span>
+      </button>
+      <div style={{
+        maxHeight: open ? contentHeight + 40 : 0, overflow: 'hidden',
+        transition: 'max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+      }}>
+        <div ref={contentRef} style={{ padding: '0 18px 18px' }}>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
+            {examples.map((ex, i) => (
+              <button key={i} onClick={() => setTab(i)} style={{
+                padding: '6px 14px', borderRadius: 6, border: '1px solid',
+                borderColor: tab === i ? 'var(--accent-glow)' : 'var(--border-subtle)',
+                background: tab === i ? 'rgba(217,70,168,0.08)' : 'transparent',
+                color: tab === i ? 'var(--accent-bright)' : 'var(--text-secondary)',
+                fontFamily: 'var(--font-mono)', fontSize: 12, cursor: 'pointer', transition: 'all 0.2s',
+              }}>{ex.title}</button>
+            ))}
+          </div>
+          <div style={{ animation: 'fadeIn 0.3s' }}>{examples[tab] && examples[tab].content}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProjectileMotionExample() {
+  const canvasRef = useRef(null);
+  const [velocity, setVelocity] = useState(30);
+  const [angle, setAngle] = useState(45);
+  const [firing, setFiring] = useState(false);
+  const [projT, setProjT] = useState(0);
+  const animRef = useRef(null);
+
+  const g = 9.81;
+  const rad = angle * Math.PI / 180;
+  const vx = velocity * Math.cos(rad);
+  const vy = velocity * Math.sin(rad);
+  const tFlight = (2 * vy) / g;
+  const rangeVal = vx * tFlight;
+  const maxH = (vy * vy) / (2 * g);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const W = canvas.parentElement.clientWidth || 500;
+    const H = 300;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    const padL = 50, padR = 20, padB = 40, padT = 20;
+    const gw = W - padL - padR;
+    const gh = H - padT - padB;
+
+    const maxRange = Math.max(rangeVal * 1.15, 50);
+    const maxHeight = Math.max(maxH * 1.3, 20);
+
+    function toX(x) { return padL + (x / maxRange) * gw; }
+    function toY(y) { return padT + gh - (y / maxHeight) * gh; }
+
+    ctx.clearRect(0, 0, W, H);
+
+    // Ground
+    ctx.strokeStyle = '#4ade80';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(padL, toY(0));
+    ctx.lineTo(W - padR, toY(0));
+    ctx.stroke();
+
+    // Ground fill
+    ctx.fillStyle = 'rgba(74, 222, 128, 0.04)';
+    ctx.fillRect(padL, toY(0), gw, padB);
+
+    // Axis labels
+    ctx.font = '10px JetBrains Mono, monospace';
+    ctx.fillStyle = 'rgba(232, 230, 240, 0.3)';
+    ctx.textAlign = 'center';
+    const xSteps = 5;
+    for (let i = 0; i <= xSteps; i++) {
+      const val = (maxRange / xSteps) * i;
+      ctx.fillText(Math.round(val) + 'm', toX(val), toY(0) + 16);
+    }
+    ctx.textAlign = 'right';
+    const ySteps = 4;
+    for (let i = 0; i <= ySteps; i++) {
+      const val = (maxHeight / ySteps) * i;
+      ctx.fillText(Math.round(val) + 'm', padL - 6, toY(val) + 4);
+    }
+
+    // Cannon body
+    ctx.save();
+    ctx.translate(toX(0), toY(0));
+    ctx.rotate(-rad);
+    ctx.fillStyle = 'rgba(232, 230, 240, 0.3)';
+    ctx.fillRect(0, -4, 30, 8);
+    ctx.fillStyle = 'rgba(232, 230, 240, 0.15)';
+    ctx.beginPath();
+    ctx.arc(0, 0, 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Parabolic trail (dotted)
+    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = '#f472c4';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    const trailSteps = 120;
+    for (let i = 0; i <= trailSteps; i++) {
+      const t = (tFlight / trailSteps) * i;
+      const px = vx * t;
+      const py = vy * t - 0.5 * g * t * t;
+      if (py < 0) break;
+      const sx = toX(px);
+      const sy = toY(py);
+      if (i === 0) ctx.moveTo(sx, sy);
+      else ctx.lineTo(sx, sy);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Max height marker
+    const peakT = vy / g;
+    const peakX = vx * peakT;
+    const peakSx = toX(peakX);
+    const peakSy = toY(maxH);
+    ctx.setLineDash([3, 3]);
+    ctx.strokeStyle = 'rgba(251, 191, 36, 0.4)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(peakSx, toY(0));
+    ctx.lineTo(peakSx, peakSy);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath();
+    ctx.arc(peakSx, peakSy, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.font = '10px JetBrains Mono, monospace';
+    ctx.fillStyle = '#fbbf24';
+    ctx.textAlign = 'center';
+    ctx.fillText('max: ' + maxH.toFixed(1) + 'm', peakSx, peakSy - 10);
+
+    // Range marker
+    ctx.fillStyle = 'rgba(168, 133, 247, 0.7)';
+    ctx.textAlign = 'center';
+    ctx.fillText('range: ' + rangeVal.toFixed(1) + 'm', toX(rangeVal / 2), toY(0) + 30);
+
+    // Animated projectile
+    if (firing && projT <= tFlight) {
+      const px = vx * projT;
+      const py = vy * projT - 0.5 * g * projT * projT;
+      if (py >= 0) {
+        const sx = toX(px);
+        const sy = toY(py);
+        // Glow
+        const grad = ctx.createRadialGradient(sx, sy, 0, sx, sy, 14);
+        grad.addColorStop(0, 'rgba(244, 114, 196, 0.6)');
+        grad.addColorStop(1, 'rgba(244, 114, 196, 0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(sx, sy, 14, 0, Math.PI * 2);
+        ctx.fill();
+        // Ball
+        ctx.fillStyle = '#f472c4';
+        ctx.beginPath();
+        ctx.arc(sx, sy, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+  }, [velocity, angle, projT, firing]);
+
+  useEffect(() => {
+    if (!firing) return;
+    const tFlightLocal = (2 * velocity * Math.sin(angle * Math.PI / 180)) / g;
+    let start = null;
+    function animate(ts) {
+      if (!start) start = ts;
+      const elapsed = (ts - start) / 1000;
+      setProjT(elapsed);
+      if (elapsed < tFlightLocal) {
+        animRef.current = requestAnimationFrame(animate);
+      } else {
+        setProjT(tFlightLocal);
+        setFiring(false);
+      }
+    }
+    animRef.current = requestAnimationFrame(animate);
+    return () => { if (animRef.current) cancelAnimationFrame(animRef.current); };
+  }, [firing]);
+
+  function handleFire() {
+    setProjT(0);
+    setFiring(true);
+  }
+
+  return (
+    <div>
+      <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.7, maxWidth: 600, marginBottom: 16 }}>
+        Every object thrown, launched, or kicked follows a parabolic arc {'\u2014'} this is <strong style={{ color: 'var(--text-primary)', fontWeight: 500 }}>projectile motion</strong>, and it{'\u2019'}s governed by a quadratic equation. Gravity pulls the object down with a constant acceleration (<span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent-bright)' }}>9.8 m/s{'\u00B2'}</span>), creating the <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent-bright)' }}>x{'\u00B2'}</span> term that defines the parabola. The launch angle and speed determine how high and far the projectile travels. Galileo first described this in the 1630s, and it remains one of the most elegant demonstrations of why quadratic equations appear in nature.
+      </p>
+      <div style={{ background: 'var(--bg-card)', borderRadius: 10, padding: '14px 16px', border: '1px solid var(--border-subtle)', marginBottom: 16, fontSize: 13 }}>
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+          <strong style={{ color: 'var(--text-primary)', fontWeight: 500 }}>What you{'\u2019'}re seeing:</strong> A cannon fires a projectile that traces a parabolic arc across the screen. Adjust the initial velocity and launch angle with the sliders, then hit {'\u2018'}Fire{'\u2019'} to watch the trajectory. The dotted trail is the parabola. The vertex (highest point) is labeled with the maximum height. Notice that <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent-bright)' }}>45{'\u00B0'}</span> gives maximum range {'\u2014'} this is a famous result that comes directly from the quadratic formula.
+        </p>
+      </div>
+      <canvas ref={canvasRef} style={{ width: '100%', borderRadius: 8, display: 'block', background: 'rgba(0,0,0,0.15)' }} />
+      <div style={{ marginTop: 14, display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+        <div style={{ flex: 1, minWidth: 120 }}>
+          <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent-bright)', marginBottom: 4 }}>
+            v{'\u2080'} = {velocity} m/s
+          </label>
+          <input type="range" min="10" max="50" step="1" value={velocity}
+            onChange={e => { setVelocity(parseInt(e.target.value)); setFiring(false); }}
+            style={{ width: '100%', accentColor: '#f472c4' }} />
+        </div>
+        <div style={{ flex: 1, minWidth: 120 }}>
+          <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, color: '#a78bfa', marginBottom: 4 }}>
+            {'\u03B8'} = {angle}{'\u00B0'}
+          </label>
+          <input type="range" min="15" max="75" step="1" value={angle}
+            onChange={e => { setAngle(parseInt(e.target.value)); setFiring(false); }}
+            style={{ width: '100%', accentColor: '#a78bfa' }} />
+        </div>
+        <button onClick={handleFire} disabled={firing} style={{
+          fontFamily: 'var(--font-mono)', fontSize: 12, padding: '8px 22px',
+          borderRadius: 8, border: 'none', cursor: firing ? 'not-allowed' : 'pointer',
+          background: firing ? 'rgba(255,255,255,0.06)' : 'linear-gradient(135deg, var(--accent), var(--accent2))',
+          color: firing ? 'var(--text-tertiary)' : '#fff', transition: 'all 0.2s',
+        }}>
+          {firing ? 'Firing...' : 'Fire'}
+        </button>
+      </div>
+      <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 8, background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)' }}>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+          y = x{'\u00B7'}tan({'\u03B8'}) - (g{'\u00B7'}x{'\u00B2'})/(2v{'\u2080'}{'\u00B2'}cos{'\u00B2'}{'\u03B8'})
+        </p>
+        <div style={{ display: 'flex', gap: 16, marginTop: 6, fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+          <span style={{ color: '#fbbf24' }}>Max height: {maxH.toFixed(1)}m</span>
+          <span style={{ color: '#a855f7' }}>Range: {rangeVal.toFixed(1)}m</span>
+          <span style={{ color: 'var(--text-tertiary)' }}>Flight: {tFlight.toFixed(2)}s</span>
+        </div>
+      </div>
+      <p style={{ marginTop: 16, fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-tertiary)', lineHeight: 1.7, maxWidth: 600 }}>
+        <strong style={{ color: 'var(--text-primary)', fontWeight: 500 }}>Why it matters:</strong> Projectile math is used by everyone from basketball players (intuiting arc trajectories) to artillery officers (calculating firing solutions) to NASA engineers (plotting rocket stages). The key insight is that horizontal and vertical motion are independent: horizontal velocity is constant, but vertical velocity changes due to gravity. Combining them creates the parabola <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent-bright)' }}>y = x{'\u00B7'}tan({'\u03B8'}) - gx{'\u00B2'}/(2v{'\u2080'}{'\u00B2'}cos{'\u00B2'}{'\u03B8'})</span>.
+      </p>
+    </div>
+  );
+}
+
+function SatelliteDishExample() {
+  const canvasRef = useRef(null);
+  const [aParam, setAParam] = useState(0.5);
+  const [rayPhase, setRayPhase] = useState(0);
+  const animRef = useRef(null);
+
+  // Focus of y = a*x^2 is at (0, 1/(4a))
+  const focusY = 1 / (4 * aParam);
+
+  useEffect(() => {
+    let running = true;
+    let phase = 0;
+    function tick() {
+      if (!running) return;
+      phase += 0.008;
+      if (phase > 1) phase = 0;
+      setRayPhase(phase);
+      animRef.current = requestAnimationFrame(tick);
+    }
+    animRef.current = requestAnimationFrame(tick);
+    return () => { running = false; if (animRef.current) cancelAnimationFrame(animRef.current); };
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const W = canvas.parentElement.clientWidth || 500;
+    const H = 280;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    const cx = W / 2;
+    const cy = H - 40;
+    const scale = Math.min(W * 0.35, 160);
+
+    function toX(x) { return cx + x * scale; }
+    function toY(y) { return cy - y * scale; }
+
+    ctx.clearRect(0, 0, W, H);
+
+    // Draw the dish cross-section (parabola y = a*x^2)
+    ctx.strokeStyle = 'rgba(232, 230, 240, 0.5)';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    const dishSteps = 100;
+    const xMax = Math.sqrt(Math.min(2.0 / aParam, 8));
+    for (let i = 0; i <= dishSteps; i++) {
+      const x = -xMax + (2 * xMax / dishSteps) * i;
+      const y = aParam * x * x;
+      if (y > 2.5) continue;
+      const sx = toX(x);
+      const sy = toY(y);
+      if (i === 0 || y > 2.5) ctx.moveTo(sx, sy);
+      else ctx.lineTo(sx, sy);
+    }
+    ctx.stroke();
+
+    // Dish fill (subtle)
+    ctx.fillStyle = 'rgba(217, 70, 168, 0.04)';
+    ctx.beginPath();
+    for (let i = 0; i <= dishSteps; i++) {
+      const x = -xMax + (2 * xMax / dishSteps) * i;
+      const y = aParam * x * x;
+      if (y > 2.5) continue;
+      const sx = toX(x);
+      const sy = toY(y);
+      if (i === 0) ctx.moveTo(sx, sy);
+      else ctx.lineTo(sx, sy);
+    }
+    ctx.lineTo(toX(xMax), cy);
+    ctx.lineTo(toX(-xMax), cy);
+    ctx.closePath();
+    ctx.fill();
+
+    // Focus point with glow
+    const focusSx = toX(0);
+    const focusSy = toY(focusY);
+    const focGrad = ctx.createRadialGradient(focusSx, focusSy, 0, focusSx, focusSy, 18);
+    focGrad.addColorStop(0, 'rgba(251, 191, 36, 0.6)');
+    focGrad.addColorStop(1, 'rgba(251, 191, 36, 0)');
+    ctx.fillStyle = focGrad;
+    ctx.beginPath();
+    ctx.arc(focusSx, focusSy, 18, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath();
+    ctx.arc(focusSx, focusSy, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.font = '10px JetBrains Mono, monospace';
+    ctx.fillStyle = '#fbbf24';
+    ctx.textAlign = 'left';
+    ctx.fillText('focus', focusSx + 10, focusSy - 4);
+    ctx.fillText('(0, ' + focusY.toFixed(2) + ')', focusSx + 10, focusSy + 10);
+
+    // Signal rays: parallel lines from top, reflecting off dish to focus
+    const numRays = 7;
+    for (let i = 0; i < numRays; i++) {
+      const xHit = -xMax * 0.85 + (2 * xMax * 0.85 / (numRays - 1)) * i;
+      const yHit = aParam * xHit * xHit;
+      if (yHit > 2.4) continue;
+      const hitSx = toX(xHit);
+      const hitSy = toY(yHit);
+
+      // Incoming ray (from top, parallel, going down)
+      const rayTopY = H * 0;
+      const rayProgress = clamp(rayPhase * 2.5, 0, 1);
+      const incomingEndY = rayTopY + (hitSy - rayTopY) * rayProgress;
+
+      ctx.strokeStyle = 'rgba(74, 222, 128, ' + (0.25 + 0.15 * rayProgress) + ')';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.moveTo(hitSx, rayTopY);
+      ctx.lineTo(hitSx, incomingEndY);
+      ctx.stroke();
+
+      // Arrow head on incoming ray
+      if (rayProgress > 0.3) {
+        const arrowY = rayTopY + (hitSy - rayTopY) * Math.min(rayProgress, 0.6);
+        ctx.fillStyle = 'rgba(74, 222, 128, 0.5)';
+        ctx.beginPath();
+        ctx.moveTo(hitSx, arrowY + 6);
+        ctx.lineTo(hitSx - 3, arrowY - 2);
+        ctx.lineTo(hitSx + 3, arrowY - 2);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // Reflected ray (from hit point to focus)
+      if (rayProgress >= 1.0) {
+        const reflProgress = clamp((rayPhase - 0.4) * 2.5, 0, 1);
+        const refEndX = hitSx + (focusSx - hitSx) * reflProgress;
+        const refEndY = hitSy + (focusSy - hitSy) * reflProgress;
+
+        ctx.strokeStyle = 'rgba(244, 114, 196, ' + (0.3 + 0.2 * reflProgress) + ')';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(hitSx, hitSy);
+        ctx.lineTo(refEndX, refEndY);
+        ctx.stroke();
+      }
+    }
+
+    // Vertex label
+    ctx.fillStyle = 'rgba(168, 85, 247, 0.7)';
+    ctx.textAlign = 'center';
+    ctx.fillText('vertex (0, 0)', toX(0), toY(0) + 16);
+
+  }, [aParam, rayPhase]);
+
+  return (
+    <div>
+      <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.7, maxWidth: 600, marginBottom: 16 }}>
+        Satellite dishes, car headlights, and radio telescopes all exploit a remarkable property of parabolas: <strong style={{ color: 'var(--text-primary)', fontWeight: 500 }}>parallel incoming signals</strong> (or light rays) all reflect to a single point called the <strong style={{ color: 'var(--text-primary)', fontWeight: 500 }}>focus</strong>. This is why dishes are parabola-shaped {'\u2014'} the curved surface concentrates weak signals from space onto one tiny receiver. The vertex form <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent-bright)' }}>y = a(x - h){'\u00B2'} + k</span> directly gives you the shape, and the focus sits at a distance <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent-bright)' }}>1/(4a)</span> from the vertex.
+      </p>
+      <div style={{ background: 'var(--bg-card)', borderRadius: 10, padding: '14px 16px', border: '1px solid var(--border-subtle)', marginBottom: 16, fontSize: 13 }}>
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+          <strong style={{ color: 'var(--text-primary)', fontWeight: 500 }}>What you{'\u2019'}re seeing:</strong> The cross-section shows a parabolic dish with parallel signal rays arriving from above. Watch how every ray reflects off the curved surface and converges at the glowing focus point. As you adjust the curvature parameter {'\u2018'}a{'\u2019'} with the slider, the dish becomes flatter or steeper, and the focus moves farther from or closer to the vertex. A shallow dish (small a) has a distant focus {'\u2014'} good for large receivers. A deep dish (large a) has a close focus {'\u2014'} good for compact designs.
+        </p>
+      </div>
+      <canvas ref={canvasRef} style={{ width: '100%', borderRadius: 8, display: 'block', background: 'rgba(0,0,0,0.15)' }} />
+      <div style={{ marginTop: 14 }}>
+        <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent-bright)', marginBottom: 4 }}>
+          Curvature (a) = {aParam.toFixed(2)}
+        </label>
+        <input type="range" min="0.15" max="1.5" step="0.05" value={aParam}
+          onChange={e => setAParam(parseFloat(e.target.value))}
+          style={{ width: '100%', accentColor: '#f472c4' }} />
+      </div>
+      <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 8, background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)' }}>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+          y = {aParam.toFixed(2)}(x - 0){'\u00B2'} + 0
+        </p>
+        <div style={{ display: 'flex', gap: 16, marginTop: 6, fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+          <span style={{ color: '#fbbf24' }}>Focus: (0, {focusY.toFixed(2)})</span>
+          <span style={{ color: 'var(--text-tertiary)' }}>Parallel signals converge at focus</span>
+        </div>
+      </div>
+      <p style={{ marginTop: 16, fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-tertiary)', lineHeight: 1.7, maxWidth: 600 }}>
+        <strong style={{ color: 'var(--text-primary)', fontWeight: 500 }}>Practical applications:</strong> The Arecibo radio telescope in Puerto Rico was a 305-meter parabolic dish that detected signals from billions of light-years away. Your car{'\u2019'}s headlights work in reverse: a bulb sits at the focus, and light reflects off the parabolic mirror into parallel beams. Solar cookers use the same principle {'\u2014'} focusing sunlight to a point hot enough to boil water. All of this is described by the vertex form of a quadratic equation.
+      </p>
+    </div>
+  );
+}
+
+
+/* ═══════════════════════════════════════════
    STEP 2: THE PARABOLA SHAPE
    ═══════════════════════════════════════════ */
 
@@ -696,31 +1177,10 @@ function StepParabolaShape({ onPrev, onNext }) {
         </p>
       </div>
 
-      {/* Real world examples */}
-      <div style={{
-        display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: 12, marginBottom: 8,
-      }}>
-        {[
-          { title: 'Projectile Motion', desc: 'A ball thrown in the air follows a parabolic path.' },
-          { title: 'Architecture', desc: 'Arches and suspension bridges use parabolic curves.' },
-          { title: 'Satellite Dishes', desc: 'Parabolas focus signals to a single point.' },
-        ].map((ex, i) => (
-          <div key={i} style={{
-            background: 'rgba(255,255,255,0.02)', borderRadius: 12,
-            border: '1px solid var(--border-subtle)', padding: '16px 18px',
-          }}>
-            <h4 style={{
-              fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 500,
-              color: 'var(--text-primary)', marginBottom: 4,
-            }}>{ex.title}</h4>
-            <p style={{
-              fontFamily: 'var(--font-body)', fontSize: 13, fontWeight: 300,
-              color: 'var(--text-secondary)', lineHeight: 1.5,
-            }}>{ex.desc}</p>
-          </div>
-        ))}
-      </div>
+      <RealWorldPanel examples={[
+        { title: 'Projectile Motion', content: <ProjectileMotionExample /> },
+        { title: 'Satellite Dish', content: <SatelliteDishExample /> },
+      ]} />
 
       <NavButtons onPrev={onPrev} onNext={onNext} />
     </div>
@@ -1470,6 +1930,10 @@ function StepVertexForm({ onPrev, onNext }) {
           width={500} height={360}
         />
       </div>
+
+      <RealWorldPanel examples={[
+        { title: 'Satellite Dish', content: <SatelliteDishExample /> },
+      ]} />
 
       <NavButtons onPrev={onPrev} onNext={onNext} />
     </div>
