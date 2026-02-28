@@ -33,6 +33,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);line-he
 ::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:var(--text-dim)}
 #root{min-height:100vh}
+@media(max-width:768px){.step-dots-desktop{display:none!important}}
 
 @keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
@@ -89,15 +90,42 @@ const TOTAL_STEPS=8; // 0=Landing,1=EqVsIneq,2=NumberLine,3=Solving,4=Flipping,5
 function ProgressBar({current,total}){
   const pct=current<=0?0:current>=total-1?100:(current/(total-1))*100;
   return(
-    <div style={{position:'fixed',top:0,left:0,right:0,zIndex:1000,height:3,background:current===0?'transparent':'var(--bg3)',transition:'background .5s'}}>
-      <div style={{height:'100%',width:`${pct}%`,background:'linear-gradient(90deg,var(--emerald-deep),var(--emerald),var(--green))',transition:'width .6s cubic-bezier(.4,0,.2,1)',boxShadow:'0 0 16px var(--emerald-dim)',borderRadius:'0 2px 2px 0'}}/>
+    <div style={{position:'fixed',top:0,left:0,right:0,zIndex:1000,
+      background:'rgba(7,8,12,0.92)',backdropFilter:'blur(12px)',WebkitBackdropFilter:'blur(12px)',
+      borderBottom:'1px solid var(--bg4)',padding:'0 20px'}}>
+      <div style={{maxWidth:720,margin:'0 auto'}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 0 6px'}}>
+          <a href="index.html" style={{
+            color:'var(--text-dim)',fontFamily:'var(--font-mono)',fontSize:12,
+            textDecoration:'none',display:'flex',alignItems:'center',gap:6,
+            transition:'color .2s',letterSpacing:'.5px'
+          }}
+          onMouseEnter={e=>e.currentTarget.style.color='var(--emerald)'}
+          onMouseLeave={e=>e.currentTarget.style.color='var(--text-dim)'}
+          >
+            <span style={{fontSize:14}}>{'\u2190'}</span> Lessons
+          </a>
+          <span style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--text-dim)'}}>
+            {current + 1} / {total}
+          </span>
+        </div>
+        <div style={{height:3,background:'var(--bg3)',borderRadius:2,marginBottom:2}}>
+          <div style={{
+            height:'100%',width:`${pct}%`,
+            background:'linear-gradient(90deg,var(--emerald-deep),var(--emerald),var(--green))',
+            transition:'width .6s cubic-bezier(.4,0,.2,1)',
+            boxShadow:'0 0 16px var(--emerald-dim)',
+            borderRadius:2
+          }}/>
+        </div>
+      </div>
     </div>
   );
 }
 
 function StepDots({current,total,onNavigate}){
   return(
-    <div style={{position:'fixed',right:20,top:'50%',transform:'translateY(-50%)',zIndex:900,display:'flex',flexDirection:'column',gap:10,alignItems:'center'}}>
+    <div className="step-dots-desktop" style={{position:'fixed',right:20,top:'50%',transform:'translateY(-50%)',zIndex:900,display:'flex',flexDirection:'column',gap:10,alignItems:'center'}}>
       {Array.from({length:total},(_,i)=>(
         <button key={i} onClick={()=>onNavigate(i)} aria-label={`Go to step ${i+1}`} style={{
           width:i===current?10:6,height:i===current?10:6,borderRadius:'50%',border:'none',cursor:'pointer',padding:0,

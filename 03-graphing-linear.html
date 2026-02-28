@@ -32,6 +32,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);line-he
 ::-webkit-scrollbar-track{background:var(--bg2)}
 ::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
 #root{min-height:100vh}
+@media(max-width:768px){.step-dots-desktop{display:none!important}}
 
 @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
@@ -71,22 +72,44 @@ function fromCanvas(cx, cy) {
    SHARED UI COMPONENTS
    ═══════════════════════════════════════════════ */
 function ProgressBar({current, total}) {
+  const pct = total > 1 ? (current/(total-1))*100 : 0;
   return (
-    <div style={{position:'fixed',top:0,left:0,right:0,zIndex:1000,height:3,background:current===0?'transparent':'var(--bg3)',transition:'background .6s'}}>
-      <div style={{
-        height:'100%',width:`${(current/(total-1))*100}%`,
-        background:'linear-gradient(90deg,var(--violet-deep),var(--violet),var(--purple))',
-        transition:'width .6s cubic-bezier(.4,0,.2,1)',
-        boxShadow:'0 0 20px var(--violet-dim)',
-        borderRadius:'0 2px 2px 0'
-      }}/>
+    <div style={{position:'fixed',top:0,left:0,right:0,zIndex:1000,
+      background:'rgba(10,10,15,0.92)',backdropFilter:'blur(12px)',WebkitBackdropFilter:'blur(12px)',
+      borderBottom:'1px solid var(--bg4)',padding:'0 20px'}}>
+      <div style={{maxWidth:720,margin:'0 auto'}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 0 6px'}}>
+          <a href="index.html" style={{
+            color:'var(--text-dim)',fontFamily:'var(--font-mono)',fontSize:12,
+            textDecoration:'none',display:'flex',alignItems:'center',gap:6,
+            transition:'color .2s',letterSpacing:'.5px'
+          }}
+          onMouseEnter={e=>e.currentTarget.style.color='var(--violet)'}
+          onMouseLeave={e=>e.currentTarget.style.color='var(--text-dim)'}
+          >
+            <span style={{fontSize:14}}>{'\u2190'}</span> Lessons
+          </a>
+          <span style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--text-dim)'}}>
+            {current + 1} / {total}
+          </span>
+        </div>
+        <div style={{height:3,background:'var(--bg3)',borderRadius:2,marginBottom:2}}>
+          <div style={{
+            height:'100%',width:`${pct}%`,
+            background:'linear-gradient(90deg,var(--violet-deep),var(--violet),var(--purple))',
+            transition:'width .6s cubic-bezier(.4,0,.2,1)',
+            boxShadow:'0 0 20px var(--violet-dim)',
+            borderRadius:2
+          }}/>
+        </div>
+      </div>
     </div>
   );
 }
 
 function StepDots({current, total, onNavigate}) {
   return (
-    <div style={{position:'fixed',right:24,top:'50%',transform:'translateY(-50%)',zIndex:900,display:'flex',flexDirection:'column',gap:12,alignItems:'center'}}>
+    <div className="step-dots-desktop" style={{position:'fixed',right:24,top:'50%',transform:'translateY(-50%)',zIndex:900,display:'flex',flexDirection:'column',gap:12,alignItems:'center'}}>
       {Array.from({length:total},(_,i)=>(
         <button key={i} onClick={()=>onNavigate(i)} aria-label={`Step ${i+1}`} style={{
           width:i===current?10:6,height:i===current?10:6,
@@ -2068,18 +2091,6 @@ function App() {
     <div>
       <ProgressBar current={step} total={TOTAL_STEPS}/>
       {step > 0 && <StepDots current={step} total={TOTAL_STEPS} onNavigate={goTo}/>}
-
-      {/* Back to Lessons link */}
-      {step > 0 && (
-        <a href="index.html" style={{
-          position:'fixed',top:16,left:20,zIndex:900,fontFamily:'var(--font-mono)',fontSize:12,
-          color:'var(--text-dim)',textDecoration:'none',transition:'color .2s',letterSpacing:'.5px',
-          display:'flex',alignItems:'center',gap:6
-        }}
-        onMouseEnter={e => e.target.style.color='var(--violet)'}
-        onMouseLeave={e => e.target.style.color='var(--text-dim)'}
-        >{'\u2190'} Lessons</a>
-      )}
 
       <div key={step} style={{animation:'fadeUp .5s ease'}}>
         {step === 0 && <StepLanding onNext={goNext}/>}
