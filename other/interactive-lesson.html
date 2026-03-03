@@ -1,0 +1,2035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>From Isochrones to Grid — Interactive Lesson</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0c10;--bg2:#11131a;--bg3:#1a1d28;--bg4:#242836;
+  --text:#c8cdd8;--text-dim:#6b7280;--text-bright:#e8ecf4;
+  --red:#e05555;--red-dim:#e0555530;--red-glow:#e0555515;
+  --green:#4ade80;--green-dim:#4ade8030;--green-glow:#4ade8015;
+  --blue:#60a5fa;--blue-dim:#60a5fa30;
+  --amber:#f59e0b;--amber-dim:#f59e0b30;
+  --font-display:'Fraunces',serif;
+  --font-body:'IBM Plex Sans',sans-serif;
+  --font-mono:'DM Mono',monospace;
+}
+html{font-size:16px;scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);line-height:1.7;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::selection{background:var(--red);color:#fff}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+
+#root{min-height:100vh}
+
+/* Utility animations */
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes scanline{from{transform:translateY(0)}to{transform:translateY(100%)}}
+@keyframes expandNode{from{r:0;opacity:0}to{r:8;opacity:1}}
+@keyframes drawLine{from{stroke-dashoffset:200}to{stroke-dashoffset:0}}
+@keyframes gridReveal{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+</style>
+
+<script type="text/babel">
+const {useState,useEffect,useRef,useCallback,useMemo,Fragment} = React;
+
+/* ═══════════════════════════════════════════════
+   SHARED COMPONENTS
+   ═══════════════════════════════════════════════ */
+
+function ProgressBar({current,total}){
+  return(
+    <div style={{position:'fixed',top:0,left:0,right:0,zIndex:1000,height:3,background:current===0?'transparent':current===total?'transparent':'var(--bg3)',transition:'background .6s'}}>
+      <div style={{
+        height:'100%',width:`${(current/(total-1))*100}%`,
+        background:'linear-gradient(90deg,var(--red),var(--amber),var(--green))',
+        transition:'width .6s cubic-bezier(.4,0,.2,1)',
+        boxShadow:'0 0 20px var(--red-dim)',
+        borderRadius:'0 2px 2px 0'
+      }}/>
+    </div>
+  );
+}
+
+function StepDots({current,total,onNavigate}){
+  return(
+    <div style={{position:'fixed',right:24,top:'50%',transform:'translateY(-50%)',zIndex:900,display:'flex',flexDirection:'column',gap:12,alignItems:'center'}}>
+      {Array.from({length:total},(_,i)=>(
+        <button key={i} onClick={()=>onNavigate(i)} aria-label={`Step ${i+1}`} style={{
+          width:i===current?10:6,height:i===current?10:6,
+          borderRadius:'50%',border:'none',cursor:'pointer',
+          background:i<current?'var(--green)':i===current?'var(--red)':'var(--bg4)',
+          transition:'all .3s',
+          boxShadow:i===current?'0 0 12px var(--red-dim)':'none',
+          opacity:i===current?1:.7,
+        }}/>
+      ))}
+    </div>
+  );
+}
+
+function NavButtons({current,total,onPrev,onNext}){
+  return(
+    <div style={{display:'flex',gap:12,marginTop:48,justifyContent:'center',flexWrap:'wrap'}}>
+      {current>0&&(
+        <button onClick={onPrev} style={{
+          padding:'12px 28px',background:'transparent',border:'1px solid var(--bg4)',
+          color:'var(--text-dim)',borderRadius:6,cursor:'pointer',fontFamily:'var(--font-mono)',
+          fontSize:13,transition:'all .2s',letterSpacing:'.5px'
+        }}
+        onMouseEnter={e=>{e.target.style.borderColor='var(--text-dim)';e.target.style.color='var(--text)'}}
+        onMouseLeave={e=>{e.target.style.borderColor='var(--bg4)';e.target.style.color='var(--text-dim)'}}
+        >&#8592; Previous</button>
+      )}
+      {current<total-1&&(
+        <button onClick={onNext} style={{
+          padding:'12px 28px',background:'var(--red)',border:'none',
+          color:'#fff',borderRadius:6,cursor:'pointer',fontFamily:'var(--font-mono)',
+          fontSize:13,transition:'all .2s',letterSpacing:'.5px',
+          boxShadow:'0 4px 20px var(--red-dim)'
+        }}
+        onMouseEnter={e=>e.target.style.transform='translateY(-1px)'}
+        onMouseLeave={e=>e.target.style.transform='translateY(0)'}
+        >Next Step &#8594;</button>
+      )}
+    </div>
+  );
+}
+
+function SectionLabel({number,title}){
+  return(
+    <div style={{marginBottom:40,animation:'fadeUp .6s ease'}}>
+      <div style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--red)',letterSpacing:2,textTransform:'uppercase',marginBottom:8}}>
+        Step {String(number).padStart(2,'0')}
+      </div>
+      <h2 style={{fontFamily:'var(--font-display)',fontSize:'clamp(28px,5vw,48px)',fontWeight:700,color:'var(--text-bright)',lineHeight:1.15,letterSpacing:'-0.02em'}}>
+        {title}
+      </h2>
+    </div>
+  );
+}
+
+function InfoCard({children,accent='var(--blue)'}){
+  return(
+    <div style={{
+      background:'var(--bg2)',border:`1px solid ${accent}22`,borderLeft:`3px solid ${accent}`,
+      borderRadius:'0 8px 8px 0',padding:'16px 20px',margin:'20px 0',fontSize:14,lineHeight:1.8
+    }}>{children}</div>
+  );
+}
+
+function CodeBlock({code,label}){
+  return(
+    <div style={{margin:'20px 0',borderRadius:8,overflow:'hidden',border:'1px solid var(--bg4)'}}>
+      {label&&<div style={{background:'var(--bg3)',padding:'8px 16px',fontFamily:'var(--font-mono)',fontSize:11,color:'var(--text-dim)',borderBottom:'1px solid var(--bg4)',letterSpacing:1,textTransform:'uppercase'}}>{label}</div>}
+      <pre style={{background:'var(--bg2)',padding:16,margin:0,overflowX:'auto',fontFamily:'var(--font-mono)',fontSize:13,lineHeight:1.8,color:'var(--text)'}}>
+        <code>{code}</code>
+      </pre>
+    </div>
+  );
+}
+
+function KeyValue({label,value,color='var(--text-bright)'}){
+  return(
+    <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid var(--bg3)'}}>
+      <span style={{color:'var(--text-dim)',fontSize:13}}>{label}</span>
+      <span style={{color,fontFamily:'var(--font-mono)',fontSize:13,fontWeight:500}}>{value}</span>
+    </div>
+  );
+}
+
+function Tag({children,color='var(--blue)'}){
+  return <span style={{display:'inline-block',padding:'2px 10px',borderRadius:4,background:`${color}18`,color,fontFamily:'var(--font-mono)',fontSize:12,fontWeight:500,letterSpacing:'.3px'}}>{children}</span>;
+}
+
+function ComparisonTable({headers,rows}){
+  return(
+    <div style={{overflowX:'auto',margin:'24px 0',borderRadius:8,border:'1px solid var(--bg4)'}}>
+      <table style={{width:'100%',borderCollapse:'collapse',fontSize:13,fontFamily:'var(--font-body)'}}>
+        <thead>
+          <tr>{headers.map((h,i)=><th key={i} style={{padding:'12px 16px',background:'var(--bg3)',color:'var(--text-dim)',fontWeight:500,textAlign:'left',borderBottom:'1px solid var(--bg4)',whiteSpace:'nowrap',fontFamily:'var(--font-mono)',fontSize:11,letterSpacing:1,textTransform:'uppercase'}}>{h}</th>)}</tr>
+        </thead>
+        <tbody>
+          {rows.map((row,ri)=><tr key={ri}>{row.map((cell,ci)=><td key={ci} style={{padding:'10px 16px',borderBottom:'1px solid var(--bg3)',color:ci===0?'var(--text-bright)':'var(--text)',whiteSpace:'nowrap'}}>{cell}</td>)}</tr>)}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   STEP 0: LANDING
+   ═══════════════════════════════════════════════ */
+function StepLanding({onNext}){
+  const [show,setShow]=useState(false);
+  useEffect(()=>{setTimeout(()=>setShow(true),100)},[]);
+  return(
+    <div style={{minHeight:'100vh',display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',padding:'40px 24px',textAlign:'center',position:'relative',overflow:'hidden'}}>
+      {/* Background grid pattern */}
+      <svg style={{position:'absolute',inset:0,width:'100%',height:'100%',opacity:.06}} xmlns="http://www.w3.org/2000/svg">
+        <defs><pattern id="bgGrid" width="60" height="60" patternUnits="userSpaceOnUse">
+          <path d="M 60 0 L 0 0 0 60" fill="none" stroke="var(--text)" strokeWidth="0.5"/>
+        </pattern></defs>
+        <rect width="100%" height="100%" fill="url(#bgGrid)"/>
+      </svg>
+      {/* Red glow */}
+      <div style={{position:'absolute',top:'30%',left:'50%',transform:'translate(-50%,-50%)',width:500,height:500,background:'radial-gradient(circle,var(--red-glow) 0%,transparent 70%)',pointerEvents:'none'}}/>
+
+      <div style={{position:'relative',opacity:show?1:0,transform:show?'translateY(0)':'translateY(40px)',transition:'all 1s cubic-bezier(.4,0,.2,1)'}}>
+        <div style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--red)',letterSpacing:4,textTransform:'uppercase',marginBottom:24}}>Interactive Lesson</div>
+        <h1 style={{fontFamily:'var(--font-display)',fontSize:'clamp(32px,7vw,64px)',fontWeight:700,color:'var(--text-bright)',lineHeight:1.1,letterSpacing:'-0.03em',maxWidth:700}}>
+          From Isochrones<br/><span style={{color:'var(--red)'}}>to Grid</span>
+        </h1>
+        <p style={{marginTop:20,fontSize:17,color:'var(--text-dim)',maxWidth:520,lineHeight:1.8,fontWeight:300}}>
+          How we compute exact walking-distance restricted zones across an entire city — step by step, with interactive visualizations.
+        </p>
+
+        <div style={{display:'flex',gap:16,marginTop:40,justifyContent:'center',flexWrap:'wrap'}}>
+          <Tag color="var(--red)">8 Steps</Tag>
+          <Tag color="var(--green)">Interactive</Tag>
+          <Tag color="var(--amber)">~15 min read</Tag>
+        </div>
+
+        <button onClick={onNext} style={{
+          marginTop:48,padding:'16px 40px',background:'var(--red)',border:'none',
+          color:'#fff',borderRadius:8,cursor:'pointer',fontFamily:'var(--font-mono)',
+          fontSize:14,letterSpacing:1,transition:'all .3s',
+          boxShadow:'0 8px 30px var(--red-dim)'
+        }}
+        onMouseEnter={e=>{e.target.style.transform='translateY(-2px)';e.target.style.boxShadow='0 12px 40px var(--red-dim)'}}
+        onMouseLeave={e=>{e.target.style.transform='translateY(0)';e.target.style.boxShadow='0 8px 30px var(--red-dim)'}}
+        >Begin Lesson &#8594;</button>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   STEP 1: THE PROBLEM
+   ═══════════════════════════════════════════════ */
+function EuclideanVsWalkingViz(){
+  const canvasRef=useRef(null);
+  const [mode,setMode]=useState('euclidean'); // euclidean | walking
+  const [hoverPt,setHoverPt]=useState(null);
+
+  const poiPos={x:200,y:180};
+  const targetPos={x:380,y:260};
+
+  // Simplified "road network" path between points
+  const walkingPath=[
+    {x:380,y:260},{x:380,y:300},{x:300,y:300},{x:300,y:240},
+    {x:240,y:240},{x:240,y:180},{x:200,y:180}
+  ];
+
+  // River path
+  const riverPath=[{x:100,y:220},{x:180,y:200},{x:280,y:230},{x:360,y:210},{x:460,y:240}];
+
+  useEffect(()=>{
+    const canvas=canvasRef.current;
+    if(!canvas)return;
+    const ctx=canvas.getContext('2d');
+    const W=canvas.width=500;
+    const H=canvas.height=400;
+
+    ctx.clearRect(0,0,W,H);
+
+    // Background
+    ctx.fillStyle='#0d0f15';
+    ctx.fillRect(0,0,W,H);
+
+    // Grid
+    ctx.strokeStyle='#1a1d2830';
+    ctx.lineWidth=0.5;
+    for(let x=0;x<W;x+=30){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+    for(let y=0;y<H;y+=30){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+
+    // River
+    ctx.beginPath();
+    ctx.moveTo(riverPath[0].x,riverPath[0].y);
+    for(let i=1;i<riverPath.length;i++){
+      const prev=riverPath[i-1],curr=riverPath[i];
+      const cpx=(prev.x+curr.x)/2, cpy=(prev.y+curr.y)/2;
+      ctx.quadraticCurveTo(prev.x,prev.y,cpx,cpy);
+    }
+    ctx.lineTo(riverPath[riverPath.length-1].x,riverPath[riverPath.length-1].y);
+    ctx.strokeStyle='#60a5fa40';
+    ctx.lineWidth=20;
+    ctx.stroke();
+    ctx.strokeStyle='#60a5fa20';
+    ctx.lineWidth=30;
+    ctx.stroke();
+
+    // Label river
+    ctx.font='11px "DM Mono"';
+    ctx.fillStyle='#60a5fa60';
+    ctx.fillText('RIVER',270,225);
+
+    // Road network (subtle)
+    const roads=[
+      [{x:50,y:120},{x:460,y:120}],
+      [{x:50,y:180},{x:460,y:180}],
+      [{x:50,y:300},{x:460,y:300}],
+      [{x:50,y:360},{x:460,y:360}],
+      [{x:120,y:50},{x:120,y:370}],
+      [{x:240,y:50},{x:240,y:370}],
+      [{x:300,y:50},{x:300,y:370}],
+      [{x:380,y:50},{x:380,y:370}],
+    ];
+    ctx.strokeStyle='#ffffff10';
+    ctx.lineWidth=2;
+    roads.forEach(([a,b])=>{ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();});
+
+    // Euclidean line
+    if(mode==='euclidean'){
+      ctx.beginPath();
+      ctx.moveTo(targetPos.x,targetPos.y);
+      ctx.lineTo(poiPos.x,poiPos.y);
+      ctx.strokeStyle='var(--amber)';
+      ctx.lineWidth=2;
+      ctx.setLineDash([6,4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Distance label
+      const mx=(targetPos.x+poiPos.x)/2, my=(targetPos.y+poiPos.y)/2;
+      ctx.font='bold 13px "DM Mono"';
+      ctx.fillStyle='#f59e0b';
+      ctx.fillText('~80m (straight)',mx-50,my-10);
+      ctx.font='11px "DM Mono"';
+      ctx.fillStyle='#f59e0b80';
+      ctx.fillText('crosses river!',mx-40,my+8);
+    }
+
+    // Walking path
+    if(mode==='walking'){
+      ctx.beginPath();
+      ctx.moveTo(walkingPath[0].x,walkingPath[0].y);
+      for(let i=1;i<walkingPath.length;i++){
+        ctx.lineTo(walkingPath[i].x,walkingPath[i].y);
+      }
+      ctx.strokeStyle='#4ade80';
+      ctx.lineWidth=3;
+      ctx.setLineDash([]);
+      ctx.stroke();
+
+      // Dots along path
+      walkingPath.forEach((p,i)=>{
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,3,0,Math.PI*2);
+        ctx.fillStyle='#4ade80';
+        ctx.fill();
+      });
+
+      // Distance label
+      ctx.font='bold 13px "DM Mono"';
+      ctx.fillStyle='#4ade80';
+      ctx.fillText('~340m (walking)',300,330);
+      ctx.font='11px "DM Mono"';
+      ctx.fillStyle='#4ade8080';
+      ctx.fillText('via bridge + streets',300,348);
+    }
+
+    // POI marker
+    ctx.beginPath();
+    ctx.arc(poiPos.x,poiPos.y,12,0,Math.PI*2);
+    ctx.fillStyle='var(--red)';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(poiPos.x,poiPos.y,18,0,Math.PI*2);
+    ctx.strokeStyle='#e0555540';
+    ctx.lineWidth=1;
+    ctx.stroke();
+    ctx.font='bold 11px "DM Mono"';
+    ctx.fillStyle='#e8ecf4';
+    ctx.textAlign='center';
+    ctx.fillText('POI',poiPos.x,poiPos.y-24);
+    ctx.textAlign='start';
+
+    // Shop
+    ctx.beginPath();
+    ctx.arc(targetPos.x,targetPos.y,10,0,Math.PI*2);
+    ctx.fillStyle='var(--amber)';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(targetPos.x,targetPos.y,16,0,Math.PI*2);
+    ctx.strokeStyle='#f59e0b40';
+    ctx.lineWidth=1;
+    ctx.stroke();
+    ctx.font='bold 11px "DM Mono"';
+    ctx.fillStyle='#e8ecf4';
+    ctx.textAlign='center';
+    ctx.fillText('NEW SITE?',targetPos.x,targetPos.y-20);
+    ctx.textAlign='start';
+
+  },[mode]);
+
+  return(
+    <div style={{margin:'24px 0'}}>
+      <div style={{display:'flex',gap:8,marginBottom:16}}>
+        <button onClick={()=>setMode('euclidean')} style={{
+          padding:'8px 16px',borderRadius:6,border:'none',cursor:'pointer',
+          fontFamily:'var(--font-mono)',fontSize:12,transition:'all .2s',
+          background:mode==='euclidean'?'var(--amber)':'var(--bg3)',
+          color:mode==='euclidean'?'#000':'var(--text-dim)'
+        }}>Straight-Line Distance</button>
+        <button onClick={()=>setMode('walking')} style={{
+          padding:'8px 16px',borderRadius:6,border:'none',cursor:'pointer',
+          fontFamily:'var(--font-mono)',fontSize:12,transition:'all .2s',
+          background:mode==='walking'?'var(--green)':'var(--bg3)',
+          color:mode==='walking'?'#000':'var(--text-dim)'
+        }}>Walking Distance</button>
+      </div>
+      <canvas ref={canvasRef} style={{width:'100%',maxWidth:500,borderRadius:8,border:'1px solid var(--bg4)'}}/>
+      <div style={{marginTop:12,fontSize:13,color:'var(--text-dim)',fontStyle:'italic'}}>
+        {mode==='euclidean'
+          ? '80m straight line — but the route crosses a river with no bridge here.'
+          : '340m by foot — the actual safe pedestrian route via streets and bridge.'}
+      </div>
+    </div>
+  );
+}
+
+function Step1(){
+  return(
+    <div>
+      <SectionLabel number={1} title="The Problem"/>
+
+      <p style={{fontSize:16,lineHeight:1.9,marginBottom:24}}>
+        Certain regulations define <strong style={{color:'var(--text-bright)'}}>restricted zones</strong> around protected locations.
+        No new business can open within:
+      </p>
+
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',gap:16,margin:'24px 0'}}>
+        <div style={{background:'var(--bg2)',borderRadius:10,padding:24,borderTop:'3px solid var(--red)'}}>
+          <div style={{fontSize:36,fontFamily:'var(--font-display)',fontWeight:700,color:'var(--red)'}}>200m</div>
+          <div style={{fontSize:13,color:'var(--text-dim)',marginTop:4}}>from Type A locations</div>
+          <div style={{fontSize:12,color:'var(--text-dim)',marginTop:8,fontFamily:'var(--font-mono)'}}>measured from building edge</div>
+        </div>
+        <div style={{background:'var(--bg2)',borderRadius:10,padding:24,borderTop:'3px solid var(--amber)'}}>
+          <div style={{fontSize:36,fontFamily:'var(--font-display)',fontWeight:700,color:'var(--amber)'}}>100m</div>
+          <div style={{fontSize:13,color:'var(--text-dim)',marginTop:4}}>from Type B locations</div>
+          <div style={{fontSize:12,color:'var(--text-dim)',marginTop:8,fontFamily:'var(--font-mono)'}}>measured from entrance</div>
+        </div>
+      </div>
+
+      <InfoCard accent="var(--amber)">
+        <strong style={{color:'var(--amber)'}}>Critical distinction:</strong> The rules specify <em>"shortest safe pedestrian route"</em> — not straight-line (Euclidean) distance. A protected site across a river might be 80m as the crow flies but 600m by foot.
+      </InfoCard>
+
+      <h3 style={{fontFamily:'var(--font-display)',fontSize:20,color:'var(--text-bright)',margin:'32px 0 16px',fontWeight:500}}>
+        Toggle to see the difference
+      </h3>
+
+      <EuclideanVsWalkingViz/>
+
+      <InfoCard accent="var(--green)">
+        <strong style={{color:'var(--green)'}}>The challenge:</strong> We need a system where both the precomputed zone map (shown on the frontend) and the click-to-query API agree on whether a point is restricted. This requires <em>exact</em>, <em>reproducible</em> walking-distance computation.
+      </InfoCard>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   STEP 2: ISOCHRONE APPROACH
+   ═══════════════════════════════════════════════ */
+function GraphExpansionViz(){
+  const [step,setStep]=useState(0);
+  const [speed,setSpeed]=useState(1);
+  const speedRef=useRef(1);
+  speedRef.current=speed;
+  const maxSteps=6;
+
+  const nodes=[
+    {id:'S',x:250,y:200,dist:0,label:'Source'},
+    {id:'A',x:170,y:140,dist:45},
+    {id:'B',x:330,y:140,dist:62},
+    {id:'C',x:100,y:90,dist:110},
+    {id:'D',x:200,y:70,dist:95},
+    {id:'E',x:140,y:200,dist:80},
+    {id:'F',x:360,y:80,dist:140},
+    {id:'G',x:300,y:220,dist:130},
+    {id:'H',x:80,y:160,dist:170},
+    {id:'I',x:400,y:180,dist:190},
+    {id:'J',x:60,y:240,dist:210},
+    {id:'K',x:420,y:250,dist:220},
+  ];
+
+  const edges=[
+    ['S','A'],['S','B'],['S','E'],['S','G'],
+    ['A','C'],['A','D'],['A','E'],
+    ['B','D'],['B','F'],['B','G'],
+    ['C','H'],['E','H'],
+    ['F','I'],['G','I'],
+    ['H','J'],['I','K'],
+  ];
+
+  const threshold=200;
+  const stepsThresholds=[0,50,100,150,200,250];
+  const currentThresh=stepsThresholds[step]||0;
+
+  const activeNodes=nodes.filter(n=>n.dist<=currentThresh);
+  const activeNodeIds=new Set(activeNodes.map(n=>n.id));
+  const activeEdges=edges.filter(([a,b])=>activeNodeIds.has(a)&&activeNodeIds.has(b));
+
+  useEffect(()=>{
+    if(step<maxSteps-1){
+      const delay=Math.max(100,800/speedRef.current);
+      const t=setTimeout(()=>setStep(s=>s+1),delay);
+      return()=>clearTimeout(t);
+    }
+  },[step,speed]);
+
+  return(
+    <div style={{margin:'24px 0'}}>
+      <div style={{display:'flex',gap:8,alignItems:'center',marginBottom:12,flexWrap:'wrap'}}>
+        <button onClick={()=>setStep(0)} style={{padding:'6px 14px',borderRadius:6,border:'none',cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:12,background:'var(--bg3)',color:'var(--text-dim)'}}>Restart</button>
+        <div style={{display:'flex',alignItems:'center',gap:4,fontFamily:'var(--font-mono)',fontSize:11,color:'var(--text-dim)'}}>
+          <span>Speed:</span>
+          {[0.5,1,2,4].map(s=>(
+            <button key={s} onClick={()=>setSpeed(s)} style={{
+              padding:'4px 8px',borderRadius:4,border:'none',cursor:'pointer',
+              fontFamily:'var(--font-mono)',fontSize:11,
+              background:speed===s?'var(--amber)':'var(--bg3)',
+              color:speed===s?'#000':'var(--text-dim)',
+              transition:'all .15s'
+            }}>{s}x</button>
+          ))}
+        </div>
+        <span style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--text-dim)',marginLeft:'auto'}}>
+          Radius: <strong style={{color:currentThresh<=threshold?'var(--red)':'var(--green)'}}>{currentThresh}m</strong> / {threshold}m
+        </span>
+      </div>
+
+      <svg viewBox="0 0 500 300" style={{width:'100%',maxWidth:500,background:'var(--bg2)',borderRadius:8,border:'1px solid var(--bg4)'}}>
+        {/* All edges (dim) */}
+        {edges.map(([a,b],i)=>{
+          const na=nodes.find(n=>n.id===a),nb=nodes.find(n=>n.id===b);
+          const isActive=activeNodeIds.has(a)&&activeNodeIds.has(b);
+          return <line key={i} x1={na.x} y1={na.y} x2={nb.x} y2={nb.y}
+            stroke={isActive?'#e0555560':'#ffffff08'} strokeWidth={isActive?2:1}
+            style={{transition:'all .4s'}}/>;
+        })}
+
+        {/* All nodes */}
+        {nodes.map(n=>{
+          const isActive=activeNodeIds.has(n.id);
+          const isOver=n.dist>threshold&&isActive;
+          return(
+            <g key={n.id} style={{transition:'all .4s'}}>
+              <circle cx={n.x} cy={n.y} r={isActive?8:4}
+                fill={n.id==='S'?'var(--red)':isOver?'var(--green)':isActive?'var(--red)':'#ffffff10'}
+                style={{transition:'all .4s'}}/>
+              {isActive&&(
+                <text x={n.x} y={n.y-14} textAnchor="middle" fontSize="10" fontFamily="DM Mono" fill={isOver?'var(--green)':'var(--text-dim)'}>
+                  {n.dist}m
+                </text>
+              )}
+            </g>
+          );
+        })}
+
+        {/* Legend */}
+        <circle cx={20} cy={280} r={5} fill="var(--red)"/>
+        <text x={30} y={284} fontSize="10" fontFamily="DM Mono" fill="var(--text-dim)">Within threshold</text>
+        <circle cx={170} cy={280} r={5} fill="var(--green)"/>
+        <text x={180} y={284} fontSize="10" fontFamily="DM Mono" fill="var(--text-dim)">Beyond threshold</text>
+      </svg>
+
+      <div style={{marginTop:12,fontSize:13,color:'var(--text-dim)'}}>
+        Watch how the algorithm "explores" outward like a wave — each node lights up when the walking distance to it is calculated. Nodes turning green (beyond 200m) fall outside the restricted zone. The algorithm always explores the closest unvisited node first, guaranteeing it finds the shortest path.
+      </div>
+    </div>
+  );
+}
+
+function Step2(){
+  return(
+    <div>
+      <SectionLabel number={2} title="The Isochrone Approach"/>
+
+      <p style={{fontSize:16,lineHeight:1.9,marginBottom:16}}>
+        An <strong style={{color:'var(--text-bright)'}}>isochrone</strong> is a polygon showing all points reachable within a given distance from a source.
+        Think of it like dropping ink on a road map — it spreads along streets, not through buildings.
+      </p>
+
+      <h3 style={{fontFamily:'var(--font-display)',fontSize:20,color:'var(--text-bright)',margin:'32px 0 16px',fontWeight:500}}>
+        How Valhalla Builds Isochrones
+      </h3>
+
+      <p style={{fontSize:14,lineHeight:1.8,color:'var(--text)',marginBottom:16}}>
+        <strong style={{color:'var(--text-bright)'}}>Valhalla</strong> is an open-source routing engine — software that calculates walking, cycling, or driving routes. It models every street as a <strong style={{color:'var(--text-bright)'}}>graph</strong>: a data structure where intersections are <em>nodes</em> (dots) and streets connecting them are <em>edges</em> (lines with a distance value).
+      </p>
+
+      <p style={{fontSize:14,lineHeight:1.8,color:'var(--text)',marginBottom:16}}>
+        To build an isochrone, Valhalla uses <strong style={{color:'var(--text-bright)'}}>Dijkstra's algorithm</strong> — a classic method for finding shortest paths. Imagine you're standing at a POI and you send explorers down every street simultaneously. Each explorer walks at the same speed, noting how far they've traveled. When an explorer reaches an intersection, they branch out down every new street. Explorers that have walked more than 200m stop. The set of all intersections reached before 200m forms the isochrone.
+      </p>
+
+      <p style={{fontSize:14,lineHeight:1.8,color:'var(--text)',marginBottom:8}}>
+        Watch it expand — each node shows its cumulative distance from the source:
+      </p>
+
+      <GraphExpansionViz/>
+
+      <h3 style={{fontFamily:'var(--font-display)',fontSize:20,color:'var(--text-bright)',margin:'32px 0 16px',fontWeight:500}}>
+        The Pipeline
+      </h3>
+
+      <p style={{fontSize:14,lineHeight:1.8,color:'var(--text)',marginBottom:16}}>
+        For each protected location, we asked Valhalla to generate a walking-distance isochrone, then combined all of them into a single "restricted zone" map:
+      </p>
+
+      <div style={{display:'flex',flexWrap:'wrap',gap:8,margin:'16px 0',alignItems:'center'}}>
+        {['POI coords','Valhalla /isochrone','200m polygon','turf.union all','Clip boundary','restricted-zones.geojson'].map((s,i,arr)=>(
+          <Fragment key={i}>
+            <div style={{padding:'8px 14px',background:'var(--bg3)',borderRadius:6,fontFamily:'var(--font-mono)',fontSize:12,color:'var(--text)',whiteSpace:'nowrap'}}>{s}</div>
+            {i<arr.length-1&&<span style={{color:'var(--text-dim)'}}>→</span>}
+          </Fragment>
+        ))}
+      </div>
+
+      <p style={{fontSize:14,lineHeight:1.8,color:'var(--text)',marginBottom:0,marginTop:12}}>
+        The <code style={{fontFamily:'var(--font-mono)',background:'var(--bg3)',padding:'2px 6px',borderRadius:3,fontSize:12}}>turf.union</code> step merges all ~6,400 individual polygons into one combined shape — like stacking thousands of stencils on top of each other and tracing the outer edge.
+      </p>
+
+      <h3 style={{fontFamily:'var(--font-display)',fontSize:20,color:'var(--red)',margin:'32px 0 16px',fontWeight:500}}>
+        What Went Wrong
+      </h3>
+
+      <p style={{fontSize:14,lineHeight:1.8,color:'var(--text)',marginBottom:20}}>
+        This approach seemed reasonable, but in testing we discovered four serious problems:
+      </p>
+
+      {/* Problem 1: Approximation Error */}
+      <div style={{background:'var(--bg2)',borderRadius:8,padding:'20px 24px',borderLeft:'3px solid var(--red)',marginBottom:16}}>
+        <div style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--red)',fontWeight:500,marginBottom:10}}>1. ~24m Approximation Error</div>
+        <p style={{fontSize:13,color:'var(--text)',lineHeight:1.8,marginBottom:12}}>
+          Remember those nodes (intersections) in the graph? On real city streets they're spaced <strong style={{color:'var(--text-bright)'}}>15–50 meters apart</strong>. When Valhalla draws the 200m isochrone boundary, it lands <em>between</em> two nodes — say, one at 185m and the next at 220m. Where exactly is the 200m point on that street?
+        </p>
+        <p style={{fontSize:13,color:'var(--text)',lineHeight:1.8,marginBottom:12}}>
+          Valhalla <em>estimates</em> by interpolating (drawing a proportional line between the two nodes). But this estimate isn't exact — streets aren't perfectly straight between intersections, and the real walking path may curve. In our testing, we compared isochrone boundaries against actual route calculations and found <strong style={{color:'var(--red)'}}>differences of about 24 meters</strong>.
+        </p>
+        <p style={{fontSize:13,color:'var(--text-dim)',lineHeight:1.8,margin:0}}>
+          That means a point the isochrone claims is "exactly at the 200m boundary" might actually be at 176m or 224m by real walking distance. When 200m is a hard threshold, a 24m error margin is unacceptable — it could mean incorrectly approving a location that's actually within the restricted zone, or blocking one that's actually permitted.
+        </p>
+      </div>
+
+      {/* Problem 2: No Per-Point Guarantee */}
+      <div style={{background:'var(--bg2)',borderRadius:8,padding:'20px 24px',borderLeft:'3px solid var(--red)',marginBottom:16}}>
+        <div style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--red)',fontWeight:500,marginBottom:10}}>2. No Per-Point Guarantee</div>
+        <p style={{fontSize:13,color:'var(--text)',lineHeight:1.8,marginBottom:12}}>
+          An isochrone gives you a <em>shape</em> that says "this region is approximately within 200m walking distance." But it can't <strong style={{color:'var(--text-bright)'}}>guarantee</strong> that every single point inside the polygon is truly within 200m, or that every point outside is truly beyond 200m.
+        </p>
+        <p style={{fontSize:13,color:'var(--text)',lineHeight:1.8,marginBottom:12}}>
+          Think of it this way: the isochrone is like a rough sketch drawn with a thick marker. Points near the edge could be on either side of the true 200m boundary. For a simple informational map, this is fine. But when the difference between "199m" and "201m" determines whether a location is approved or denied — we need certainty, not approximation.
+        </p>
+        <p style={{fontSize:13,color:'var(--text-dim)',lineHeight:1.8,margin:0}}>
+          Imagine defending the map in court: "Your honor, this polygon says the location is approximately probably outside the restricted zone." That doesn't work.
+        </p>
+      </div>
+
+      {/* Problem 3: Union Artifacts */}
+      <div style={{background:'var(--bg2)',borderRadius:8,padding:'20px 24px',borderLeft:'3px solid var(--red)',marginBottom:16}}>
+        <div style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--red)',fontWeight:500,marginBottom:10}}>3. Union Artifacts (Merging Problems)</div>
+        <p style={{fontSize:13,color:'var(--text)',lineHeight:1.8,marginBottom:12}}>
+          We have ~6,400 individual isochrone polygons (one per POI sample point). To show them on the map, we need to merge them into one combined "restricted zone" shape. This merge operation is called a <strong style={{color:'var(--text-bright)'}}>union</strong> — like combining overlapping cookie cutters into a single outline.
+        </p>
+        <p style={{fontSize:13,color:'var(--text)',lineHeight:1.8,marginBottom:12}}>
+          The problem: merging two polygons is computationally expensive. And this cost grows <em>quadratically</em> — meaning if you double the number of polygons, the work roughly quadruples. With 6,400 polygons, this takes a very long time and eats enormous amounts of memory.
+        </p>
+
+        {/* Visual explanation of quadratic growth */}
+        <div style={{background:'var(--bg3)',borderRadius:6,padding:16,marginBottom:12}}>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--text-dim)',marginBottom:8,letterSpacing:1,textTransform:'uppercase'}}>Why Quadratic Growth Hurts</div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,textAlign:'center',fontSize:12,fontFamily:'var(--font-mono)'}}>
+            <div><div style={{color:'var(--text-dim)'}}>Polygons</div><div style={{color:'var(--text-bright)',fontSize:16}}>10</div></div>
+            <div><div style={{color:'var(--text-dim)'}}>Polygons</div><div style={{color:'var(--text-bright)',fontSize:16}}>100</div></div>
+            <div><div style={{color:'var(--text-dim)'}}>Polygons</div><div style={{color:'var(--amber)',fontSize:16}}>1,000</div></div>
+            <div><div style={{color:'var(--text-dim)'}}>Polygons</div><div style={{color:'var(--red)',fontSize:16}}>6,400</div></div>
+            <div><div style={{color:'var(--text-dim)'}}>Work</div><div style={{color:'var(--text-bright)',fontSize:16}}>100</div></div>
+            <div><div style={{color:'var(--text-dim)'}}>Work</div><div style={{color:'var(--text-bright)',fontSize:16}}>10K</div></div>
+            <div><div style={{color:'var(--text-dim)'}}>Work</div><div style={{color:'var(--amber)',fontSize:16}}>1M</div></div>
+            <div><div style={{color:'var(--text-dim)'}}>Work</div><div style={{color:'var(--red)',fontSize:16}}>41M</div></div>
+          </div>
+        </div>
+
+        <p style={{fontSize:13,color:'var(--text)',lineHeight:1.8,marginBottom:12}}>
+          Worse, merging imprecise floating-point coordinates produces geometric errors:
+        </p>
+        <ul style={{fontSize:13,color:'var(--text)',lineHeight:2,paddingLeft:20,marginBottom:0}}>
+          <li><strong style={{color:'var(--text-bright)'}}>Self-intersections:</strong> The merged polygon's outline crosses over itself, like a figure-8. This is geometrically invalid — software that tries to fill or measure this shape gets confused about which side is "inside."</li>
+          <li><strong style={{color:'var(--text-bright)'}}>Sliver polygons:</strong> Tiny, needle-thin triangles that appear where two polygon edges almost-but-not-quite overlap. Imagine two pieces of paper that are supposed to line up perfectly but are shifted by a hair's width — the tiny gap between them is a sliver. These slivers pollute the output and can cause rendering glitches on the map.</li>
+          <li><strong style={{color:'var(--text-bright)'}}>Coordinate precision loss:</strong> Each merge operation rounds coordinates slightly. After thousands of merges, these rounding errors accumulate, shifting boundaries by several meters.</li>
+        </ul>
+      </div>
+
+      {/* Problem 4: Denoise Tradeoffs */}
+      <div style={{background:'var(--bg2)',borderRadius:8,padding:'20px 24px',borderLeft:'3px solid var(--red)',marginBottom:16}}>
+        <div style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--red)',fontWeight:500,marginBottom:10}}>4. Smoothing Tradeoffs (No Good Setting)</div>
+        <p style={{fontSize:13,color:'var(--text)',lineHeight:1.8,marginBottom:12}}>
+          Valhalla has two knobs that control how the isochrone polygon looks: <code style={{fontFamily:'var(--font-mono)',background:'var(--bg3)',padding:'2px 6px',borderRadius:3,fontSize:12}}>denoise</code> (removes small bumps) and <code style={{fontFamily:'var(--font-mono)',background:'var(--bg3)',padding:'2px 6px',borderRadius:3,fontSize:12}}>generalize</code> (smooths the outline). Think of it like the difference between tracing a coastline on a globe versus a detailed nautical chart.
+        </p>
+
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:12}}>
+          <div style={{background:'var(--bg3)',borderRadius:6,padding:14}}>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--amber)',marginBottom:6}}>Low smoothing (detailed)</div>
+            <div style={{fontSize:12,color:'var(--text-dim)',lineHeight:1.7}}>
+              Keeps every bump and irregularity. Polygons are huge (thousands of coordinates each) and extremely slow to merge. More accurate in shape, but the merge step becomes impractical.
+            </div>
+          </div>
+          <div style={{background:'var(--bg3)',borderRadius:6,padding:14}}>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--amber)',marginBottom:6}}>High smoothing (simplified)</div>
+            <div style={{fontSize:12,color:'var(--text-dim)',lineHeight:1.7}}>
+              Rounds off corners and straightens edges. Polygons are small and fast to merge. But in areas with winding streets, alleyways, or irregular blocks, the smoothing cuts corners — literally — marking areas as restricted or permitted incorrectly.
+            </div>
+          </div>
+        </div>
+
+        <p style={{fontSize:13,color:'var(--text-dim)',lineHeight:1.8,margin:0}}>
+          There's no sweet spot. Any setting is either too detailed (slow, memory-hungry) or too smooth (inaccurate). This is a fundamental limitation of the isochrone approach, not just a tuning problem.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   STEP 3: GRID-EXACT APPROACH
+   ═══════════════════════════════════════════════ */
+function DistanceMatrixViz(){
+  const [mode,setMode]=useState('individual');
+  const [speed,setSpeed]=useState(1);
+  const speedRef=useRef(1);
+  speedRef.current=speed;
+
+  // Individual mode state
+  const [iRoute,setIRoute]=useState(0);
+  const [iExp,setIExp]=useState(0);
+  const [iPhase,setIPhase]=useState('explore');
+  const [iTotalExp,setITotalExp]=useState(0);
+  // Matrix mode state
+  const [mEdge,setMEdge]=useState(0);
+  const [mDone,setMDone]=useState(false);
+
+  const W=260,H=200;
+  const source={x:40,y:100};
+  const targets=[
+    {x:120,y:40,d:85},{x:180,y:55,d:130},{x:230,y:100,d:160},
+    {x:200,y:160,d:145},{x:140,y:175,d:110},{x:100,y:130,d:70},
+    {x:160,y:110,d:120},{x:210,y:40,d:190},
+  ];
+
+  // All network edges (for dim background)
+  const networkEdges=[
+    [source,targets[5]],[source,targets[0]],[targets[0],targets[1]],
+    [targets[1],targets[2]],[targets[1],targets[7]],[targets[5],targets[4]],
+    [targets[5],targets[6]],[targets[6],targets[2]],[targets[6],targets[3]],
+    [targets[4],targets[3]],[targets[0],targets[6]],
+  ];
+
+  // Dijkstra exploration order: edges explored by distance from source
+  // Each edge discovers a new target node
+  const dijkEdges=[
+    {from:source,to:targets[5],discovers:5},       // 0: 70m
+    {from:source,to:targets[0],discovers:0},        // 1: 85m
+    {from:targets[5],to:targets[4],discovers:4},    // 2: 110m
+    {from:targets[5],to:targets[6],discovers:6},    // 3: 120m
+    {from:targets[0],to:targets[1],discovers:1},    // 4: 130m
+    {from:targets[6],to:targets[3],discovers:3},    // 5: 145m
+    {from:targets[6],to:targets[2],discovers:2},    // 6: 160m
+    {from:targets[1],to:targets[7],discovers:7},    // 7: 190m
+  ];
+
+  // Shortest paths through the network (indices into dijkEdges)
+  const routePaths=[[0],[1],[0,2],[0,3],[1,4],[0,3,5],[0,3,6],[1,4,7]];
+  // Target discovery order (sorted by distance)
+  const routeOrder=[5,0,4,6,1,3,2,7];
+
+  const isDone=mode==='individual'?iPhase==='done':mDone;
+
+  useEffect(()=>{
+    if(isDone)return;
+    const delay=Math.max(100,500/speedRef.current);
+    const t=setTimeout(()=>{
+      if(mode==='individual'){
+        if(iPhase==='explore'){
+          if(iExp<iRoute){
+            setIExp(e=>e+1);
+            setITotalExp(t=>t+1);
+          } else {
+            setIPhase('path');
+            setITotalExp(t=>t+1);
+          }
+        } else if(iPhase==='path'){
+          setIPhase('pause');
+        } else if(iPhase==='pause'){
+          if(iRoute<7){
+            setIRoute(r=>r+1);
+            setIExp(0);
+            setIPhase('explore');
+          } else {
+            setIPhase('done');
+          }
+        }
+      } else {
+        if(mEdge<7){
+          setMEdge(e=>e+1);
+        } else {
+          setMDone(true);
+        }
+      }
+    },delay);
+    return()=>clearTimeout(t);
+  },[mode,iRoute,iExp,iPhase,mEdge,mDone,speed]);
+
+  function switchMode(m){
+    setMode(m);
+    setIRoute(0);setIExp(0);setIPhase('explore');setITotalExp(0);
+    setMEdge(0);setMDone(false);
+  }
+  function restart(){
+    setIRoute(0);setIExp(0);setIPhase('explore');setITotalExp(0);
+    setMEdge(0);setMDone(false);
+  }
+
+  // Compute which targets have been found
+  const iFoundTargets=new Set();
+  for(let r=0;r<iRoute;r++)iFoundTargets.add(routeOrder[r]);
+  if(iPhase==='path'||iPhase==='pause'||iPhase==='done')iFoundTargets.add(routeOrder[iRoute]);
+
+  const mFoundTargets=new Set();
+  for(let e=0;e<=mEdge;e++)mFoundTargets.add(dijkEdges[e].discovers);
+
+  const svgBase={width:'100%',background:'var(--bg2)',borderRadius:8,display:'block'};
+
+  return(
+    <div style={{margin:'20px 0'}}>
+      <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap',alignItems:'center'}}>
+        {[{id:'individual',label:'Individual Routes'},{id:'matrix',label:'Distance Matrix'}].map(m=>(
+          <button key={m.id} onClick={()=>switchMode(m.id)} style={{
+            padding:'6px 14px',borderRadius:6,border:'none',cursor:'pointer',
+            fontFamily:'var(--font-mono)',fontSize:11,fontWeight:600,
+            background:mode===m.id?'var(--blue)':'var(--bg3)',
+            color:mode===m.id?'#000':'var(--text-dim)',transition:'all .2s'
+          }}>{m.label}</button>
+        ))}
+        <div style={{display:'flex',alignItems:'center',gap:4,marginLeft:8}}>
+          {[0.5,1,2].map(s=>(
+            <button key={s} onClick={()=>setSpeed(s)} style={{
+              padding:'3px 6px',borderRadius:3,border:'none',cursor:'pointer',
+              fontFamily:'var(--font-mono)',fontSize:10,
+              background:speed===s?'var(--amber)':'var(--bg3)',
+              color:speed===s?'#000':'var(--text-dim)'
+            }}>{s}x</button>
+          ))}
+        </div>
+        {isDone&&<button onClick={restart} style={{
+          padding:'4px 10px',borderRadius:4,border:'1px solid var(--bg4)',cursor:'pointer',
+          fontFamily:'var(--font-mono)',fontSize:10,background:'var(--bg3)',color:'var(--text-dim)',marginLeft:8
+        }}>Restart</button>}
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+        {/* Left: Individual Routes */}
+        <div>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:10,color:mode==='individual'?'var(--red)':'var(--text-dim)',marginBottom:6,letterSpacing:1,textTransform:'uppercase',fontWeight:mode==='individual'?700:400,textAlign:'center'}}>
+            {mode==='individual'
+              ?(iPhase==='done'?'Done — 36 edge explorations':`Route ${iRoute+1}/8 · ${iTotalExp} edges explored`)
+              :'8 routes = 36 edge explorations'}
+          </div>
+          <svg viewBox={`0 0 ${W} ${H}`} style={{...svgBase,border:`1px solid ${mode==='individual'?'var(--red)':'var(--bg4)'}`}}>
+            {/* Dim network */}
+            {networkEdges.map((e,i)=><line key={`n${i}`} x1={e[0].x} y1={e[0].y} x2={e[1].x} y2={e[1].y} stroke="var(--text-dim)" strokeWidth={0.5} opacity={0.15}/>)}
+
+            {mode==='individual'?(<>
+              {/* Previous route paths (very dim) */}
+              {Array.from({length:iRoute},(_,r)=>
+                routePaths[r].map(ei=>{
+                  const e=dijkEdges[ei];
+                  return <line key={`prev${r}-${ei}`} x1={e.from.x} y1={e.from.y} x2={e.to.x} y2={e.to.y}
+                    stroke="var(--red)" strokeWidth={1.5} opacity={0.12}/>;
+                })
+              )}
+
+              {/* Current exploration edges (dashed — showing Dijkstra expanding) */}
+              {iPhase==='explore'&&Array.from({length:iExp+1},(_,i)=>{
+                const e=dijkEdges[i];
+                const isLatest=i===iExp;
+                return <line key={`exp${i}`} x1={e.from.x} y1={e.from.y} x2={e.to.x} y2={e.to.y}
+                  stroke="var(--red)" strokeWidth={isLatest?2:1.5} opacity={isLatest?0.7:0.3}
+                  strokeDasharray="4,3"/>;
+              })}
+
+              {/* Exploration wave front pulse */}
+              {iPhase==='explore'&&(
+                <circle cx={dijkEdges[iExp].to.x} cy={dijkEdges[iExp].to.y} r={4}
+                  fill="none" stroke="var(--red)" strokeWidth={1} opacity={0.5}>
+                  <animate attributeName="r" from="4" to="14" dur="0.7s" repeatCount="indefinite"/>
+                  <animate attributeName="opacity" from="0.5" to="0" dur="0.7s" repeatCount="indefinite"/>
+                </circle>
+              )}
+
+              {/* Found path (solid bright — the actual route through the network) */}
+              {(iPhase==='path'||iPhase==='pause')&&routePaths[iRoute].map(ei=>{
+                const e=dijkEdges[ei];
+                return <line key={`path${ei}`} x1={e.from.x} y1={e.from.y} x2={e.to.x} y2={e.to.y}
+                  stroke="var(--red)" strokeWidth={2.5} opacity={0.85}/>;
+              })}
+
+              {/* Done state: all paths */}
+              {iPhase==='done'&&routePaths.map((path,r)=>
+                path.map(ei=>{
+                  const e=dijkEdges[ei];
+                  return <line key={`d${r}-${ei}`} x1={e.from.x} y1={e.from.y} x2={e.to.x} y2={e.to.y}
+                    stroke="var(--red)" strokeWidth={1.5} opacity={0.25}/>;
+                })
+              )}
+
+              {/* Targets */}
+              {targets.map((t,i)=>{
+                const found=iFoundTargets.has(i);
+                const isCurrent=i===routeOrder[iRoute]&&iPhase==='path';
+                return(<g key={`t${i}`}>
+                  <circle cx={t.x} cy={t.y} r={isCurrent?6:found?5:3.5}
+                    fill={isCurrent?'#fff':found?'var(--red)':'#ffffff12'}
+                    style={{transition:'all .3s'}}/>
+                  {found&&<text x={t.x} y={t.y-9} textAnchor="middle" fontSize="7" fontFamily="var(--font-mono)" fill="var(--red)" opacity={0.8}>{t.d}m</text>}
+                </g>);
+              })}
+            </>):(<>
+              {/* Inactive: show completed paths dim */}
+              {routePaths.map((path,r)=>
+                path.map(ei=>{
+                  const e=dijkEdges[ei];
+                  return <line key={`dim${r}-${ei}`} x1={e.from.x} y1={e.from.y} x2={e.to.x} y2={e.to.y}
+                    stroke="var(--red)" strokeWidth={1} opacity={0.08}/>;
+                })
+              )}
+              {targets.map((t,i)=><circle key={`dt${i}`} cx={t.x} cy={t.y} r={3.5} fill="#ffffff08"/>)}
+            </>)}
+
+            {/* Source */}
+            <circle cx={source.x} cy={source.y} r={7} fill="var(--blue)" stroke="#fff" strokeWidth={1.5}/>
+            <text x={source.x} y={source.y-12} textAnchor="middle" fontSize="8" fontFamily="var(--font-mono)" fontWeight="bold" fill="var(--blue)">POI</text>
+          </svg>
+        </div>
+
+        {/* Right: Distance Matrix */}
+        <div>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:10,color:mode==='matrix'?'var(--green)':'var(--text-dim)',marginBottom:6,letterSpacing:1,textTransform:'uppercase',fontWeight:mode==='matrix'?700:400,textAlign:'center'}}>
+            {mode==='matrix'
+              ?(mDone?'Done — 8 edge explorations':`1 expansion · ${mEdge+1}/8 edges`)
+              :'1 expansion = 8 edge explorations'}
+          </div>
+          <svg viewBox={`0 0 ${W} ${H}`} style={{...svgBase,border:`1px solid ${mode==='matrix'?'var(--green)':'var(--bg4)'}`}}>
+            {/* Dim network */}
+            {networkEdges.map((e,i)=><line key={`n${i}`} x1={e[0].x} y1={e[0].y} x2={e[1].x} y2={e[1].y} stroke="var(--text-dim)" strokeWidth={0.5} opacity={0.15}/>)}
+
+            {mode==='matrix'?(<>
+              {/* Explored edges (solid green — single expanding wave through network) */}
+              {Array.from({length:mEdge+1},(_,i)=>{
+                const e=dijkEdges[i];
+                const isLatest=i===mEdge&&!mDone;
+                return <line key={`me${i}`} x1={e.from.x} y1={e.from.y} x2={e.to.x} y2={e.to.y}
+                  stroke="var(--green)" strokeWidth={isLatest?2.5:2} opacity={isLatest?0.9:0.5}/>;
+              })}
+
+              {/* Wave front pulse */}
+              {!mDone&&(
+                <circle cx={dijkEdges[mEdge].to.x} cy={dijkEdges[mEdge].to.y} r={4}
+                  fill="none" stroke="var(--green)" strokeWidth={1}>
+                  <animate attributeName="r" from="4" to="14" dur="0.7s" repeatCount="indefinite"/>
+                  <animate attributeName="opacity" from="0.5" to="0" dur="0.7s" repeatCount="indefinite"/>
+                </circle>
+              )}
+
+              {/* Targets */}
+              {targets.map((t,i)=>{
+                const reached=mFoundTargets.has(i);
+                return(<g key={`t${i}`}>
+                  <circle cx={t.x} cy={t.y} r={reached?5:3.5}
+                    fill={reached?'var(--green)':'#ffffff12'}
+                    style={{transition:'all .3s'}}/>
+                  {reached&&<text x={t.x} y={t.y-9} textAnchor="middle" fontSize="7" fontFamily="var(--font-mono)" fill="var(--green)" opacity={0.9}>{t.d}m</text>}
+                </g>);
+              })}
+            </>):(<>
+              {/* Inactive: show all edges dim */}
+              {dijkEdges.map((e,i)=>(
+                <line key={`dim${i}`} x1={e.from.x} y1={e.from.y} x2={e.to.x} y2={e.to.y}
+                  stroke="var(--green)" strokeWidth={1} opacity={0.08}/>
+              ))}
+              {targets.map((t,i)=><circle key={`dt${i}`} cx={t.x} cy={t.y} r={3.5} fill="#ffffff08"/>)}
+            </>)}
+
+            {/* Source */}
+            <circle cx={source.x} cy={source.y} r={7} fill="var(--blue)" stroke="#fff" strokeWidth={1.5}/>
+            <text x={source.x} y={source.y-12} textAnchor="middle" fontSize="8" fontFamily="var(--font-mono)" fontWeight="bold" fill="var(--blue)">POI</text>
+          </svg>
+        </div>
+      </div>
+
+      {/* Summary comparison */}
+      {isDone&&(
+        <div style={{marginTop:12,padding:'8px 12px',background:'var(--bg2)',borderRadius:6,fontFamily:'var(--font-mono)',fontSize:11,textAlign:'center',color:'var(--text-dim)'}}>
+          Individual: <span style={{color:'var(--red)',fontWeight:700}}>36</span> edge explorations &nbsp;•&nbsp; Distance Matrix: <span style={{color:'var(--green)',fontWeight:700}}>8</span> edge explorations &nbsp;•&nbsp; <span style={{color:'var(--amber)'}}>4.5× less work</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function GridClassificationViz(){
+  const cols=24,rows=16;
+  const cellSize=16;
+  const poiX=4,poiY=3;
+  const mPerCell=35; // scaled for illustration (real grid uses 15m)
+
+  const cells=useMemo(()=>{
+    const c=[];
+    for(let r=0;r<rows;r++){
+      for(let cl=0;cl<cols;cl++){
+        const dPoi=Math.sqrt((cl-poiX)**2+(r-poiY)**2)*mPerCell;
+        let status='far';
+        if(dPoi<200)status='restricted';
+        else if(dPoi<400)status='needs-check';
+        c.push({row:r,col:cl,status,dist:Math.round(dPoi)});
+      }
+    }
+    return c;
+  },[]);
+
+  const counts=useMemo(()=>{
+    const c={far:0,restricted:0,'needs-check':0};
+    cells.forEach(cell=>c[cell.status]++);
+    return c;
+  },[cells]);
+
+  const totalCells=cols*rows;
+  const pctSkipped=Math.round(counts.far/totalCells*100);
+  const pctNeedsCheck=Math.round(counts['needs-check']/totalCells*100);
+  const pctRestricted=100-pctSkipped-pctNeedsCheck;
+
+  const W=cols*cellSize,H=rows*cellSize;
+  const radiusPx=400/mPerCell*cellSize;
+  const poiCx=poiX*cellSize+cellSize/2;
+  const poiCy=poiY*cellSize+cellSize/2;
+
+  return(
+    <div style={{margin:'24px 0'}}>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 40px 1fr',gap:0,alignItems:'center'}}>
+
+        {/* LEFT: Before — all cells need checking */}
+        <div>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--text-dim)',marginBottom:8,textAlign:'center',letterSpacing:1,textTransform:'uppercase'}}>Before: all ~3M cells</div>
+          <svg viewBox={`0 0 ${W} ${H}`} style={{width:'100%',background:'var(--bg2)',borderRadius:8,border:'1px solid var(--bg4)'}}>
+            {cells.map((c,i)=>(
+              <rect key={i} x={c.col*cellSize} y={c.row*cellSize} width={cellSize-0.5} height={cellSize-0.5} rx={0.5}
+                fill="rgba(224,85,85,0.22)"/>
+            ))}
+            <text x={W/2} y={H/2-6} textAnchor="middle" fontSize="13" fontFamily="DM Mono" fontWeight="bold" fill="var(--red)">{totalCells.toLocaleString()} cells</text>
+            <text x={W/2} y={H/2+10} textAnchor="middle" fontSize="9" fontFamily="DM Mono" fill="var(--text-dim)">all need distance checks?</text>
+          </svg>
+        </div>
+
+        <div style={{textAlign:'center',fontSize:28,color:'var(--amber)',fontWeight:700}}>→</div>
+
+        {/* RIGHT: After — only nearby cells remain visible */}
+        <div>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--text-dim)',marginBottom:8,textAlign:'center',letterSpacing:1,textTransform:'uppercase'}}>After: Euclidean pre-filter</div>
+          <svg viewBox={`0 0 ${W} ${H}`} style={{width:'100%',background:'#05080e',borderRadius:8,border:'1px solid var(--bg4)'}}>
+            {cells.map((c,i)=>{
+              if(c.status==='far') return <rect key={i} x={c.col*cellSize} y={c.row*cellSize} width={cellSize-0.5} height={cellSize-0.5} rx={0.5} fill="rgba(74,222,128,0.08)"/>;
+              if(c.status==='restricted') return <rect key={i} x={c.col*cellSize} y={c.row*cellSize} width={cellSize-0.5} height={cellSize-0.5} rx={0.5} fill="rgba(239,68,68,0.7)"/>;
+              return <rect key={i} x={c.col*cellSize} y={c.row*cellSize} width={cellSize-0.5} height={cellSize-0.5} rx={0.5} fill="rgba(96,165,250,0.5)"/>;
+            })}
+            {/* Euclidean radius ring */}
+            <circle cx={poiCx} cy={poiCy} r={radiusPx} fill="none" stroke="var(--amber)" strokeWidth={1.5} strokeDasharray="6,4" opacity={0.6}/>
+            {/* Restricted radius ring */}
+            <circle cx={poiCx} cy={poiCy} r={200/mPerCell*cellSize} fill="none" stroke="var(--red)" strokeWidth={1} strokeDasharray="3,2" opacity={0.6}/>
+            {/* POI marker */}
+            <circle cx={poiCx} cy={poiCy} r={6} fill="#fff" stroke="var(--red)" strokeWidth={2}/>
+            <text x={poiCx} y={poiCy-12} textAnchor="middle" fontSize="10" fontFamily="DM Mono" fontWeight="bold" fill="#fff">POI</text>
+            {/* Radius labels */}
+            <text x={poiCx+200/mPerCell*cellSize+5} y={poiCy} fontSize="9" fontFamily="DM Mono" fill="var(--red)" opacity={0.8}>200m</text>
+            <text x={poiCx+radiusPx+5} y={poiCy} fontSize="9" fontFamily="DM Mono" fill="var(--amber)" opacity={0.8}>400m</text>
+          </svg>
+        </div>
+      </div>
+
+      {/* Stats bar */}
+      <div style={{marginTop:16,background:'var(--bg2)',borderRadius:8,padding:'16px 20px'}}>
+        <div style={{display:'flex',gap:2,height:28,borderRadius:6,overflow:'hidden',marginBottom:12}}>
+          {pctSkipped>0&&<div style={{width:`${pctSkipped}%`,background:'var(--green)',borderRadius:'6px 0 0 6px',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontFamily:'var(--font-mono)',color:'#000',fontWeight:600}}>{pctSkipped}%</div>}
+          {pctNeedsCheck>0&&<div style={{width:`${pctNeedsCheck}%`,background:'var(--blue)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontFamily:'var(--font-mono)',color:'#000',fontWeight:600}}>{pctNeedsCheck}%</div>}
+          {pctRestricted>0&&<div style={{width:`${pctRestricted}%`,background:'var(--red)',borderRadius:'0 6px 6px 0',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontFamily:'var(--font-mono)',color:'#fff',fontWeight:600}}>{pctRestricted}%</div>}
+        </div>
+        <div style={{display:'flex',gap:20,flexWrap:'wrap',fontSize:12,fontFamily:'var(--font-mono)'}}>
+          <div><span style={{color:'var(--green)'}}>■</span> <span style={{color:'var(--text-dim)'}}>Too far — skip ({counts.far} cells)</span></div>
+          <div><span style={{color:'var(--blue)'}}>■</span> <span style={{color:'var(--text-dim)'}}>Nearby — compute distance ({counts['needs-check']})</span></div>
+          <div><span style={{color:'var(--red)'}}>■</span> <span style={{color:'var(--text-dim)'}}>Inside restricted zone ({counts.restricted})</span></div>
+        </div>
+      </div>
+
+      <div style={{marginTop:12,fontSize:13,color:'var(--text-dim)',lineHeight:1.8}}>
+        This demo shows <strong style={{color:'var(--green)'}}>{pctSkipped}% of cells eliminated</strong> by one POI alone. In the real dataset with hundreds of POIs, the pre-filter eliminates <strong style={{color:'var(--green)'}}>79% of all cells</strong> — reducing computation from ~3M to ~685K.
+      </div>
+    </div>
+  );
+}
+
+function Step3(){
+  return(
+    <div>
+      <SectionLabel number={3} title="The Grid-Exact Approach"/>
+
+      <p style={{fontSize:16,lineHeight:1.9,marginBottom:16}}>
+        Instead of asking <em>"what area is within 200m?"</em> (isochrone), we flip the question: <strong style={{color:'var(--text-bright)'}}>"for this specific point, what is the exact walking distance to the nearest protected location?"</strong>
+      </p>
+
+      <InfoCard accent="var(--green)">
+        <strong style={{color:'var(--green)'}}>The guarantee:</strong> If a grid cell is green, every point within that 15m cell has been confirmed permitted by exact walking-distance computation.
+      </InfoCard>
+
+      <h3 style={{fontFamily:'var(--font-display)',fontSize:20,color:'var(--text-bright)',margin:'32px 0 16px',fontWeight:500}}>
+        Grid Geometry
+      </h3>
+
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))',gap:12,margin:'16px 0'}}>
+        {[
+          {label:'Resolution',value:'15m',color:'var(--text-bright)'},
+          {label:'Columns',value:'~2,040',color:'var(--blue)'},
+          {label:'Rows',value:'~2,450',color:'var(--blue)'},
+          {label:'Total cells',value:'~5M',color:'var(--text-dim)'},
+          {label:'Inside boundary',value:'~3M',color:'var(--amber)'},
+          {label:'Need computation',value:'~685K',color:'var(--green)'},
+        ].map((item,i)=>(
+          <div key={i} style={{background:'var(--bg2)',borderRadius:8,padding:'12px 16px',textAlign:'center'}}>
+            <div style={{fontFamily:'var(--font-display)',fontSize:22,fontWeight:700,color:item.color}}>{item.value}</div>
+            <div style={{fontSize:11,color:'var(--text-dim)',fontFamily:'var(--font-mono)',marginTop:4}}>{item.label}</div>
+          </div>
+        ))}
+      </div>
+
+      <h3 style={{fontFamily:'var(--font-display)',fontSize:20,color:'var(--text-bright)',margin:'32px 0 16px',fontWeight:500}}>
+        Euclidean Pre-Filter
+      </h3>
+
+      <p style={{fontSize:14,lineHeight:1.8,marginBottom:12}}>
+        Here's a key insight: <strong style={{color:'var(--text-bright)'}}>walking distance can never be shorter than straight-line distance</strong>. You can't walk through walls, so the route by foot is always the same length or longer than a direct line. This means: if a cell is 500m away from a POI in a straight line, the walking distance is <em>at least</em> 500m — definitely beyond the 200m threshold. No need to even ask Valhalla.
+      </p>
+      <p style={{fontSize:14,lineHeight:1.8,marginBottom:16}}>
+        We add a generous margin (e.g. 200m extra for Type A, 150m for Type B) to account for worst-case detours. Any cell beyond this Euclidean radius is <strong style={{color:'var(--green)'}}>guaranteed safe</strong>. Toggle the pre-filter to see how this eliminates the vast majority of cells:
+      </p>
+
+      <GridClassificationViz/>
+
+      {/* Pie chart stats now integrated into GridClassificationViz above */}
+
+      <h3 style={{fontFamily:'var(--font-display)',fontSize:20,color:'var(--text-bright)',margin:'32px 0 16px',fontWeight:500}}>
+        Exact Distance Computation
+      </h3>
+
+      <p style={{fontSize:14,lineHeight:1.8,marginBottom:16}}>
+        For the remaining ~685K cells that <em>might</em> be restricted, we need the <strong style={{color:'var(--text-bright)'}}>actual walking distance</strong> from each cell to its nearest POI. Instead of isochrones (which give approximate shapes), we use Valhalla's <strong style={{color:'var(--text-bright)'}}>distance matrix</strong> feature.
+      </p>
+
+      <InfoCard accent="var(--blue)">
+        <strong style={{color:'var(--blue)'}}>What's a distance matrix?</strong> When you ask Valhalla for a single walking route (A → B), it runs Dijkstra's algorithm: expanding outward from A through the road graph until it reaches B, then it traces the full path back. If you need 2,000 distances from the same POI, running 2,000 separate routes means 2,000 separate graph expansions — and each one redundantly explores the same streets near the POI.
+        <br/><br/>
+        A distance matrix is smarter: Valhalla expands the graph from the POI <em>once</em>, and as the expansion wave reaches each of the 2,000 target cells, it records that cell's distance. One expansion, 2,000 answers. It also skips computing the actual turn-by-turn path (we only need the distance number, not the directions), which saves even more work. In Valhalla's API, this is the <code style={{fontFamily:'var(--font-mono)',background:'var(--bg3)',padding:'2px 6px',borderRadius:3,fontSize:12}}>sources_to_targets</code> endpoint.
+      </InfoCard>
+
+      <DistanceMatrixViz/>
+
+      <p style={{fontSize:14,lineHeight:1.8,marginBottom:16,marginTop:16}}>
+        Valhalla limits each request to 2,500 cells. Here's how many cells fall within each POI's search radius — all comfortably under the limit:
+      </p>
+
+      <ComparisonTable
+        headers={['POI Type','Search Radius','Cells in Radius','Fits in 2,500 limit?']}
+        rows={[
+          ['Type A (polygon edge)','400m','~2,234','Yes ✓'],
+          ['Type A (point only)','400m','~2,234','Yes ✓'],
+          ['Type B (point)','250m','~873','Yes ✓'],
+        ]}
+      />
+
+      <p style={{fontSize:14,lineHeight:1.8,marginBottom:16}}>
+        After all distance matrices come back, classifying each cell is straightforward:
+      </p>
+
+      <CodeBlock label="Cell Classification Logic" code={`cell is RESTRICTED if:
+    minTypeADist[cell] < 0.200 km   // 200m Type A rule
+    OR
+    minTypeBDist[cell] < 0.100 km  // 100m Type B rule`}/>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   STEP 4: BOUNDARY RASTERIZATION
+   ═══════════════════════════════════════════════ */
+function ScanlineViz(){
+  const [scanY,setScanY]=useState(-1);
+  const [isAnimating,setIsAnimating]=useState(false);
+  const [filledRows,setFilledRows]=useState(new Set());
+  const [speed,setSpeed]=useState(1); // 0.5x, 1x, 2x, 4x
+  const speedRef=useRef(1);
+  speedRef.current=speed;
+
+  const W=400,H=300;
+  const polygon=[
+    {x:120,y:40},{x:260,y:30},{x:340,y:70},{x:360,y:140},
+    {x:320,y:220},{x:270,y:260},{x:160,y:270},{x:80,y:230},
+    {x:60,y:150},{x:80,y:80}
+  ];
+
+  const gridSize=15;
+  const gridCols=Math.floor(W/gridSize);
+  const gridRows=Math.floor(H/gridSize);
+
+  function getIntersections(y){
+    const intersections=[];
+    for(let i=0;i<polygon.length;i++){
+      const j=(i+1)%polygon.length;
+      const yi=polygon[i].y, yj=polygon[j].y;
+      if((yi<=y&&yj>y)||(yj<=y&&yi>y)){
+        const t=(y-yi)/(yj-yi);
+        const x=polygon[i].x+t*(polygon[j].x-polygon[i].x);
+        intersections.push(x);
+      }
+    }
+    return intersections.sort((a,b)=>a-b);
+  }
+
+  function startAnimation(){
+    setIsAnimating(true);
+    setFilledRows(new Set());
+    setScanY(0);
+  }
+
+  function resetAnimation(){
+    setIsAnimating(false);
+    setFilledRows(new Set());
+    setScanY(-1);
+  }
+
+  useEffect(()=>{
+    if(!isAnimating||scanY<0)return;
+    if(scanY>=gridRows){
+      setIsAnimating(false);
+      return;
+    }
+    const delay=Math.max(10,80/speedRef.current);
+    const t=setTimeout(()=>{
+      setFilledRows(prev=>{const n=new Set(prev);n.add(scanY);return n;});
+      setScanY(s=>s+1);
+    },delay);
+    return()=>clearTimeout(t);
+  },[scanY,isAnimating,speed]);
+
+  const filledCells=useMemo(()=>{
+    const cells=new Set();
+    filledRows.forEach(row=>{
+      const y=row*gridSize+gridSize/2;
+      const ints=getIntersections(y);
+      for(let p=0;p<ints.length-1;p+=2){
+        const x1=Math.ceil(ints[p]/gridSize);
+        const x2=Math.floor(ints[p+1]/gridSize);
+        for(let c=x1;c<=x2;c++){
+          cells.add(`${row}-${c}`);
+        }
+      }
+    });
+    return cells;
+  },[filledRows]);
+
+  const currentIntersections=scanY>=0&&scanY<gridRows?getIntersections(scanY*gridSize+gridSize/2):[];
+  const isDone=!isAnimating&&filledCells.size>0;
+
+  return(
+    <div style={{margin:'24px 0'}}>
+      {/* Controls row */}
+      <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:12,flexWrap:'wrap'}}>
+        <button onClick={isDone?resetAnimation:startAnimation} disabled={isAnimating} style={{
+          padding:'8px 18px',borderRadius:6,border:'none',cursor:isAnimating?'default':'pointer',
+          fontFamily:'var(--font-mono)',fontSize:12,fontWeight:600,
+          background:isAnimating?'var(--bg4)':isDone?'var(--bg3)':'var(--blue)',
+          color:isAnimating?'var(--text-dim)':isDone?'var(--text)':'#000',
+          transition:'all .2s',opacity:isAnimating?0.6:1
+        }}>
+          {isAnimating?'Scanning...':isDone?'Reset':'Run Scanline Fill'}
+        </button>
+
+        <div style={{display:'flex',alignItems:'center',gap:4,fontFamily:'var(--font-mono)',fontSize:11,color:'var(--text-dim)'}}>
+          <span>Speed:</span>
+          {[0.5,1,2,4].map(s=>(
+            <button key={s} onClick={()=>setSpeed(s)} style={{
+              padding:'4px 8px',borderRadius:4,border:'none',cursor:'pointer',
+              fontFamily:'var(--font-mono)',fontSize:11,
+              background:speed===s?'var(--amber)':'var(--bg3)',
+              color:speed===s?'#000':'var(--text-dim)',
+              transition:'all .15s'
+            }}>{s}x</button>
+          ))}
+        </div>
+
+        {filledCells.size>0&&(
+          <span style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--text-dim)',marginLeft:'auto'}}>
+            {filledCells.size} cells filled {isDone&&'✓'}
+          </span>
+        )}
+      </div>
+
+      <svg viewBox={`0 0 ${W} ${H}`} style={{width:'100%',maxWidth:520,background:'var(--bg2)',borderRadius:8,border:'1px solid var(--bg4)'}}>
+        {Array.from({length:gridRows},(_,r)=>
+          Array.from({length:gridCols},(_,c)=>{
+            const isFilled=filledCells.has(`${r}-${c}`);
+            return <rect key={`${r}-${c}`} x={c*gridSize} y={r*gridSize} width={gridSize-1} height={gridSize-1}
+              fill={isFilled?'rgba(96,165,250,0.45)':'rgba(255,255,255,0.02)'} rx={1}
+              style={{transition:'fill .12s'}}/>;
+          })
+        )}
+
+        <polygon
+          points={polygon.map(p=>`${p.x},${p.y}`).join(' ')}
+          fill="none" stroke="var(--amber)" strokeWidth={2} strokeDasharray="6,3"/>
+
+        {isAnimating&&scanY>=0&&scanY<gridRows&&(
+          <>
+            <line x1={0} y1={scanY*gridSize+gridSize/2} x2={W} y2={scanY*gridSize+gridSize/2}
+              stroke="var(--red)" strokeWidth={1.5} opacity={0.9}/>
+            {currentIntersections.map((x,i)=>(
+              <circle key={i} cx={x} cy={scanY*gridSize+gridSize/2} r={4}
+                fill="var(--red)" stroke="#fff" strokeWidth={1}/>
+            ))}
+          </>
+        )}
+      </svg>
+
+      <div style={{marginTop:12,fontSize:13,color:'var(--text-dim)',lineHeight:1.8}}>
+        For each row, the algorithm finds where the boundary edges cross that Y-coordinate (red dots), sorts them left-to-right,
+        and fills cells between each pair using the <strong style={{color:'var(--text)'}}>even-odd rule</strong>: the first crossing means "entering the polygon," the second means "leaving it," the third means "entering again," and so on. Everything between an odd-numbered crossing and the next even-numbered crossing is inside.
+      </div>
+    </div>
+  );
+}
+
+function Step4(){
+  return(
+    <div>
+      <SectionLabel number={4} title="Boundary Rasterization"/>
+
+      <p style={{fontSize:16,lineHeight:1.9,marginBottom:16}}>
+        The city's boundary polygon has <strong style={{color:'var(--text-bright)'}}>~23,000 vertices</strong>.
+        Testing every grid cell with point-in-polygon would be ~70 billion operations.
+        Instead, we use a <strong style={{color:'var(--text-bright)'}}>scanline fill algorithm</strong>.
+      </p>
+
+      <InfoCard accent="var(--blue)">
+        <strong style={{color:'var(--blue)'}}>Scanline fill</strong> works like a printer — it processes one horizontal row at a time, finding where the polygon boundary crosses that row, then filling cells between crossings.
+        The naive approach tests every cell against every boundary edge: 3 million cells × 23,000 edges = ~70 billion checks. Scanline fill only processes ~2,450 rows × 23,000 edges = ~56 million checks — over <strong style={{color:'var(--text-bright)'}}>1,000× faster</strong>. What would take hours finishes in seconds.
+      </InfoCard>
+
+      <h3 style={{fontFamily:'var(--font-display)',fontSize:20,color:'var(--text-bright)',margin:'32px 0 16px',fontWeight:500}}>
+        Watch It Fill
+      </h3>
+
+      <ScanlineViz/>
+
+      <h3 style={{fontFamily:'var(--font-display)',fontSize:20,color:'var(--text-bright)',margin:'32px 0 16px',fontWeight:500}}>
+        The Math
+      </h3>
+
+      <p style={{fontSize:14,lineHeight:1.8,marginBottom:16}}>
+        For each polygon edge crossing the scan row at latitude Y:
+      </p>
+
+      <CodeBlock label="Edge crossing formula" code={`t = (Y - lat_i) / (lat_j - lat_i)
+lon_cross = lon_i + t * (lon_j - lon_i)
+
+// Sort all crossings left-to-right
+// Fill between pairs: [cross0..cross1], [cross2..cross3], ...`}/>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   STEP 5: MORPHOLOGICAL CLOSE
+   ═══════════════════════════════════════════════ */
+function MorphViz(){
+  const [phase,setPhase]=useState('original'); // original | dilated | eroded
+  const gSize=8;
+  const cols=14,rows=10;
+
+  // Create a grid with some holes
+  const baseGrid=useMemo(()=>{
+    const g=Array(rows).fill(null).map(()=>Array(cols).fill(0));
+    // Fill a rough circle of "restricted"
+    for(let r=0;r<rows;r++){
+      for(let c=0;c<cols;c++){
+        const d=Math.sqrt((c-6)**2+(r-4.5)**2);
+        if(d<4)g[r][c]=1;
+      }
+    }
+    // Punch some holes
+    g[3][5]=0;g[5][7]=0;g[4][4]=0;
+    return g;
+  },[]);
+
+  // Dilate
+  const dilatedGrid=useMemo(()=>{
+    const g=baseGrid.map(r=>[...r]);
+    for(let r=0;r<rows;r++){
+      for(let c=0;c<cols;c++){
+        if(baseGrid[r][c])continue;
+        const neighbors=[
+          r>0&&baseGrid[r-1][c],
+          r<rows-1&&baseGrid[r+1][c],
+          c>0&&baseGrid[r][c-1],
+          c<cols-1&&baseGrid[r][c+1],
+        ];
+        if(neighbors.some(Boolean))g[r][c]=1;
+      }
+    }
+    return g;
+  },[baseGrid]);
+
+  // Erode (from dilated)
+  const erodedGrid=useMemo(()=>{
+    const g=dilatedGrid.map(r=>[...r]);
+    for(let r=0;r<rows;r++){
+      for(let c=0;c<cols;c++){
+        if(!dilatedGrid[r][c])continue;
+        const neighbors=[
+          r>0?dilatedGrid[r-1][c]:0,
+          r<rows-1?dilatedGrid[r+1][c]:0,
+          c>0?dilatedGrid[r][c-1]:0,
+          c<cols-1?dilatedGrid[r][c+1]:0,
+        ];
+        if(!neighbors.every(Boolean))g[r][c]=0;
+      }
+    }
+    return g;
+  },[dilatedGrid]);
+
+  const currentGrid=phase==='original'?baseGrid:phase==='dilated'?dilatedGrid:erodedGrid;
+  const cellPx=28;
+
+  // Count differences
+  const holesFixed=useMemo(()=>{
+    let count=0;
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+      if(!baseGrid[r][c]&&erodedGrid[r][c])count++;
+    }
+    return count;
+  },[baseGrid,erodedGrid]);
+
+  return(
+    <div style={{margin:'24px 0'}}>
+      <div style={{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap'}}>
+        {[
+          {id:'original',label:'Original',color:'var(--red)'},
+          {id:'dilated',label:'Step 1: Dilate',color:'var(--amber)'},
+          {id:'eroded',label:'Step 2: Erode',color:'var(--green)'},
+        ].map(b=>(
+          <button key={b.id} onClick={()=>setPhase(b.id)} style={{
+            padding:'8px 14px',borderRadius:6,border:'none',cursor:'pointer',
+            fontFamily:'var(--font-mono)',fontSize:12,transition:'all .2s',
+            background:phase===b.id?b.color:'var(--bg3)',
+            color:phase===b.id?'#000':'var(--text-dim)'
+          }}>{b.label}</button>
+        ))}
+      </div>
+
+      <svg viewBox={`0 0 ${cols*cellPx} ${rows*cellPx}`} style={{width:'100%',maxWidth:cols*cellPx*1.5,background:'var(--bg2)',borderRadius:8,border:'1px solid var(--bg4)'}}>
+        {currentGrid.map((row,r)=>row.map((val,c)=>{
+          const wasHole=!baseGrid[r][c]&&currentGrid[r][c];
+          const willBeFilled=!baseGrid[r][c]&&erodedGrid[r][c];
+          return(
+            <rect key={`${r}-${c}`} x={c*cellPx+1} y={r*cellPx+1} width={cellPx-2} height={cellPx-2} rx={3}
+              fill={val?(wasHole?'#f59e0b80':'#e0555580'):'#ffffff06'}
+              stroke={phase==='original'&&willBeFilled?'var(--amber)':'transparent'}
+              strokeWidth={1} strokeDasharray={phase==='original'?'3,2':''}
+              style={{transition:'fill .3s'}}/>
+          );
+        }))}
+      </svg>
+
+      <div style={{marginTop:12,display:'flex',gap:16,flexWrap:'wrap',fontSize:12,fontFamily:'var(--font-mono)'}}>
+        <span style={{color:'var(--red)'}}>■ Restricted</span>
+        {phase!=='original'&&<span style={{color:'var(--amber)'}}>■ Filled gap</span>}
+        {phase==='original'&&<span style={{color:'var(--amber)'}}>┅ Gap (will be fixed)</span>}
+      </div>
+      <div style={{marginTop:8,fontSize:13,color:'var(--text-dim)'}}>
+        {phase==='original'&&`3 single-cell holes visible (dashed outline). These cells' center points landed on awkward spots in the road network, producing walking distances just over the threshold while all neighbors are under it.`}
+        {phase==='dilated'&&`Dilate: every empty cell that touches a restricted neighbor becomes restricted too. This fills the holes — but notice the entire shape grew one cell outward in every direction.`}
+        {phase==='eroded'&&`Erode: remove any restricted cell that touches an empty neighbor. The outer boundary shrinks back to its original position. But the filled holes stay filled (they're fully surrounded), so ${holesFixed} gaps are permanently closed.`}
+      </div>
+    </div>
+  );
+}
+
+function Step5(){
+  return(
+    <div>
+      <SectionLabel number={5} title="Morphological Close"/>
+
+      <p style={{fontSize:16,lineHeight:1.9,marginBottom:16}}>
+        After computing all grid distances, we noticed <strong style={{color:'var(--text-bright)'}}>single-cell holes</strong> scattered through the restricted grid — isolated "permitted" cells completely surrounded by restricted ones. Why?
+      </p>
+
+      <InfoCard accent="var(--blue)">
+        <strong style={{color:'var(--blue)'}}>What causes these holes?</strong> Each grid cell's distance is measured from the cell's center point. Sometimes that center point falls on an awkward spot in the road network — like just past an intersection where Valhalla has to route <em>around</em> a block instead of straight through. The walking distance comes out to, say, 103m while all four neighbors are 82–92m. It's not that the cell is truly "permitted" — it's a quirk of where the center point landed relative to the street grid.
+      </InfoCard>
+
+      <p style={{fontSize:14,lineHeight:1.8,color:'var(--text)',margin:'20px 0 16px'}}>
+        To fix these holes without moving the zone boundaries, we borrow a technique from <strong style={{color:'var(--text-bright)'}}>image processing</strong> called a <strong style={{color:'var(--text-bright)'}}>morphological close</strong>. It's a two-step operation: <em>dilate</em> (grow), then <em>erode</em> (shrink). The net effect fills small interior gaps while leaving the outer boundary unchanged.
+      </p>
+
+      <div style={{display:'grid',gap:12,margin:'16px 0'}}>
+        <div style={{background:'var(--bg2)',borderRadius:8,padding:'14px 18px',borderLeft:'3px solid var(--amber)'}}>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--amber)',fontWeight:500,marginBottom:4}}>Step 1: Dilate (grow)</div>
+          <div style={{fontSize:13,color:'var(--text-dim)',lineHeight:1.7}}>Look at every empty cell. If any of its immediate neighbors (up, down, left, right) is restricted, mark it as restricted too. This fills all the holes — but it also makes the entire zone one cell bigger in every direction.</div>
+        </div>
+        <div style={{background:'var(--bg2)',borderRadius:8,padding:'14px 18px',borderLeft:'3px solid var(--green)'}}>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--green)',fontWeight:500,marginBottom:4}}>Step 2: Erode (shrink)</div>
+          <div style={{fontSize:13,color:'var(--text-dim)',lineHeight:1.7}}>Now look at every restricted cell in the dilated result. If any of its immediate neighbors is <em>not</em> restricted, remove the restriction. This shrinks the boundary back to its original position. The holes that were filled in step 1 stay filled, because after dilation they're completely surrounded by restricted cells and the erosion has no effect on them.</div>
+        </div>
+      </div>
+
+      <h3 style={{fontFamily:'var(--font-display)',fontSize:20,color:'var(--text-bright)',margin:'32px 0 16px',fontWeight:500}}>
+        Step Through the Process
+      </h3>
+
+      <MorphViz/>
+
+      <div style={{background:'var(--bg2)',borderRadius:8,padding:20,margin:'24px 0'}}>
+        <div style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--text-dim)',marginBottom:12,letterSpacing:1}}>IN PRACTICE</div>
+        <KeyValue label="Gaps filled across full grid" value="~3,200" color="var(--amber)"/>
+        <KeyValue label="Boundary expansion" value="0 cells" color="var(--green)"/>
+        <KeyValue label="Processing time" value="< 1 second (single pass over grid)" color="var(--text)"/>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   STEP 6: MARCHING SQUARES
+   ═══════════════════════════════════════════════ */
+function MarchingSquaresViz(){
+  const cols=10,rows=8;
+  const cellPx=40;
+  const [showContour,setShowContour]=useState(false);
+
+  const grid=useMemo(()=>{
+    const g=Array(rows).fill(null).map(()=>Array(cols).fill(0));
+    for(let r=0;r<rows;r++){
+      for(let c=0;c<cols;c++){
+        const d=Math.sqrt((c-4.5)**2+(r-3.5)**2);
+        if(d<3)g[r][c]=1;
+      }
+    }
+    return g;
+  },[]);
+
+  // Compute contour edges using marching squares
+  // Reference point = center of the 2×2 block (where 4 cells meet)
+  const contourEdges=useMemo(()=>{
+    const edges=[];
+    for(let r=0;r<rows-1;r++){
+      for(let c=0;c<cols-1;c++){
+        const tl=grid[r][c],tr=grid[r][c+1],br=grid[r+1][c+1],bl=grid[r+1][c];
+        const idx=(tl<<3)|(tr<<2)|(br<<1)|bl;
+        if(idx===0||idx===15)continue;
+
+        // Block center = corner shared by all 4 cells
+        const cx=(c+1)*cellPx, cy=(r+1)*cellPx;
+        const h=cellPx/2;
+
+        const add=(dx1,dy1,dx2,dy2)=>edges.push({x1:cx+dx1,y1:cy+dy1,x2:cx+dx2,y2:cy+dy2});
+
+        if(idx===1||idx===14)add(-h,0,0,h);
+        else if(idx===2||idx===13)add(0,h,h,0);
+        else if(idx===4||idx===11)add(h,0,0,-h);
+        else if(idx===8||idx===7)add(0,-h,-h,0);
+        else if(idx===3||idx===12)add(-h,0,h,0);
+        else if(idx===6||idx===9)add(0,-h,0,h);
+        else if(idx===5){add(-h,0,0,-h);add(0,h,h,0);}
+        else if(idx===10){add(0,-h,h,0);add(-h,0,0,h);}
+      }
+    }
+    return edges;
+  },[grid]);
+
+  // Chain edges into a closed polygon path for clean rendering
+  const contourPath=useMemo(()=>{
+    if(contourEdges.length===0)return'';
+    const key=(x,y)=>`${Math.round(x)},${Math.round(y)}`;
+    const adj=new Map();
+    contourEdges.forEach((e,i)=>{
+      const k1=key(e.x1,e.y1),k2=key(e.x2,e.y2);
+      if(!adj.has(k1))adj.set(k1,[]);
+      if(!adj.has(k2))adj.set(k2,[]);
+      adj.get(k1).push({to:k2,idx:i});
+      adj.get(k2).push({to:k1,idx:i});
+    });
+    const used=new Set();
+    const pts=[];
+    let cur=key(contourEdges[0].x1,contourEdges[0].y1);
+    pts.push(cur);
+    for(let safe=0;safe<contourEdges.length*2;safe++){
+      const nbrs=adj.get(cur)||[];
+      const next=nbrs.find(n=>!used.has(n.idx));
+      if(!next)break;
+      used.add(next.idx);
+      cur=next.to;
+      pts.push(cur);
+    }
+    return pts.map((p,i)=>(i===0?'M':'L')+p.replace(',',' ')).join(' ')+'Z';
+  },[contourEdges]);
+
+  const W=cols*cellPx, H=rows*cellPx;
+
+  return(
+    <div style={{margin:'24px 0'}}>
+      <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:12}}>
+        <button onClick={()=>setShowContour(!showContour)} style={{
+          padding:'8px 16px',borderRadius:6,border:'none',cursor:'pointer',
+          fontFamily:'var(--font-mono)',fontSize:12,fontWeight:600,
+          background:showContour?'var(--green)':'var(--bg3)',
+          color:showContour?'#000':'var(--text-dim)',transition:'all .2s'
+        }}>
+          {showContour?'Showing Contour':'Show Contour'}
+        </button>
+        {showContour&&<span style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--text-dim)'}}>
+          {contourEdges.length} edge segments → 1 closed polygon
+        </span>}
+      </div>
+
+      <svg viewBox={`0 0 ${W} ${H}`} style={{width:'100%',maxWidth:520,display:'block',background:'var(--bg2)',borderRadius:8,border:'1px solid var(--bg4)'}}>
+        {grid.map((row,r)=>row.map((val,c)=>(
+          <rect key={`${r}-${c}`} x={c*cellPx+2} y={r*cellPx+2} width={cellPx-4} height={cellPx-4} rx={4}
+            fill={val?'#e0555540':'#ffffff06'}/>
+        )))}
+
+        {/* Corner dots — green where restricted meets permitted */}
+        {Array.from({length:rows+1},(_,r)=>
+          Array.from({length:cols+1},(_,c)=>{
+            const samples=[
+              r>0&&c>0?grid[r-1][c-1]:0,
+              r>0&&c<cols?grid[r-1][c]:0,
+              r<rows&&c<cols?grid[r][c]:0,
+              r<rows&&c>0?grid[r][c-1]:0,
+            ];
+            const any=samples.some(Boolean);
+            const all=samples.every(Boolean);
+            return(
+              <circle key={`d${r}-${c}`} cx={c*cellPx} cy={r*cellPx} r={showContour&&any&&!all?3:2}
+                fill={showContour?(any&&!all?'var(--green)':'#ffffff10'):'#ffffff15'}/>
+            );
+          })
+        )}
+
+        {/* Contour as a single closed path */}
+        {showContour&&contourPath&&(
+          <path d={contourPath} fill="none" stroke="var(--green)" strokeWidth={2.5}
+            strokeLinejoin="round" strokeLinecap="round"/>
+        )}
+      </svg>
+
+      <div style={{marginTop:12,fontSize:13,color:'var(--text-dim)',lineHeight:1.8}}>
+        The green dots highlight corners where restricted and permitted cells meet — these are the "interesting" spots where a boundary line is needed. The algorithm marches through each 2×2 block, decides which of 16 possible patterns it matches, and draws the corresponding line segment. When all segments connect, they form the <strong style={{color:'var(--text)'}}>polygon boundary</strong>.
+      </div>
+    </div>
+  );
+}
+
+function Step6(){
+  return(
+    <div>
+      <SectionLabel number={6} title="Grid to Polygon"/>
+
+      <p style={{fontSize:16,lineHeight:1.9,marginBottom:16}}>
+        We now have a binary grid — each cell is either 1 (restricted) or 0 (permitted). But the map on the frontend can't display a grid directly. It needs <strong style={{color:'var(--text-bright)'}}>polygons</strong> — shapes defined by coordinates — that it can draw as colored overlays. We need to convert the grid into polygon outlines.
+      </p>
+
+      <h3 style={{fontFamily:'var(--font-display)',fontSize:20,color:'var(--text-bright)',margin:'32px 0 16px',fontWeight:500}}>
+        Marching Squares Algorithm
+      </h3>
+
+      <p style={{fontSize:14,lineHeight:1.8,color:'var(--text)',marginBottom:16}}>
+        <strong style={{color:'var(--text-bright)'}}>Marching squares</strong> is an algorithm that finds boundaries in a grid. It's called "marching" because it walks through the grid one 2×2 block at a time, like a soldier marching in formation.
+      </p>
+
+      <p style={{fontSize:14,lineHeight:1.8,color:'var(--text)',marginBottom:16}}>
+        At each 2×2 block, it looks at the four corner values (each is 0 or 1). With 4 corners and 2 possible values each, there are 2⁴ = <strong style={{color:'var(--text-bright)'}}>16 possible patterns</strong>. For each pattern, there's a predefined rule about where to draw a line segment — for example, if the top-left and top-right are 1 but the bottom corners are 0, draw a horizontal line across the middle. Connect all these little segments and you get a polygon boundary.
+      </p>
+
+      <p style={{fontSize:14,lineHeight:1.8,color:'var(--text)',marginBottom:16}}>
+        We use a library called <strong style={{color:'var(--text-bright)'}}>d3-contour</strong> (part of the popular D3.js data visualization toolkit) which implements marching squares for us. Toggle the contour to see the polygon boundary it produces:
+      </p>
+
+      <MarchingSquaresViz/>
+
+      <h3 style={{fontFamily:'var(--font-display)',fontSize:20,color:'var(--text-bright)',margin:'32px 0 16px',fontWeight:500}}>
+        Post-Processing
+      </h3>
+
+      <p style={{fontSize:14,lineHeight:1.8,color:'var(--text)',marginBottom:16}}>
+        The marching squares output is in grid coordinates (column 5, row 12). We need to transform it into geographic coordinates (latitude/longitude), clip it to the city boundary, and simplify it to reduce file size:
+      </p>
+
+      <div style={{display:'flex',flexWrap:'wrap',gap:8,margin:'16px 0',alignItems:'center'}}>
+        {['Marching squares output','Transform to lat/lon','Clip to city boundary','Simplify (3m tolerance)','GeoJSON file'].map((s,i,arr)=>(
+          <Fragment key={i}>
+            <div style={{padding:'8px 12px',background:'var(--bg3)',borderRadius:6,fontFamily:'var(--font-mono)',fontSize:11,color:'var(--text)'}}>{s}</div>
+            {i<arr.length-1&&<span style={{color:'var(--text-dim)',fontSize:12}}>→</span>}
+          </Fragment>
+        ))}
+      </div>
+
+      <InfoCard accent="var(--amber)">
+        <strong style={{color:'var(--amber)'}}>Why 3m simplification?</strong> Simplification removes points from the polygon to shrink the file. The grid has 15m resolution, so using the default 10m simplification would erase entire grid cells worth of detail, potentially marking restricted cells as permitted. A tighter 3m tolerance keeps the boundary faithful to the grid while still cutting file size significantly.
+      </InfoCard>
+
+      <ComparisonTable
+        headers={['Metric','Isochrone','Grid-Exact']}
+        rows={[
+          ['Boundary style','Smooth, rounded','Angular, stepped (15m grid)'],
+          ['Accuracy','~24m error','Exact to grid resolution'],
+          ['restricted-zones.geojson','~180 KB','~458 KB'],
+          ['Total geo/ output','~500 KB','~1.2 MB'],
+        ]}
+      />
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   STEP 7: CLICK-TO-QUERY
+   ═══════════════════════════════════════════════ */
+function SequenceDiagramViz(){
+  const [activeStep,setActiveStep]=useState(-1);
+  const steps=[
+    {from:'User',to:'Server',label:'GET /api/check?lat=X&lng=Y',color:'var(--blue)'},
+    {from:'Server',to:'Turf',label:'booleanPointInPolygon()',color:'var(--amber)'},
+    {from:'Turf',to:'Server',label:'restricted = true/false',color:'var(--amber)'},
+    {from:'Server',to:'Turf',label:'findNearbyPOIs(500m)',color:'var(--red)'},
+    {from:'Turf',to:'Server',label:'5 nearest POIs',color:'var(--red)'},
+    {from:'Server',to:'Valhalla',label:'Walking route per POI',color:'var(--green)'},
+    {from:'Valhalla',to:'Server',label:'distance + geometry',color:'var(--green)'},
+    {from:'Server',to:'User',label:'{ restricted, nearby[] }',color:'var(--blue)'},
+  ];
+
+  useEffect(()=>{
+    const t=setInterval(()=>{
+      setActiveStep(s=>(s+1)%(steps.length+2));
+    },700);
+    return()=>clearInterval(t);
+  },[]);
+
+  const actors=['User','Server','Turf','Valhalla'];
+  const actorX={User:60,Server:180,Turf:300,Valhalla:420};
+  const H=steps.length*45+60;
+
+  return(
+    <div style={{margin:'24px 0',overflowX:'auto'}}>
+      <svg viewBox={`0 0 500 ${H}`} style={{width:'100%',maxWidth:500,background:'var(--bg2)',borderRadius:8,border:'1px solid var(--bg4)'}}>
+        {/* Actor lines */}
+        {actors.map(a=>(
+          <g key={a}>
+            <line x1={actorX[a]} y1={35} x2={actorX[a]} y2={H} stroke="#ffffff08" strokeWidth={1} strokeDasharray="4,4"/>
+            <rect x={actorX[a]-30} y={8} width={60} height={22} rx={4} fill="var(--bg3)" stroke="var(--bg4)" strokeWidth={1}/>
+            <text x={actorX[a]} y={23} textAnchor="middle" fontSize="10" fontFamily="DM Mono" fill="var(--text-dim)">{a}</text>
+          </g>
+        ))}
+
+        {/* Messages */}
+        {steps.map((s,i)=>{
+          const y=50+i*45;
+          const x1=actorX[s.from],x2=actorX[s.to];
+          const isActive=i===activeStep;
+          return(
+            <g key={i} style={{opacity:i<=activeStep?1:0.3,transition:'opacity .3s'}}>
+              <line x1={x1} y1={y} x2={x2} y2={y} stroke={isActive?s.color:'#ffffff20'} strokeWidth={isActive?2:1} markerEnd="url(#arrowhead)"/>
+              <text x={(x1+x2)/2} y={y-8} textAnchor="middle" fontSize="8" fontFamily="DM Mono" fill={isActive?s.color:'var(--text-dim)'}>{s.label}</text>
+            </g>
+          );
+        })}
+
+        <defs>
+          <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="var(--text-dim)"/>
+          </marker>
+        </defs>
+      </svg>
+    </div>
+  );
+}
+
+function Step7(){
+  return(
+    <div>
+      <SectionLabel number={7} title="Click-to-Query Runtime"/>
+
+      <p style={{fontSize:16,lineHeight:1.9,marginBottom:16}}>
+        The precomputed zone map is the first line of defense. But when a user clicks the map, the backend provides a <strong style={{color:'var(--text-bright)'}}>second verification layer</strong> with individual Valhalla route calculations.
+      </p>
+
+      <h3 style={{fontFamily:'var(--font-display)',fontSize:20,color:'var(--text-bright)',margin:'32px 0 16px',fontWeight:500}}>
+        Request Flow
+      </h3>
+
+      <SequenceDiagramViz/>
+
+      <h3 style={{fontFamily:'var(--font-display)',fontSize:20,color:'var(--text-bright)',margin:'32px 0 16px',fontWeight:500}}>
+        Dual Verification
+      </h3>
+
+      <div style={{display:'grid',gap:16,margin:'16px 0'}}>
+        <div style={{background:'var(--bg2)',borderRadius:8,padding:'16px 20px',display:'flex',gap:16,alignItems:'flex-start'}}>
+          <div style={{width:36,height:36,borderRadius:'50%',background:'var(--bg3)',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'var(--font-mono)',fontSize:14,color:'var(--blue)',flexShrink:0,border:'1px solid var(--blue)30'}}>1</div>
+          <div>
+            <div style={{fontWeight:500,color:'var(--text-bright)',fontSize:14,marginBottom:4}}>Zone polygon containment</div>
+            <div style={{fontSize:13,color:'var(--text-dim)',lineHeight:1.7}}>Fast point-in-polygon test against the precomputed restricted zones. Instant answer.</div>
+          </div>
+        </div>
+        <div style={{background:'var(--bg2)',borderRadius:8,padding:'16px 20px',display:'flex',gap:16,alignItems:'flex-start'}}>
+          <div style={{width:36,height:36,borderRadius:'50%',background:'var(--bg3)',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'var(--font-mono)',fontSize:14,color:'var(--green)',flexShrink:0,border:'1px solid var(--green)30'}}>2</div>
+          <div>
+            <div style={{fontWeight:500,color:'var(--text-bright)',fontSize:14,marginBottom:4}}>Individual route verification</div>
+            <div style={{fontSize:13,color:'var(--text-dim)',lineHeight:1.7}}>Exact Valhalla <code style={{fontFamily:'var(--font-mono)',background:'var(--bg3)',padding:'1px 5px',borderRadius:3,fontSize:11}}>/route</code> calls to each nearby POI. Walking distance + route geometry for the map.</div>
+          </div>
+        </div>
+      </div>
+
+      <CodeBlock label="Final determination" code={`restricted =
+    zone_polygon_containment  // precomputed grid
+    || any_typeA_within_200m   // live route check
+    || any_typeB_within_100m  // live route check
+
+// Even if the precomputed zone has a gap,
+// the runtime check catches it.`}/>
+
+      <h3 style={{fontFamily:'var(--font-display)',fontSize:20,color:'var(--text-bright)',margin:'32px 0 16px',fontWeight:500}}>
+        Distance by POI Type
+      </h3>
+
+      <ComparisonTable
+        headers={['POI Type','Source Point','Distance']}
+        rows={[
+          ['Type A (with polygon)','Nearest point on building edge','200m'],
+          ['Type A (point only)','Centroid','200m'],
+          ['Type B','Centroid / entrance','100m'],
+        ]}
+      />
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   STEP 8: PIPELINE & REFRESH
+   ═══════════════════════════════════════════════ */
+function PipelineViz(){
+  const [activeStage,setActiveStage]=useState(-1);
+
+  const stages=[
+    {name:'fetch-overpass',duration:'~30s',desc:'POIs, boundary, supplementary data',color:'var(--blue)',icon:'🗺'},
+    {name:'fetch-secondary',duration:'~2 min',desc:'Secondary source POIs (multiple categories × areas)',color:'var(--amber)',icon:'📍'},
+    {name:'merge-pois',duration:'~1s',desc:'Deduplicate by type + 20m proximity',color:'var(--green)',icon:'🔗'},
+    {name:'compute:grid',duration:'~5 min',desc:'15m grid × Valhalla matrix → GeoJSON',color:'var(--red)',icon:'⬛'},
+  ];
+
+  useEffect(()=>{
+    const t=setInterval(()=>{
+      setActiveStage(s=>(s+1)%(stages.length+1));
+    },1200);
+    return()=>clearInterval(t);
+  },[]);
+
+  return(
+    <div style={{margin:'24px 0'}}>
+      <div style={{display:'grid',gap:12}}>
+        {stages.map((s,i)=>(
+          <div key={i} style={{
+            background:i<=activeStage?'var(--bg3)':'var(--bg2)',
+            borderRadius:8,padding:'16px 20px',
+            borderLeft:`3px solid ${i<=activeStage?s.color:'var(--bg4)'}`,
+            transition:'all .4s',
+            opacity:i<=activeStage?1:0.4,
+            transform:i===activeStage?'translateX(4px)':'translateX(0)',
+          }}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+              <div style={{fontFamily:'var(--font-mono)',fontSize:13,color:s.color,fontWeight:500}}>
+                Stage {i+1}: {s.name}
+              </div>
+              <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--text-dim)'}}>{s.duration}</div>
+            </div>
+            <div style={{fontSize:13,color:'var(--text-dim)'}}>{s.desc}</div>
+            {i===activeStage&&(
+              <div style={{marginTop:8,height:3,borderRadius:2,background:s.color,animation:'pulse 1s infinite',opacity:0.6}}/>
+            )}
+          </div>
+        ))}
+      </div>
+      <div style={{marginTop:16,textAlign:'center',fontFamily:'var(--font-mono)',fontSize:13}}>
+        <span style={{color:'var(--text-dim)'}}>Total: </span>
+        <span style={{color:'var(--text-bright)'}}>~8 minutes</span>
+        <span style={{color:'var(--text-dim)'}}> end-to-end</span>
+      </div>
+    </div>
+  );
+}
+
+function Step8(){
+  return(
+    <div>
+      <SectionLabel number={8} title="Pipeline & Refresh"/>
+
+      <p style={{fontSize:16,lineHeight:1.9,marginBottom:16}}>
+        The entire zone computation is a single command: <code style={{fontFamily:'var(--font-mono)',background:'var(--bg3)',padding:'2px 8px',borderRadius:3,fontSize:13}}>pnpm pipeline:grid:full</code>. Four stages, fully automated:
+      </p>
+
+      <PipelineViz/>
+
+      <h3 style={{fontFamily:'var(--font-display)',fontSize:20,color:'var(--text-bright)',margin:'32px 0 16px',fontWeight:500}}>
+        What Changes Over Time
+      </h3>
+
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',gap:12,margin:'16px 0'}}>
+        {[
+          {label:'Type A POIs',detail:'Open, close, renovations',freq:'Monthly check',color:'var(--red)'},
+          {label:'Type B POIs',detail:'Open/close frequently',freq:'Weekly ideal',color:'var(--amber)'},
+          {label:'Road Network',detail:'New streets, bridges',freq:'Quarterly rebuild',color:'var(--blue)'},
+          {label:'Rule Changes',detail:'Buffer distances, new categories',freq:'As needed',color:'var(--green)'},
+        ].map((item,i)=>(
+          <div key={i} style={{background:'var(--bg2)',borderRadius:8,padding:16,borderTop:`2px solid ${item.color}`}}>
+            <div style={{fontWeight:500,color:'var(--text-bright)',fontSize:14,marginBottom:4}}>{item.label}</div>
+            <div style={{fontSize:12,color:'var(--text-dim)',lineHeight:1.6}}>{item.detail}</div>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:item.color,marginTop:8}}>{item.freq}</div>
+          </div>
+        ))}
+      </div>
+
+      <h3 style={{fontFamily:'var(--font-display)',fontSize:20,color:'var(--text-bright)',margin:'32px 0 16px',fontWeight:500}}>
+        Recommended Schedule
+      </h3>
+
+      <ComparisonTable
+        headers={['Component','Frequency','Reason']}
+        rows={[
+          ['POI data (Overpass + secondary)','Weekly to monthly','Type B POIs change frequently'],
+          ['Valhalla tiles','Quarterly','Road network changes slowly'],
+          ['Zone recomputation','After every update','Zones depend on both'],
+          ['Full end-to-end','Monthly','Balance freshness vs. cost'],
+        ]}
+      />
+
+      <CodeBlock label="Automation (cron)" code={`# Monthly refresh — 1st of each month, 3 AM
+0 3 1 * * cd /path/to/project && pnpm pipeline:grid:full \\
+  >> /var/log/zones-refresh.log 2>&1`}/>
+
+      <InfoCard accent="var(--green)">
+        <strong style={{color:'var(--green)'}}>Resilience:</strong> The <code style={{fontFamily:'var(--font-mono)',fontSize:12}}>data/</code> directory caches previous fetches. If an API fails, the pipeline gracefully falls back to cached data — stale but functional.
+      </InfoCard>
+
+      {/* Completion */}
+      <div style={{textAlign:'center',margin:'48px 0 24px',padding:32,background:'var(--bg2)',borderRadius:12,border:'1px solid var(--bg4)'}}>
+        <div style={{fontSize:32,fontFamily:'var(--font-display)',fontWeight:700,color:'var(--text-bright)',marginBottom:8}}>Lesson Complete</div>
+        <p style={{color:'var(--text-dim)',fontSize:14,maxWidth:400,margin:'0 auto',lineHeight:1.7}}>
+          You've walked through the full pipeline: from understanding the problem, through isochrone limitations, to grid-exact computation with real-time verification.
+        </p>
+        <div style={{display:'flex',gap:12,justifyContent:'center',marginTop:24,flexWrap:'wrap'}}>
+          <Tag color="var(--green)">Exact distances</Tag>
+          <Tag color="var(--red)">Precision-critical</Tag>
+          <Tag color="var(--blue)">Dual verification</Tag>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   MAIN APP
+   ═══════════════════════════════════════════════ */
+function App(){
+  const [step,setStep]=useState(0);
+  const contentRef=useRef(null);
+  const totalSteps=9; // 0=landing + 8 lesson steps
+
+  const goTo=useCallback((s)=>{
+    setStep(Math.max(0,Math.min(totalSteps-1,s)));
+    window.scrollTo({top:0,behavior:'smooth'});
+  },[]);
+
+  const onNext=useCallback(()=>goTo(step+1),[step,goTo]);
+  const onPrev=useCallback(()=>goTo(step-1),[step,goTo]);
+
+  // Keyboard navigation
+  useEffect(()=>{
+    const handler=(e)=>{
+      if(e.key==='ArrowRight'||e.key==='ArrowDown')onNext();
+      if(e.key==='ArrowLeft'||e.key==='ArrowUp')onPrev();
+    };
+    window.addEventListener('keydown',handler);
+    return()=>window.removeEventListener('keydown',handler);
+  },[onNext,onPrev]);
+
+  const stepComponents=[
+    <StepLanding key={0} onNext={onNext}/>,
+    <Step1 key={1}/>,
+    <Step2 key={2}/>,
+    <Step3 key={3}/>,
+    <Step4 key={4}/>,
+    <Step5 key={5}/>,
+    <Step6 key={6}/>,
+    <Step7 key={7}/>,
+    <Step8 key={8}/>,
+  ];
+
+  return(
+    <div>
+      <ProgressBar current={step} total={totalSteps}/>
+      {step>0&&<StepDots current={step-1} total={totalSteps-1} onNavigate={(i)=>goTo(i+1)}/>}
+
+      <div ref={contentRef} style={{
+        maxWidth:720,margin:'0 auto',padding:step===0?'0':'80px 24px 80px',
+        animation:'fadeIn .4s ease',
+      }}>
+        {stepComponents[step]}
+        {step>0&&<NavButtons current={step} total={totalSteps} onPrev={onPrev} onNext={onNext}/>}
+      </div>
+
+      {/* Keyboard hint */}
+      {step>0&&(
+        <div style={{position:'fixed',bottom:16,left:'50%',transform:'translateX(-50%)',
+          fontFamily:'var(--font-mono)',fontSize:11,color:'var(--text-dim)',opacity:.4,
+          display:'flex',gap:8,alignItems:'center'}}>
+          <kbd style={{padding:'2px 6px',background:'var(--bg3)',borderRadius:3,border:'1px solid var(--bg4)'}}>←</kbd>
+          <kbd style={{padding:'2px 6px',background:'var(--bg3)',borderRadius:3,border:'1px solid var(--bg4)'}}>→</kbd>
+          <span>to navigate</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</head>
+<body>
+<div id="root"></div>
+</body>
+</html>

@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Math Foundations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #101010;
+    --border: rgba(255, 255, 255, 0.08);
+    --text: #e0e0e0;
+    --text-dim: rgba(255, 255, 255, 0.45);
+    --text-faint: rgba(255, 255, 255, 0.25);
+    --accent: #4a9eff;
+    --green: #4ade80;
+    --font-display: 'Instrument Serif', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  html {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body { min-height: 100vh; overflow-x: hidden; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+
+  ::selection { background: rgba(74,158,255,0.25); color: #fff; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+const LESSONS = [
+  { id: 1, title: 'Linear Equations', file: '01-linear-equations.html',
+    desc: 'Solve for the unknown. Balance, isolate, and check.' },
+  { id: 2, title: 'Inequalities', file: '02-inequalities.html',
+    desc: 'When things aren\'t equal. Number lines, ranges, and direction.' },
+  { id: 3, title: 'Graphing & Linear Functions', file: '03-graphing-linear.html',
+    desc: 'Coordinate plane, slope, y-intercept, and y = mx + b.' },
+  { id: 4, title: 'Systems of Equations', file: '04-systems.html',
+    desc: 'Two equations, two unknowns. Graphing, substitution, elimination.' },
+  { id: 5, title: 'Exponents & Radicals', file: '05-exponents-radicals.html',
+    desc: 'Power rules, negative exponents, roots, and simplifying radicals.' },
+  { id: 6, title: 'Polynomials & Factoring', file: '06-polynomials.html',
+    desc: 'Adding, multiplying, and breaking down polynomial expressions.' },
+  { id: 7, title: 'Quadratic Equations', file: '07-quadratics.html',
+    desc: 'Parabolas, the quadratic formula, vertex form, and discriminants.' },
+  { id: 8, title: 'Functions & Transformations', file: '08-functions.html',
+    desc: 'Inputs, outputs, domain, range, shifts, stretches, reflections.' },
+  { id: 9, title: 'Coordinate Geometry', file: '09-coordinate-geometry.html',
+    desc: 'Distance, midpoints, line equations, and circles on the plane.' },
+  { id: 10, title: 'Trigonometry', file: '10-trigonometry.html',
+    desc: 'Right triangles, SOH-CAH-TOA, the unit circle, and trig waves.' },
+  { id: 11, title: 'Rational Expressions', file: '11-rational-expressions.html',
+    desc: 'Polynomial fractions, simplifying, asymptotes, and solving.' , draft: true },
+  { id: 12, title: 'Logarithms & Exponentials', file: '12-logarithms.html',
+    desc: 'Inverse of exponents. Growth, decay, compound interest, and e.' , draft: true },
+  { id: 13, title: 'Sequences & Series', file: '13-sequences-series.html',
+    desc: 'Patterns in numbers. Arithmetic, geometric, sigma notation, limits.' , draft: true },
+  { id: 14, title: 'Probability & Combinatorics', file: '14-probability.html',
+    desc: 'Counting, permutations, combinations, and measuring chance.' , draft: true },
+];
+
+function useProgress() {
+  const [visited, setVisited] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('math-progress') || '[]'); }
+    catch { return []; }
+  });
+  const markVisited = useCallback((id) => {
+    setVisited(prev => {
+      if (prev.includes(id)) return prev;
+      const next = [...prev, id];
+      localStorage.setItem('math-progress', JSON.stringify(next));
+      return next;
+    });
+  }, []);
+  const resetProgress = useCallback(() => {
+    setVisited([]);
+    localStorage.removeItem('math-progress');
+  }, []);
+  return { visited, markVisited, resetProgress };
+}
+
+function useInView() {
+  const ref = useRef(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { setInView(true); obs.unobserve(el); }
+    }, { threshold: 0.1 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  return [ref, inView];
+}
+
+/* ── Animated mini icons per lesson ── */
+function LessonIcon({ id, active }) {
+  const ref = useRef(null);
+  const raf = useRef(null);
+  const col = active ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.25)';
+  const colBright = active ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.4)';
+  const S = 44; // canvas size
+  const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
+
+  useEffect(() => {
+    const c = ref.current;
+    if (!c) return;
+    c.width = S * dpr;
+    c.height = S * dpr;
+    const ctx = c.getContext('2d');
+    ctx.scale(dpr, dpr);
+    let t = Math.random() * 100;
+    let running = true;
+
+    function draw() {
+      if (!running) return;
+      ctx.clearRect(0, 0, S, S);
+      ctx.lineWidth = 1.2;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = col;
+      ctx.fillStyle = col;
+      const cx = S / 2, cy = S / 2;
+
+      switch (id) {
+        case 1: { // Balance beam — gentle tilt oscillation
+          const tilt = Math.sin(t * 0.02) * 0.15;
+          // fulcrum triangle
+          ctx.beginPath();
+          ctx.moveTo(cx, cy + 8);
+          ctx.lineTo(cx - 5, cy + 14);
+          ctx.lineTo(cx + 5, cy + 14);
+          ctx.closePath();
+          ctx.fill();
+          // beam
+          ctx.save();
+          ctx.translate(cx, cy + 8);
+          ctx.rotate(tilt);
+          ctx.beginPath();
+          ctx.moveTo(-16, 0);
+          ctx.lineTo(16, 0);
+          ctx.stroke();
+          // left weight
+          ctx.fillStyle = colBright;
+          ctx.fillRect(-17, -6, 5, 6);
+          // right weight
+          ctx.fillRect(12, -6, 5, 6);
+          ctx.restore();
+          break;
+        }
+        case 2: { // Number line with sliding point
+          const y = cy + 2;
+          ctx.beginPath();
+          ctx.moveTo(6, y);
+          ctx.lineTo(S - 6, y);
+          ctx.stroke();
+          // ticks
+          for (let i = 0; i < 5; i++) {
+            const tx = 10 + i * 7;
+            ctx.beginPath();
+            ctx.moveTo(tx, y - 3);
+            ctx.lineTo(tx, y + 3);
+            ctx.stroke();
+          }
+          // sliding dot
+          const px = 12 + (Math.sin(t * 0.025) * 0.5 + 0.5) * 20;
+          ctx.fillStyle = colBright;
+          ctx.beginPath();
+          ctx.arc(px, y, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+          // shading
+          ctx.fillStyle = active ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)';
+          ctx.fillRect(px, y - 4, S - 6 - px, 8);
+          break;
+        }
+        case 3: { // Line on a small coordinate plane
+          // axes
+          ctx.beginPath();
+          ctx.moveTo(8, cy);
+          ctx.lineTo(S - 6, cy);
+          ctx.moveTo(cx, 6);
+          ctx.lineTo(cx, S - 6);
+          ctx.stroke();
+          // animated line y = mx + b
+          const m = 0.8;
+          const bOff = Math.sin(t * 0.015) * 4;
+          ctx.strokeStyle = colBright;
+          ctx.beginPath();
+          ctx.moveTo(8, cy - (m * (8 - cx) + bOff));
+          ctx.lineTo(S - 6, cy - (m * (S - 6 - cx) + bOff));
+          ctx.stroke();
+          break;
+        }
+        case 4: { // Two lines crossing
+          // axes
+          ctx.globalAlpha = 0.3;
+          ctx.beginPath();
+          ctx.moveTo(8, cy);
+          ctx.lineTo(S - 6, cy);
+          ctx.moveTo(cx, 6);
+          ctx.lineTo(cx, S - 6);
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+          // line 1
+          const a1 = 0.6 + Math.sin(t * 0.012) * 0.2;
+          ctx.strokeStyle = col;
+          ctx.beginPath();
+          ctx.moveTo(6, cy - a1 * (6 - cx));
+          ctx.lineTo(S - 6, cy - a1 * (S - 6 - cx));
+          ctx.stroke();
+          // line 2
+          ctx.strokeStyle = colBright;
+          ctx.beginPath();
+          ctx.moveTo(6, cy + 0.5 * (6 - cx) + 4);
+          ctx.lineTo(S - 6, cy + 0.5 * (S - 6 - cx) + 4);
+          ctx.stroke();
+          // intersection dot
+          ctx.fillStyle = colBright;
+          ctx.beginPath();
+          ctx.arc(cx + 2, cy - 2, 2, 0, Math.PI * 2);
+          ctx.fill();
+          break;
+        }
+        case 5: { // Exponential growth dots
+          const count = 6;
+          for (let i = 0; i < count; i++) {
+            const x = 8 + i * 6;
+            const h = Math.pow(1.5, i) * 2;
+            const bounce = Math.sin(t * 0.03 + i * 0.5) * 1.5;
+            ctx.fillStyle = i < count - 1 ? col : colBright;
+            ctx.beginPath();
+            ctx.arc(x, cy + 6 - h + bounce, 1.5 + i * 0.3, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          break;
+        }
+        case 6: { // Area model grid
+          const gx = 10, gy = 12, gw = 24, gh = 18;
+          ctx.strokeStyle = col;
+          ctx.strokeRect(gx, gy, gw, gh);
+          // divider
+          const split = Math.sin(t * 0.02) * 2 + gw * 0.55;
+          ctx.beginPath();
+          ctx.moveTo(gx + split, gy);
+          ctx.lineTo(gx + split, gy + gh);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(gx, gy + gh * 0.5);
+          ctx.lineTo(gx + gw, gy + gh * 0.5);
+          ctx.stroke();
+          // fill cells with dim colors
+          ctx.fillStyle = active ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)';
+          ctx.fillRect(gx + 1, gy + 1, split - 1, gh * 0.5 - 1);
+          ctx.fillStyle = active ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.04)';
+          ctx.fillRect(gx + split + 1, gy + 1, gw - split - 1, gh * 0.5 - 1);
+          break;
+        }
+        case 7: { // Parabola
+          ctx.strokeStyle = colBright;
+          ctx.beginPath();
+          const a = 0.04 + Math.sin(t * 0.015) * 0.01;
+          for (let px = 4; px < S - 4; px++) {
+            const x = px - cx;
+            const y = cy - 6 - a * x * x;
+            if (px === 4) ctx.moveTo(px, y);
+            else ctx.lineTo(px, y);
+          }
+          ctx.stroke();
+          // vertex dot
+          ctx.fillStyle = colBright;
+          ctx.beginPath();
+          ctx.arc(cx, cy - 6, 2, 0, Math.PI * 2);
+          ctx.fill();
+          break;
+        }
+        case 8: { // Function machine — box with in/out arrows
+          // box
+          ctx.strokeStyle = col;
+          ctx.strokeRect(cx - 8, cy - 7, 16, 14);
+          // f label
+          ctx.fillStyle = colBright;
+          ctx.font = '9px ' + "'JetBrains Mono'";
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('f', cx, cy);
+          // input arrow
+          const inX = cx - 16 + Math.sin(t * 0.03) * 2;
+          ctx.strokeStyle = col;
+          ctx.beginPath();
+          ctx.moveTo(6, cy);
+          ctx.lineTo(inX, cy);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(inX - 3, cy - 2);
+          ctx.lineTo(inX, cy);
+          ctx.lineTo(inX - 3, cy + 2);
+          ctx.stroke();
+          // output arrow
+          const outX = cx + 16 - Math.sin(t * 0.03) * 2;
+          ctx.beginPath();
+          ctx.moveTo(outX, cy);
+          ctx.lineTo(S - 6, cy);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(S - 9, cy - 2);
+          ctx.lineTo(S - 6, cy);
+          ctx.lineTo(S - 9, cy + 2);
+          ctx.stroke();
+          break;
+        }
+        case 9: { // Two points with distance line
+          const p1x = 10 + Math.sin(t * 0.015) * 2;
+          const p1y = cy + 8;
+          const p2x = S - 12;
+          const p2y = cy - 8 + Math.cos(t * 0.015) * 2;
+          // dashed line
+          ctx.setLineDash([2, 2]);
+          ctx.strokeStyle = col;
+          ctx.beginPath();
+          ctx.moveTo(p1x, p1y);
+          ctx.lineTo(p2x, p2y);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          // points
+          ctx.fillStyle = colBright;
+          ctx.beginPath();
+          ctx.arc(p1x, p1y, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(p2x, p2y, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+          // midpoint
+          ctx.fillStyle = col;
+          ctx.beginPath();
+          ctx.arc((p1x + p2x) / 2, (p1y + p2y) / 2, 1.5, 0, Math.PI * 2);
+          ctx.fill();
+          break;
+        }
+        case 10: { // Unit circle with rotating point
+          const r = 13;
+          // circle
+          ctx.strokeStyle = col;
+          ctx.beginPath();
+          ctx.arc(cx, cy, r, 0, Math.PI * 2);
+          ctx.stroke();
+          // rotating point
+          const angle = t * 0.025;
+          const px = cx + Math.cos(angle) * r;
+          const py = cy - Math.sin(angle) * r;
+          ctx.fillStyle = colBright;
+          ctx.beginPath();
+          ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+          // radius line
+          ctx.strokeStyle = colBright;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(px, py);
+          ctx.stroke();
+          // sin projection
+          ctx.strokeStyle = active ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.1)';
+          ctx.setLineDash([1, 2]);
+          ctx.beginPath();
+          ctx.moveTo(px, py);
+          ctx.lineTo(px, cy);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          break;
+        }
+        case 11: { // Fraction bar with polynomials
+          ctx.beginPath();
+          ctx.moveTo(8, cy);
+          ctx.lineTo(S - 8, cy);
+          ctx.stroke();
+          // numerator wiggle
+          const nx = cx + Math.sin(t * 0.03) * 4;
+          ctx.fillStyle = colBright;
+          ctx.font = `${10}px serif`;
+          ctx.textAlign = 'center';
+          ctx.fillText('x+1', nx, cy - 5);
+          ctx.fillText('x\u00b2', nx, cy + 13);
+          break;
+        }
+        case 12: { // Exponential curve
+          ctx.beginPath();
+          for (let i = 0; i < S - 12; i++) {
+            const x = 6 + i;
+            const y = cy + 10 - Math.pow(1.08, i) * 0.5;
+            i === 0 ? ctx.moveTo(x, Math.max(6, y)) : ctx.lineTo(x, Math.max(6, y));
+          }
+          ctx.strokeStyle = colBright;
+          ctx.stroke();
+          // "log" label
+          ctx.fillStyle = col;
+          ctx.font = `${9}px monospace`;
+          ctx.textAlign = 'center';
+          ctx.fillText('log', cx, cy + 14);
+          break;
+        }
+        case 13: { // Dots in a pattern (sequence)
+          for (let i = 0; i < 5; i++) {
+            const x = 8 + i * 7.5;
+            const y = cy + 2 - i * 2.5 + Math.sin(t * 0.02 + i) * 2;
+            ctx.fillStyle = i < 3 ? colBright : col;
+            ctx.beginPath();
+            ctx.arc(x, y, 2.2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          // sigma
+          ctx.fillStyle = col;
+          ctx.font = `${13}px serif`;
+          ctx.textAlign = 'center';
+          ctx.fillText('\u03a3', cx + 8, cy + 14);
+          break;
+        }
+        case 14: { // Dice / probability
+          const sz = 14;
+          const dx = cx - sz/2, dy = cy - sz/2;
+          ctx.strokeStyle = col;
+          ctx.strokeRect(dx, dy, sz, sz);
+          // dots on die face
+          const dots = [[0.5,0.5],[0.2,0.2],[0.8,0.8]];
+          ctx.fillStyle = colBright;
+          dots.forEach(([px,py]) => {
+            ctx.beginPath();
+            ctx.arc(dx + px * sz, dy + py * sz, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+          });
+          // P(x) label
+          ctx.fillStyle = col;
+          ctx.font = `${8}px monospace`;
+          ctx.textAlign = 'center';
+          ctx.fillText('P(x)', cx, cy + 16);
+          break;
+        }
+      }
+      t++;
+      raf.current = requestAnimationFrame(draw);
+    }
+    raf.current = requestAnimationFrame(draw);
+    return () => { running = false; cancelAnimationFrame(raf.current); };
+  }, [id, active]);
+
+  return (
+    <canvas
+      ref={ref}
+      style={{ width: S, height: S, flexShrink: 0 }}
+    />
+  );
+}
+
+function LessonRow({ lesson, index, isVisited, onNavigate }) {
+  const [ref, inView] = useInView();
+  const [hovered, setHovered] = useState(false);
+  const num = String(lesson.id).padStart(2, '0');
+
+  return (
+    <div ref={ref} style={{
+      opacity: inView ? 1 : 0,
+      transform: inView ? 'translateY(0)' : 'translateY(16px)',
+      transition: 'opacity 0.5s ease ' + (index * 0.04) + 's, transform 0.5s ease ' + (index * 0.04) + 's',
+    }}>
+      <a
+        href={lesson.file}
+        onClick={() => onNavigate(lesson.id)}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '32px 44px 1fr auto',
+          alignItems: 'center',
+          gap: 16,
+          padding: '18px 12px',
+          textDecoration: 'none',
+          color: 'inherit',
+          borderBottom: '1px solid var(--border)',
+          background: hovered ? 'rgba(255,255,255,0.02)' : 'transparent',
+          transition: 'background 0.2s ease',
+        }}
+      >
+        {/* Number / check */}
+        <span style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 13,
+          color: isVisited ? 'var(--green)' : 'var(--text-faint)',
+          textAlign: 'center',
+        }}>
+          {isVisited ? '\u2713' : num}
+        </span>
+
+        {/* Animated icon */}
+        <LessonIcon id={lesson.id} active={hovered} />
+
+        {/* Content */}
+        <div>
+          <div style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: 20,
+            color: hovered ? '#fff' : 'var(--text)',
+            transition: 'color 0.2s',
+            marginBottom: 2,
+          }}>
+            {lesson.title}
+          </div>
+          <div style={{
+            fontSize: 14,
+            fontWeight: 300,
+            color: 'var(--text-dim)',
+            lineHeight: 1.4,
+          }}>
+            {lesson.desc}
+          </div>
+          {lesson.draft && (
+            <span style={{
+              display: 'inline-block', marginTop: 4,
+              fontFamily: 'var(--font-mono)', fontSize: 10,
+              color: 'var(--accent)', opacity: 0.7,
+              letterSpacing: '0.08em', textTransform: 'uppercase',
+            }}>Draft</span>
+          )}
+        </div>
+
+        {/* Arrow */}
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke={hovered ? 'var(--text)' : 'var(--text-faint)'}
+          strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+          style={{
+            transition: 'stroke 0.2s, transform 0.2s',
+            transform: hovered ? 'translateX(3px)' : 'translateX(0)',
+          }}>
+          <line x1="5" y1="12" x2="19" y2="12"/>
+          <polyline points="12 5 19 12 12 19"/>
+        </svg>
+      </a>
+    </div>
+  );
+}
+
+function App() {
+  const { visited, markVisited, resetProgress } = useProgress();
+  const pct = Math.round((visited.length / LESSONS.length) * 100);
+
+  return (
+    <div style={{ maxWidth: 660, margin: '0 auto', padding: '0 24px' }}>
+      <header style={{
+        padding: '80px 0 60px',
+        borderBottom: '1px solid var(--border)',
+        animation: 'fadeIn 0.6s ease both',
+      }}>
+        <h1 style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: 'clamp(36px, 6vw, 52px)',
+          fontWeight: 400,
+          color: '#fff',
+          lineHeight: 1.1,
+          marginBottom: 12,
+        }}>
+          Math Foundations
+        </h1>
+        <p style={{
+          fontSize: 16,
+          fontWeight: 300,
+          color: 'var(--text-dim)',
+          lineHeight: 1.5,
+          maxWidth: 440,
+          marginBottom: 28,
+        }}>
+          Fourteen lessons from linear equations to probability.
+          Interactive visualizations, step-by-step problem solving.
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{
+            width: 120, height: 3, borderRadius: 2,
+            background: 'rgba(255,255,255,0.08)',
+            overflow: 'hidden',
+          }}>
+            <div style={{
+              height: '100%', width: pct + '%',
+              background: visited.length === LESSONS.length ? 'var(--green)' : 'var(--accent)',
+              borderRadius: 2,
+              transition: 'width 0.5s ease',
+            }} />
+          </div>
+          <span style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 12,
+            color: 'var(--text-faint)',
+          }}>
+            {visited.length}/{LESSONS.length}
+          </span>
+        </div>
+      </header>
+
+      <div style={{ borderTop: '1px solid var(--border)' }}>
+        {LESSONS.map((lesson, i) => (
+          <LessonRow
+            key={lesson.id}
+            lesson={lesson}
+            index={i}
+            isVisited={visited.includes(lesson.id)}
+            onNavigate={markVisited}
+          />
+        ))}
+      </div>
+
+      <footer style={{
+        padding: '32px 0 48px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+      }}>
+        <span style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 11,
+          color: 'var(--text-faint)',
+        }}>
+          {visited.length === LESSONS.length ? 'All lessons complete.' : ''}
+        </span>
+        {visited.length > 0 && (
+          <button
+            onClick={resetProgress}
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 11,
+              color: 'var(--text-faint)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '4px 0',
+              transition: 'color 0.2s',
+            }}
+            onMouseEnter={e => e.target.style.color = 'var(--text)'}
+            onMouseLeave={e => e.target.style.color = 'var(--text-faint)'}
+          >
+            Reset progress
+          </button>
+        )}
+      </footer>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
