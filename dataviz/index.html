@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Data Visualization</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #101010;
+    --border: rgba(255, 255, 255, 0.08);
+    --text: #e0e0e0;
+    --text-dim: rgba(255, 255, 255, 0.45);
+    --text-faint: rgba(255, 255, 255, 0.25);
+    --accent: #4a9eff;
+    --font-display: 'Instrument Serif', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  html {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body { min-height: 100vh; overflow-x: hidden; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+
+  ::selection { background: rgba(74,158,255,0.25); color: #fff; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .container {
+    max-width: 660px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  header {
+    padding: 80px 0 60px;
+    border-bottom: 1px solid var(--border);
+    animation: fadeIn 0.6s ease both;
+  }
+
+  header h1 {
+    font-family: var(--font-display);
+    font-size: clamp(36px, 6vw, 52px);
+    font-weight: 400;
+    color: #fff;
+    line-height: 1.1;
+    margin-bottom: 12px;
+  }
+
+  header p {
+    font-size: 16px;
+    font-weight: 300;
+    color: var(--text-dim);
+    line-height: 1.5;
+    max-width: 440px;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-faint);
+    text-decoration: none;
+    letter-spacing: 0.03em;
+    margin-bottom: 32px;
+    transition: color 0.2s;
+  }
+
+  .back-link:hover { color: var(--text); }
+
+  .sections {
+    padding: 32px 0 80px;
+  }
+
+  .sections-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 24px;
+  }
+
+  .section-card {
+    display: grid;
+    grid-template-columns: 48px 1fr auto;
+    align-items: center;
+    gap: 16px;
+    padding: 20px 12px;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.2s ease;
+    animation: fadeIn 0.5s ease both;
+  }
+
+  .section-card:first-of-type {
+    border-top: 1px solid var(--border);
+  }
+
+  .section-card:hover {
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .section-num {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text-faint);
+    text-align: center;
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 20px;
+    transition: color 0.2s;
+    margin-bottom: 2px;
+  }
+
+  .section-card:hover .section-title {
+    color: #fff;
+  }
+
+  .section-desc {
+    font-size: 14px;
+    font-weight: 300;
+    color: var(--text-dim);
+    line-height: 1.4;
+  }
+
+  .section-meta {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-faint);
+    margin-top: 4px;
+    letter-spacing: 0.03em;
+  }
+
+  .section-arrow {
+    transition: stroke 0.2s, transform 0.2s;
+  }
+
+  .section-card:hover .section-arrow {
+    stroke: var(--text);
+    transform: translateX(3px);
+  }
+
+  footer {
+    padding: 32px 0;
+    border-top: 1px solid var(--border);
+    animation: fadeIn 0.6s ease 0.3s both;
+  }
+
+  footer p {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-faint);
+    letter-spacing: 0.03em;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <a href="../index.html" class="back-link">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"/>
+        <polyline points="12 19 5 12 12 5"/>
+      </svg>
+      Academy
+    </a>
+    <h1>Data Visualization</h1>
+    <p>57 chart types across 9 categories. Conventional forms alongside artistic alternatives, rendered with real data.</p>
+  </header>
+
+  <div class="sections">
+    <div class="sections-label">Sections</div>
+
+    <a href="atlas.html#comparison" class="section-card" style="animation-delay: 0.05s">
+      <span class="section-num">01</span>
+      <div>
+        <div class="section-title" style="color: #E8453C">Comparison</div>
+        <div class="section-desc">Comparing values across categories or groups. Bar charts, lollipops, bump charts.</div>
+        <div class="section-meta">8 charts</div>
+      </div>
+      <svg class="section-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="var(--text-faint)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12"/>
+        <polyline points="12 5 19 12 12 19"/>
+      </svg>
+    </a>
+
+    <a href="atlas.html#distribution" class="section-card" style="animation-delay: 0.1s">
+      <span class="section-num">02</span>
+      <div>
+        <div class="section-title" style="color: #00B4D8">Distribution</div>
+        <div class="section-desc">Shape, spread, and density. Histograms, box plots, violin plots, ridgelines.</div>
+        <div class="section-meta">8 charts</div>
+      </div>
+      <svg class="section-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="var(--text-faint)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12"/>
+        <polyline points="12 5 19 12 12 19"/>
+      </svg>
+    </a>
+
+    <a href="atlas.html#relationship" class="section-card" style="animation-delay: 0.15s">
+      <span class="section-num">03</span>
+      <div>
+        <div class="section-title" style="color: #FFB703">Relationship</div>
+        <div class="section-desc">How variables relate. Scatter plots, heatmaps, bubble charts, parallel coordinates.</div>
+        <div class="section-meta">8 charts</div>
+      </div>
+      <svg class="section-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="var(--text-faint)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12"/>
+        <polyline points="12 5 19 12 12 19"/>
+      </svg>
+    </a>
+
+    <a href="atlas.html#composition" class="section-card" style="animation-delay: 0.2s">
+      <span class="section-num">04</span>
+      <div>
+        <div class="section-title" style="color: #2DC653">Composition</div>
+        <div class="section-desc">Parts of a whole. Pie charts, treemaps, streamgraphs, circle packing.</div>
+        <div class="section-meta">8 charts</div>
+      </div>
+      <svg class="section-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="var(--text-faint)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12"/>
+        <polyline points="12 5 19 12 12 19"/>
+      </svg>
+    </a>
+
+    <a href="atlas.html#temporal" class="section-card" style="animation-delay: 0.25s">
+      <span class="section-num">05</span>
+      <div>
+        <div class="section-title" style="color: #9D4EDD">Temporal</div>
+        <div class="section-desc">Data over time. Line charts, horizon charts, spiral plots, slope graphs.</div>
+        <div class="section-meta">8 charts</div>
+      </div>
+      <svg class="section-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="var(--text-faint)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12"/>
+        <polyline points="12 5 19 12 12 19"/>
+      </svg>
+    </a>
+
+    <a href="atlas.html#spatial" class="section-card" style="animation-delay: 0.3s">
+      <span class="section-num">06</span>
+      <div>
+        <div class="section-title" style="color: #06D6A0">Spatial / Geographic</div>
+        <div class="section-desc">Coordinates and place. Dot maps, choropleths, cartograms, flow maps.</div>
+        <div class="section-meta">6 charts</div>
+      </div>
+      <svg class="section-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="var(--text-faint)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12"/>
+        <polyline points="12 5 19 12 12 19"/>
+      </svg>
+    </a>
+
+    <a href="atlas.html#network" class="section-card" style="animation-delay: 0.35s">
+      <span class="section-num">07</span>
+      <div>
+        <div class="section-title" style="color: #F77F00">Network / Graph</div>
+        <div class="section-desc">Connections and flows. Force graphs, Sankey diagrams, adjacency matrices.</div>
+        <div class="section-meta">8 charts</div>
+      </div>
+      <svg class="section-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="var(--text-faint)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12"/>
+        <polyline points="12 5 19 12 12 19"/>
+      </svg>
+    </a>
+
+    <a href="atlas.html#text" class="section-card" style="animation-delay: 0.4s">
+      <span class="section-num">08</span>
+      <div>
+        <div class="section-title" style="color: #EF476F">Text Data</div>
+        <div class="section-desc">NLP and linguistic analysis. Word frequencies, sentiment streams, embedding landscapes.</div>
+        <div class="section-meta">6 charts</div>
+      </div>
+      <svg class="section-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="var(--text-faint)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12"/>
+        <polyline points="12 5 19 12 12 19"/>
+      </svg>
+    </a>
+
+    <a href="atlas.html#unconventional" class="section-card" style="animation-delay: 0.45s">
+      <span class="section-num">09</span>
+      <div>
+        <div class="section-title" style="color: #7209B7">Unconventional / Artistic</div>
+        <div class="section-desc">Expression over communication. Flow fields, particle systems, data-driven typography.</div>
+        <div class="section-meta">4 charts</div>
+      </div>
+      <svg class="section-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="var(--text-faint)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12"/>
+        <polyline points="12 5 19 12 12 19"/>
+      </svg>
+    </a>
+  </div>
+
+  <footer>
+    <p>An interactive reference. No tracking, no accounts.</p>
+  </footer>
+</div>
+</body>
+</html>

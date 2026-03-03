@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Data Visualization Atlas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="hero">
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-content">
+    <p class="hero-eyebrow">An Interactive Reference</p>
+    <h1>The Data Visualization Atlas</h1>
+    <p class="hero-sub">Explore every major chart type — conventional forms alongside artistic alternatives — rendered with real data.</p>
+    <div class="hero-scroll">Scroll to explore</div>
+  </div>
+</div>
+
+<nav id="nav">
+  <div class="nav-inner">
+    <a href="#comparison" data-section="comparison">Comparison</a>
+    <a href="#distribution" data-section="distribution">Distribution</a>
+    <a href="#relationship" data-section="relationship">Relationship</a>
+    <a href="#composition" data-section="composition">Composition</a>
+    <a href="#temporal" data-section="temporal">Temporal</a>
+    <a href="#spatial" data-section="spatial">Spatial</a>
+    <a href="#network" data-section="network">Network</a>
+    <a href="#text" data-section="text">Text Data</a>
+    <a href="#unconventional" data-section="unconventional">Unconventional</a>
+  </div>
+</nav>
+
+<main>
+
+<!-- COMPARISON -->
+<section id="comparison" class="viz-section" data-accent="comparison">
+  <div class="section-header">
+    <span class="section-number">01</span>
+    <h2>Comparison</h2>
+    <p class="section-desc">Comparing values across categories or groups.</p>
+  </div>
+  <div class="viz-grid">
+    <div class="viz-pair" data-label="Few categories (&lt;8)">
+      <div class="viz-card conventional"><h4>Bar Chart</h4><div class="viz-box" id="bar-chart"></div></div>
+      <div class="viz-card artistic"><h4>Lollipop Chart</h4><div class="viz-box" id="lollipop-chart"></div></div>
+    </div>
+    <div class="viz-pair" data-label="Many categories (8–30)">
+      <div class="viz-card conventional"><h4>Horizontal Bar</h4><div class="viz-box" id="hbar-chart"></div></div>
+      <div class="viz-card artistic"><h4>Bump Chart</h4><div class="viz-box" id="bump-chart"></div></div>
+    </div>
+    <div class="viz-pair" data-label="Two variables per category">
+      <div class="viz-card conventional"><h4>Grouped Bar</h4><div class="viz-box" id="grouped-bar"></div></div>
+      <div class="viz-card artistic"><h4>Dumbbell Plot</h4><div class="viz-box" id="dumbbell-plot"></div></div>
+    </div>
+    <div class="viz-pair" data-label="Ranked data">
+      <div class="viz-card conventional"><h4>Ordered Bar Chart</h4><div class="viz-box" id="ordered-bar"></div></div>
+      <div class="viz-card artistic"><h4>Radial Bar Chart</h4><div class="viz-box" id="radial-bar"></div></div>
+    </div>
+  </div>
+  <div class="callout">
+    <span class="callout-icon">&#9733;</span>
+    <p><strong>Artistic explorations:</strong> Unit charts (one shape per data point), isotype-style pictograms, physical metaphors (stacking, filling containers).</p>
+  </div>
+</section>
+
+<!-- DISTRIBUTION -->
+<section id="distribution" class="viz-section" data-accent="distribution">
+  <div class="section-header">
+    <span class="section-number">02</span>
+    <h2>Distribution</h2>
+    <p class="section-desc">Understanding shape, spread, and density of a variable.</p>
+  </div>
+  <div class="viz-grid">
+    <div class="viz-pair" data-label="Normal / bell curve">
+      <div class="viz-card conventional"><h4>Histogram</h4><div class="viz-box" id="histogram"></div></div>
+      <div class="viz-card artistic"><h4>Beeswarm Plot</h4><div class="viz-box" id="beeswarm"></div></div>
+    </div>
+    <div class="viz-pair" data-label="Skewed distribution">
+      <div class="viz-card conventional"><h4>Box Plot</h4><div class="viz-box" id="box-plot"></div></div>
+      <div class="viz-card artistic"><h4>Violin Plot</h4><div class="viz-box" id="violin-plot"></div></div>
+    </div>
+    <div class="viz-pair" data-label="Bimodal / multimodal">
+      <div class="viz-card conventional"><h4>KDE Overlay</h4><div class="viz-box" id="kde-overlay"></div></div>
+      <div class="viz-card artistic"><h4>Ridgeline / Joy Division</h4><div class="viz-box" id="ridgeline"></div></div>
+    </div>
+    <div class="viz-pair" data-label="Discrete / count data">
+      <div class="viz-card conventional"><h4>Bar Chart of Counts</h4><div class="viz-box" id="count-bar"></div></div>
+      <div class="viz-card artistic"><h4>Waffle Chart</h4><div class="viz-box" id="waffle-dist"></div></div>
+    </div>
+  </div>
+  <div class="callout warning">
+    <span class="callout-icon">&#9888;</span>
+    <p><strong>Key rule:</strong> Always check if log-transform is needed. Power-law distributions (city populations, word frequencies, wealth) look meaningless on a linear scale.</p>
+  </div>
+</section>
+
+<!-- RELATIONSHIP -->
+<section id="relationship" class="viz-section" data-accent="relationship">
+  <div class="section-header">
+    <span class="section-number">03</span>
+    <h2>Relationship</h2>
+    <p class="section-desc">How two or more variables relate to each other.</p>
+  </div>
+  <div class="viz-grid">
+    <div class="viz-pair" data-label="Two continuous variables">
+      <div class="viz-card conventional"><h4>Scatter Plot</h4><div class="viz-box" id="scatter-plot"></div></div>
+      <div class="viz-card artistic"><h4>Hexbin Plot</h4><div class="viz-box" id="hexbin-plot"></div></div>
+    </div>
+    <div class="viz-pair" data-label="Correlation matrix">
+      <div class="viz-card conventional"><h4>Heatmap</h4><div class="viz-box" id="corr-heatmap"></div></div>
+      <div class="viz-card artistic"><h4>Chord Diagram</h4><div class="viz-box" id="chord-diagram"></div></div>
+    </div>
+    <div class="viz-pair" data-label="Three continuous variables">
+      <div class="viz-card conventional"><h4>Bubble Chart</h4><div class="viz-box" id="bubble-chart"></div></div>
+      <div class="viz-card artistic"><h4>Color-Mapped Scatter</h4><div class="viz-box" id="color-scatter"></div></div>
+    </div>
+    <div class="viz-pair" data-label="Many-to-many relationships">
+      <div class="viz-card conventional"><h4>Parallel Coordinates</h4><div class="viz-box" id="parallel-coords"></div></div>
+      <div class="viz-card artistic"><h4>Radial Parallel Coordinates</h4><div class="viz-box" id="radial-parallel"></div></div>
+    </div>
+  </div>
+  <div class="callout warning">
+    <span class="callout-icon">&#9888;</span>
+    <p><strong>Note:</strong> Scatter plots with &gt;10k points need density encoding (hexbin, contour, alpha blending) to avoid overplotting.</p>
+  </div>
+</section>
+
+<!-- COMPOSITION -->
+<section id="composition" class="viz-section" data-accent="composition">
+  <div class="section-header">
+    <span class="section-number">04</span>
+    <h2>Composition</h2>
+    <p class="section-desc">Parts of a whole, proportions.</p>
+  </div>
+  <div class="viz-grid">
+    <div class="viz-pair" data-label="Simple parts-of-whole">
+      <div class="viz-card conventional"><h4>Pie Chart</h4><div class="viz-box" id="pie-chart"></div></div>
+      <div class="viz-card artistic"><h4>Waffle Chart</h4><div class="viz-box" id="waffle-chart"></div></div>
+    </div>
+    <div class="viz-pair" data-label="Hierarchical data">
+      <div class="viz-card conventional"><h4>Treemap</h4><div class="viz-box" id="treemap"></div></div>
+      <div class="viz-card artistic"><h4>Circle Packing</h4><div class="viz-box" id="circle-packing"></div></div>
+    </div>
+    <div class="viz-pair" data-label="Composition over time">
+      <div class="viz-card conventional"><h4>Stacked Area</h4><div class="viz-box" id="stacked-area"></div></div>
+      <div class="viz-card artistic"><h4>Streamgraph</h4><div class="viz-box" id="streamgraph"></div></div>
+    </div>
+    <div class="viz-pair" data-label="Nested categories">
+      <div class="viz-card conventional"><h4>Nested Treemap</h4><div class="viz-box" id="nested-treemap"></div></div>
+      <div class="viz-card artistic"><h4>Marimekko Chart</h4><div class="viz-box" id="marimekko"></div></div>
+    </div>
+  </div>
+  <div class="callout warning">
+    <span class="callout-icon">&#9888;</span>
+    <p><strong>Avoid</strong> pie charts with &gt;5 slices or 3D pie charts (always). Treemaps are almost universally better.</p>
+  </div>
+</section>
+
+<!-- TEMPORAL -->
+<section id="temporal" class="viz-section" data-accent="temporal">
+  <div class="section-header">
+    <span class="section-number">05</span>
+    <h2>Temporal</h2>
+    <p class="section-desc">Data with a time dimension.</p>
+  </div>
+  <div class="viz-grid">
+    <div class="viz-pair" data-label="Single time series">
+      <div class="viz-card conventional"><h4>Line Chart</h4><div class="viz-box" id="line-chart"></div></div>
+      <div class="viz-card artistic"><h4>Spiral Plot</h4><div class="viz-box" id="spiral-plot"></div></div>
+    </div>
+    <div class="viz-pair" data-label="Multiple series">
+      <div class="viz-card conventional"><h4>Multi-Line Chart</h4><div class="viz-box" id="multi-line"></div></div>
+      <div class="viz-card artistic"><h4>Horizon Chart</h4><div class="viz-box" id="horizon-chart"></div></div>
+    </div>
+    <div class="viz-pair" data-label="Seasonality / cyclical">
+      <div class="viz-card conventional"><h4>Seasonal Decomposition</h4><div class="viz-box" id="seasonal-decomp"></div></div>
+      <div class="viz-card artistic"><h4>Radial Clock Plot</h4><div class="viz-box" id="radial-clock"></div></div>
+    </div>
+    <div class="viz-pair" data-label="Change over time">
+      <div class="viz-card conventional"><h4>Slope Graph</h4><div class="viz-box" id="slope-graph"></div></div>
+      <div class="viz-card artistic"><h4>Connected Scatter</h4><div class="viz-box" id="connected-scatter"></div></div>
+    </div>
+  </div>
+  <div class="callout">
+    <span class="callout-icon">&#9733;</span>
+    <p><strong>Creative coding opportunity:</strong> Time-series as particle trails, physics simulations, or sound. Map temporal data to animation frames in p5.js or D3 transitions.</p>
+  </div>
+</section>
+
+<!-- SPATIAL -->
+<section id="spatial" class="viz-section" data-accent="spatial">
+  <div class="section-header">
+    <span class="section-number">06</span>
+    <h2>Spatial / Geographic</h2>
+    <p class="section-desc">Data with coordinates, place names, or spatial relationships.</p>
+  </div>
+  <div class="viz-grid">
+    <div class="viz-pair" data-label="Point locations">
+      <div class="viz-card conventional"><h4>Dot Map</h4><div class="viz-box" id="dot-map"></div></div>
+      <div class="viz-card artistic"><h4>Density Heatmap</h4><div class="viz-box" id="density-heatmap"></div></div>
+    </div>
+    <div class="viz-pair" data-label="Regional aggregates">
+      <div class="viz-card conventional"><h4>Choropleth</h4><div class="viz-box" id="choropleth"></div></div>
+      <div class="viz-card artistic"><h4>Cartogram</h4><div class="viz-box" id="cartogram"></div></div>
+    </div>
+    <div class="viz-pair" data-label="Flows between places">
+      <div class="viz-card conventional"><h4>Flow Map</h4><div class="viz-box" id="flow-map"></div></div>
+      <div class="viz-card artistic"><h4>Arc Map</h4><div class="viz-box" id="arc-map"></div></div>
+    </div>
+  </div>
+  <div class="callout">
+    <span class="callout-icon">&#9733;</span>
+    <p><strong>Tools:</strong> deck.gl for WebGL performance with large point datasets, kepler.gl for quick exploration, D3 + topojson for bespoke cartography.</p>
+  </div>
+</section>
+
+<!-- NETWORK -->
+<section id="network" class="viz-section" data-accent="network">
+  <div class="section-header">
+    <span class="section-number">07</span>
+    <h2>Network / Graph</h2>
+    <p class="section-desc">Connections, relationships, flows between entities.</p>
+  </div>
+  <div class="viz-grid">
+    <div class="viz-pair" data-label="Small network (&lt;100 nodes)">
+      <div class="viz-card conventional"><h4>Force-Directed Graph</h4><div class="viz-box" id="force-graph"></div></div>
+      <div class="viz-card artistic"><h4>Arc Diagram</h4><div class="viz-box" id="arc-diagram"></div></div>
+    </div>
+    <div class="viz-pair" data-label="Large network (100–10k)">
+      <div class="viz-card conventional"><h4>Adjacency Matrix</h4><div class="viz-box" id="adj-matrix"></div></div>
+      <div class="viz-card artistic"><h4>Bundled Edge Layout</h4><div class="viz-box" id="bundled-edges"></div></div>
+    </div>
+    <div class="viz-pair" data-label="Hierarchical">
+      <div class="viz-card conventional"><h4>Tree Layout</h4><div class="viz-box" id="tree-layout"></div></div>
+      <div class="viz-card artistic"><h4>Radial Tree</h4><div class="viz-box" id="radial-tree"></div></div>
+    </div>
+    <div class="viz-pair" data-label="Directed flow">
+      <div class="viz-card conventional"><h4>Sankey Diagram</h4><div class="viz-box" id="sankey"></div></div>
+      <div class="viz-card artistic"><h4>Alluvial Diagram</h4><div class="viz-box" id="alluvial"></div></div>
+    </div>
+  </div>
+  <div class="callout warning">
+    <span class="callout-icon">&#9888;</span>
+    <p><strong>Warning:</strong> Force-directed layouts are beautiful but can mislead — node proximity doesn't necessarily mean similarity. Always clarify what the layout algorithm optimizes for.</p>
+  </div>
+</section>
+
+<!-- TEXT -->
+<section id="text" class="viz-section" data-accent="text">
+  <div class="section-header">
+    <span class="section-number">08</span>
+    <h2>Text Data</h2>
+    <p class="section-desc">Free text, NLP outputs, linguistic analysis.</p>
+  </div>
+  <div class="viz-grid">
+    <div class="viz-pair" data-label="Word frequency">
+      <div class="viz-card conventional"><h4>Bar Chart of Top Words</h4><div class="viz-box" id="word-bar"></div></div>
+      <div class="viz-card artistic"><h4>Bubble Pack</h4><div class="viz-box" id="word-bubble"></div></div>
+    </div>
+    <div class="viz-pair" data-label="Sentiment over time">
+      <div class="viz-card conventional"><h4>Sentiment Line Chart</h4><div class="viz-box" id="sentiment-line"></div></div>
+      <div class="viz-card artistic"><h4>Color-Encoded Stream</h4><div class="viz-box" id="color-stream"></div></div>
+    </div>
+    <div class="viz-pair" data-label="Topic clusters">
+      <div class="viz-card conventional"><h4>Embedding Scatter</h4><div class="viz-box" id="embedding-scatter"></div></div>
+      <div class="viz-card artistic"><h4>t-SNE / UMAP Landscape</h4><div class="viz-box" id="tsne-landscape"></div></div>
+    </div>
+  </div>
+  <div class="callout">
+    <span class="callout-icon">&#9733;</span>
+    <p><strong>Embedding projections</strong> (t-SNE, UMAP) create stunning 2D landscapes from high-dimensional data. Clusters emerge naturally — excellent for data art.</p>
+  </div>
+</section>
+
+<!-- UNCONVENTIONAL -->
+<section id="unconventional" class="viz-section" data-accent="unconventional">
+  <div class="section-header">
+    <span class="section-number">09</span>
+    <h2>Unconventional / Artistic</h2>
+    <p class="section-desc">For when the goal is expression, not just communication.</p>
+  </div>
+  <div class="viz-grid unconventional-grid">
+    <div class="viz-card-full"><h4>Generative Flow Field</h4><p class="viz-desc">Data as parameters for flow fields and attractors</p><div class="viz-box" id="flow-field"></div></div>
+    <div class="viz-card-full"><h4>Particle System</h4><p class="viz-desc">Each data point as a particle with position, velocity, color</p><div class="viz-box" id="particle-system"></div></div>
+    <div class="viz-card-full"><h4>Dear Data Style</h4><p class="viz-desc">Hand-drawn, personal, postcard-scale data drawings</p><div class="viz-box" id="dear-data"></div></div>
+    <div class="viz-card-full"><h4>Data-Driven Typography</h4><p class="viz-desc">Letter forms shaped or distorted by data values</p><div class="viz-box" id="data-typography"></div></div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p>The Data Visualization Atlas &mdash; An interactive guide to choosing the right visual form for your data.</p>
+</footer>
+
+<script src="viz.js"></script>
+</body>
+</html>
