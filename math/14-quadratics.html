@@ -2170,8 +2170,8 @@ function StepSandbox({ onPrev, onFinish }) {
 
       <NavButtons onPrev={onPrev} prevLabel="Back" />
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:32,padding:'16px 0',borderTop:'1px solid var(--border-subtle)'}}>
-        <a href="06-polynomials.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent-bright)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>&larr; Previous Lesson: Polynomials &amp; Factoring</a>
-        <a href="08-functions.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent-bright)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>Next Lesson: Functions &amp; Transformations &rarr;</a>
+        <a href="13-polygons.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent-bright)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>&larr; Previous Lesson: Polygons</a>
+        <a href="15-polynomials-ii.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent-bright)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>Next Lesson: Polynomials II &rarr;</a>
       </div>
     </div>
   );
@@ -2199,8 +2199,8 @@ function App() {
   function handleFinish() {
     try {
       const visited = JSON.parse(localStorage.getItem('math-progress') || '[]');
-      if (!visited.includes(7)) {
-        visited.push(7);
+      if (!visited.includes('mf2-01')) {
+        visited.push('mf2-01');
         localStorage.setItem('math-progress', JSON.stringify(visited));
       }
     } catch {}

@@ -255,8 +255,8 @@ function NavButtons({ step, setStep, total }) {
         <button onClick={() => {
           try {
             const progress = JSON.parse(localStorage.getItem('math-progress') || '[]');
-            if (!progress.includes(14)) {
-              progress.push(14);
+            if (!progress.includes('mf2-14')) {
+              progress.push('mf2-14');
               localStorage.setItem('math-progress', JSON.stringify(progress));
             }
           } catch(e) {}
@@ -1113,8 +1113,8 @@ function App() {
     if (step === TOTAL_STEPS - 1) {
       try {
         const progress = JSON.parse(localStorage.getItem('math-progress') || '[]');
-        if (!progress.includes(14)) {
-          progress.push(14);
+        if (!progress.includes('mf2-14')) {
+          progress.push('mf2-14');
           localStorage.setItem('math-progress', JSON.stringify(progress));
         }
       } catch(e) {}

@@ -1436,7 +1436,7 @@ function StepCompletion({onPrev,step}){
   const [show,setShow]=useState(false);
   useEffect(()=>{
     setTimeout(()=>setShow(true),150);
-    try{const p=JSON.parse(localStorage.getItem('math-progress')||'[]');if(!p.includes(2)){p.push(2);localStorage.setItem('math-progress',JSON.stringify(p))}}catch(e){}
+    try{const p=JSON.parse(localStorage.getItem('math-progress')||'[]');if(!p.includes('mf1-05b')){p.push('mf1-05b');localStorage.setItem('math-progress',JSON.stringify(p))}}catch(e){}
   },[]);
 
   const items=[
@@ -1473,8 +1473,8 @@ function StepCompletion({onPrev,step}){
         </div>
 
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:32,padding:'16px 0',borderTop:'1px solid var(--bg4)',maxWidth:580,width:'100%'}}>
-          <a href="01-linear-equations.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--emerald)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>&larr; Previous Lesson: Linear Equations</a>
-          <a href="03-graphing-linear.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--emerald)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>Next Lesson: Graphing &amp; Linear Functions &rarr;</a>
+          <a href="05a-equations.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--emerald)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>&larr; Previous Lesson: Equations</a>
+          <a href="06a-graphing-linear.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--emerald)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>Next Lesson: Graphing &amp; Linear Functions &rarr;</a>
         </div>
       </div>
     </div>

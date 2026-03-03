@@ -2012,7 +2012,7 @@ function StepComplete() {
   const [show, setShow] = useState(false);
   useEffect(() => {
     setTimeout(() => setShow(true), 100);
-    try { const p=JSON.parse(localStorage.getItem('math-progress')||'[]'); if(!p.includes(3)){p.push(3);localStorage.setItem('math-progress',JSON.stringify(p));} } catch(e) {}
+    try { const p=JSON.parse(localStorage.getItem('math-progress')||'[]'); if(!p.includes('mf1-06a')){p.push('mf1-06a');localStorage.setItem('math-progress',JSON.stringify(p));} } catch(e) {}
   }, []);
 
   return (
@@ -2045,8 +2045,8 @@ function StepComplete() {
         </div>
 
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:32,padding:'16px 0',borderTop:'1px solid rgba(167,139,250,0.15)',maxWidth:600,width:'100%'}}>
-          <a href="02-inequalities.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--violet)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>&larr; Previous Lesson: Inequalities</a>
-          <a href="04-systems.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--violet)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>Next Lesson: Systems of Equations &rarr;</a>
+          <a href="05b-inequalities.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--violet)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>&larr; Previous Lesson: Inequalities</a>
+          <a href="06b-systems.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--violet)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>Next Lesson: Systems of Equations &rarr;</a>
         </div>
       </div>
     </div>

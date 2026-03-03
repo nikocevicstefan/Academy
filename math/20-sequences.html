@@ -250,8 +250,8 @@ function NavButtons({ step, setStep, total }) {
         <button onClick={() => {
           try {
             const progress = JSON.parse(localStorage.getItem('math-progress') || '[]');
-            if (!progress.includes(13)) {
-              progress.push(13);
+            if (!progress.includes('mf2-07')) {
+              progress.push('mf2-07');
               localStorage.setItem('math-progress', JSON.stringify(progress));
             }
           } catch(e) {}
@@ -963,8 +963,8 @@ function App() {
     if (step === TOTAL_STEPS - 1) {
       try {
         const progress = JSON.parse(localStorage.getItem('math-progress') || '[]');
-        if (!progress.includes(13)) {
-          progress.push(13);
+        if (!progress.includes('mf2-07')) {
+          progress.push('mf2-07');
           localStorage.setItem('math-progress', JSON.stringify(progress));
         }
       } catch(e) {}
@@ -1003,8 +1003,9 @@ function App() {
           <NavButtons step={step} setStep={setStep} total={TOTAL_STEPS} />
         )}
         {step === TOTAL_STEPS - 1 && (
-          <div style={{display:'flex',justifyContent:'center',alignItems:'center',marginTop:32,padding:'16px 0',borderTop:'1px solid var(--border-subtle)'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:32,padding:'16px 0',borderTop:'1px solid var(--border-subtle)'}}>
             <a href="index.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>&larr; Back to All Lessons</a>
+            <a href="21-geometry.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>Next Lesson: Geometry &rarr;</a>
           </div>
         )}
       </div>

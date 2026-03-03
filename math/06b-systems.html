@@ -2374,7 +2374,7 @@ function App() {
     if (step === TOTAL_STEPS - 1 && maxVisited >= TOTAL_STEPS - 1) {
       try {
         const progress = JSON.parse(localStorage.getItem('math-progress') || '[]');
-        if (!progress.includes(4)) { progress.push(4); localStorage.setItem('math-progress', JSON.stringify(progress)); }
+        if (!progress.includes('mf1-06b')) { progress.push('mf1-06b'); localStorage.setItem('math-progress', JSON.stringify(progress)); }
       } catch (e) {}
     }
   }, [step, maxVisited]);
@@ -2435,8 +2435,8 @@ function App() {
       )}
       {step === TOTAL_STEPS - 1 && (
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',margin:'0 auto',maxWidth:700,padding:'16px 24px',borderTop:'1px solid var(--border-subtle)'}}>
-          <a href="03-graphing-linear.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent-light)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>&larr; Previous Lesson: Graphing &amp; Linear Functions</a>
-          <a href="05-exponents-radicals.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent-light)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>Next Lesson: Exponents &amp; Radicals &rarr;</a>
+          <a href="06a-graphing-linear.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent-light)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>&larr; Previous Lesson: Graphing &amp; Linear Functions</a>
+          <a href="07-radical-rational-expr.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent-light)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>Next Lesson: Radical &amp; Rational Expressions &rarr;</a>
         </div>
       )}
     </div>

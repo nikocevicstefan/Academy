@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Geometry Fundamentals — Math Foundations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg-deep: #06060b; --bg-primary: #0a0a12;
+    --bg-card: rgba(255,255,255,0.03); --bg-card-hover: rgba(255,255,255,0.06);
+    --border-subtle: rgba(255,255,255,0.06); --border-hover: rgba(255,255,255,0.12);
+    --text-primary: #e8e6f0; --text-secondary: rgba(232,230,240,0.55); --text-tertiary: rgba(232,230,240,0.3);
+    --font-display: 'Instrument Serif', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --accent: #06b6d4; --accent-bright: #22d3ee; --accent-dim: #0891b2;
+    --accent-glow: rgba(6, 182, 212,0.3); --accent-bg: rgba(6, 182, 212,0.06);
+    --accent2: #0891b2; --accent3: #22d3ee;
+    --success: #4ade80; --warning: #fbbf24; --error: #f87171;
+    --ease-out-expo: cubic-bezier(0.16,1,0.3,1); --ease-out-quart: cubic-bezier(0.25,1,0.5,1); --ease-spring: cubic-bezier(0.34,1.56,0.64,1);
+  }
+  html { background:var(--bg-deep); color:var(--text-primary); font-family:var(--font-body); -webkit-font-smoothing:antialiased; scroll-behavior:smooth; }
+  body { min-height:100vh; overflow-x:hidden; background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(6, 182, 212,0.07) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 80% 50%, rgba(6, 182, 212,0.04) 0%, transparent 50%), radial-gradient(ellipse 50% 50% at 20% 80%, rgba(6, 182, 212,0.03) 0%, transparent 50%), var(--bg-deep); }
+  #root { min-height:100vh; }
+  body::before { content:''; position:fixed; inset:0; z-index:9999; pointer-events:none; opacity:0.3; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"); background-repeat:repeat; background-size:256px; }
+  ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-track { background:transparent; } ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.08); border-radius:3px; } ::-webkit-scrollbar-thumb:hover { background:rgba(255,255,255,0.14); }
+  ::selection { background:rgba(6, 182, 212,0.3); color:#fff; }
+  @keyframes fadeInUp { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+  @keyframes slideDown { from { opacity:0; transform:translateY(-12px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes pulseGlow { 0%,100% { opacity:0.4; } 50% { opacity:1; } }
+  @keyframes float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-6px); } }
+  button { cursor:pointer; } button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+const TOTAL_STEPS = 6;
+const STEP_TITLES = ['Landing', 'Points, Lines & Segments', 'Angles', 'Advanced Angles', 'Circles', 'Practice & Completion'];
+
+function GridBackground() { return (<div style={{ position:'fixed', inset:0, zIndex:0, pointerEvents:'none', opacity:0.35 }}><svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(255,255,255,0.015)" strokeWidth="1"/></pattern></defs><rect width="100%" height="100%" fill="url(#grid)" /></svg></div>); }
+
+function ProgressBar({ step, total }) {
+  return (
+    <div style={{ position:'sticky', top:0, zIndex:100, background:'rgba(6,6,11,0.85)', backdropFilter:'blur(16px)', borderBottom:'1px solid var(--border-subtle)', padding:'12px 24px' }}>
+      <div style={{ maxWidth:900, margin:'0 auto', display:'flex', alignItems:'center', gap:12 }}>
+        <a href="index.html" style={{ fontFamily:'var(--font-mono)', fontSize:11, letterSpacing:'0.06em', textTransform:'uppercase', color:'var(--text-tertiary)', textDecoration:'none', whiteSpace:'nowrap', transition:'color 0.3s ease' }} onMouseEnter={e => e.target.style.color='var(--accent)'} onMouseLeave={e => e.target.style.color='var(--text-tertiary)'}>&larr; Lessons</a>
+        <div style={{ flex:1, display:'flex', alignItems:'center', gap:4 }}>
+          {Array.from({length:total}, (_,i) => (<div key={i} style={{ flex:1, height:3, borderRadius:2, background: i < step ? 'var(--accent)' : i === step ? 'var(--accent-dim)' : 'rgba(255,255,255,0.06)', transition:'background 0.5s var(--ease-out-expo)', position:'relative', overflow:'hidden' }}>{i === step && (<div style={{ position:'absolute', inset:0, borderRadius:2, background:'linear-gradient(90deg, var(--accent), var(--accent-bright))' }}/>)}</div>))}
+        </div>
+        <span style={{ fontFamily:'var(--font-mono)', fontSize:11, color:'var(--text-tertiary)', letterSpacing:'0.04em', whiteSpace:'nowrap' }}>{step + 1} / {total}</span>
+      </div>
+    </div>
+  );
+}
+
+function NavButtons({ step, setStep, total }) {
+  return (
+    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:48, gap:16 }}>
+      {step > 0 ? (
+        <button onClick={() => setStep(step - 1)} style={{ display:'flex', alignItems:'center', gap:8, fontFamily:'var(--font-body)', fontSize:15, fontWeight:400, color:'var(--text-secondary)', background:'none', border:'1px solid var(--border-subtle)', borderRadius:12, padding:'12px 24px', transition:'all 0.3s var(--ease-out-expo)' }} onMouseEnter={e => { e.currentTarget.style.borderColor='var(--accent-dim)'; e.currentTarget.style.color='var(--text-primary)'; }} onMouseLeave={e => { e.currentTarget.style.borderColor='var(--border-subtle)'; e.currentTarget.style.color='var(--text-secondary)'; }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>Previous
+        </button>
+      ) : <div />}
+      {step < total - 1 ? (
+        <button onClick={() => setStep(step + 1)} style={{ display:'flex', alignItems:'center', gap:8, fontFamily:'var(--font-body)', fontSize:15, fontWeight:500, color:'#fff', background:'linear-gradient(135deg, var(--accent-dim), var(--accent))', border:'none', borderRadius:12, padding:'12px 28px', transition:'all 0.3s var(--ease-out-expo)', boxShadow:'0 4px 20px rgba(6, 182, 212,0.2)' }} onMouseEnter={e => { e.currentTarget.style.boxShadow='0 6px 28px rgba(6, 182, 212,0.35)'; e.currentTarget.style.transform='translateY(-1px)'; }} onMouseLeave={e => { e.currentTarget.style.boxShadow='0 4px 20px rgba(6, 182, 212,0.2)'; e.currentTarget.style.transform='translateY(0)'; }}>
+          Next<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      ) : (
+        <button onClick={() => { try { const progress = JSON.parse(localStorage.getItem('math-progress') || '[]'); if (!progress.includes('mf1-12')) { progress.push('mf1-12'); localStorage.setItem('math-progress', JSON.stringify(progress)); } } catch(e) {} window.location.href = 'index.html'; }} style={{ display:'flex', alignItems:'center', gap:8, fontFamily:'var(--font-body)', fontSize:15, fontWeight:500, color:'#fff', background:'linear-gradient(135deg, #059669, var(--success))', border:'none', borderRadius:12, padding:'12px 28px', transition:'all 0.3s var(--ease-out-expo)', boxShadow:'0 4px 20px rgba(74,222,128,0.2)' }} onMouseEnter={e => { e.currentTarget.style.boxShadow='0 6px 28px rgba(74,222,128,0.35)'; e.currentTarget.style.transform='translateY(-1px)'; }} onMouseLeave={e => { e.currentTarget.style.boxShadow='0 4px 20px rgba(74,222,128,0.2)'; e.currentTarget.style.transform='translateY(0)'; }}>
+          Complete Lesson<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </button>
+      )}
+    </div>
+  );
+}
+
+function SectionHeader({ title, subtitle }) {
+  return (
+    <div style={{ marginBottom:32, animation:'fadeInUp 0.7s var(--ease-out-expo) both' }}>
+      <h2 style={{ fontFamily:'var(--font-display)', fontSize:'clamp(32px, 5vw, 48px)', fontWeight:400, lineHeight:1.1, letterSpacing:'-0.01em', marginBottom:12, background:'linear-gradient(135deg, var(--text-primary) 0%, var(--accent-bright) 100%)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>{title}</h2>
+      {subtitle && (<p style={{ fontFamily:'var(--font-body)', fontSize:'clamp(15px, 1.8vw, 18px)', fontWeight:300, color:'var(--text-secondary)', lineHeight:1.6, maxWidth:580 }}>{subtitle}</p>)}
+    </div>
+  );
+}
+
+function Card({ children, style }) {
+  return (<div style={{ background:'var(--bg-card)', border:'1px solid var(--border-subtle)', borderRadius:16, padding:'clamp(20px, 3vw, 32px)', backdropFilter:'blur(8px)', position:'relative', overflow:'hidden', ...style }}>{children}</div>);
+}
+
+function MathBlock({ children, label }) {
+  return (<div style={{ background:'rgba(6, 182, 212,0.04)', border:'1px solid rgba(6, 182, 212,0.1)', borderRadius:12, padding:'20px 24px', margin:'20px 0', textAlign:'center' }}>{label && (<div style={{ fontFamily:'var(--font-mono)', fontSize:11, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--text-tertiary)', marginBottom:10 }}>{label}</div>)}<div style={{ fontFamily:'var(--font-mono)', fontSize:'clamp(16px, 2.5vw, 22px)', color:'var(--accent-bright)', fontWeight:500, lineHeight:1.8 }}>{children}</div></div>);
+}
+
+function M({ children }) {
+  return (<span style={{ fontFamily:'var(--font-mono)', color:'var(--accent-bright)', fontSize:'0.92em', fontWeight:500 }}>{children}</span>);
+}
+
+function TodoPlaceholder({ description }) {
+  return (
+    <div style={{
+      background:'rgba(255,255,255,0.02)',
+      border:'1px dashed rgba(255,255,255,0.1)',
+      borderRadius:12, padding:'32px 24px', margin:'24px 0',
+      textAlign:'center',
+    }}>
+      <div style={{
+        fontFamily:'var(--font-mono)', fontSize:13,
+        color:'var(--text-tertiary)', lineHeight:1.6,
+      }}>
+        TODO: {description}
+      </div>
+    </div>
+  );
+}
+
+const bodyStyle = { fontFamily:'var(--font-body)', fontSize:16, color:'var(--text-secondary)', lineHeight:1.75, marginBottom:16, fontWeight:300 };
+const strongStyle = { color:'var(--text-primary)', fontWeight:500 };
+
+function DraftBanner() {
+  return (<div style={{ position:'fixed', top:56, right:20, zIndex:200, background:'rgba(6, 182, 212,0.12)', border:'1px solid rgba(6, 182, 212,0.25)', borderRadius:8, padding:'6px 14px', animation:'slideDown 0.6s var(--ease-out-expo) 0.3s both' }}><span style={{ fontFamily:'var(--font-mono)', fontSize:10, letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--accent-bright)', fontWeight:500 }}>Rough Draft</span></div>);
+}
+
+function StepLanding({ onStart }) {
+  return (
+    <div style={{ minHeight:'85vh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', textAlign:'center', padding:'80px 24px 40px' }}>
+      <div style={{ fontFamily:'var(--font-mono)', fontSize:11, letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--accent)', marginBottom:16, animation:'slideDown 0.8s var(--ease-out-expo) both' }}>
+        Chapter 12 &mdash; Rough Draft
+      </div>
+      <h1 style={{ fontFamily:'var(--font-display)', fontSize:'clamp(48px, 9vw, 84px)', fontWeight:400, lineHeight:1, letterSpacing:'-0.02em', marginBottom:16, animation:'fadeInUp 1s var(--ease-out-expo) 0.1s both' }}>
+        <span style={{ background:'linear-gradient(135deg, var(--accent3) 0%, var(--accent) 40%, var(--accent2) 100%)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>Geometry</span>
+        <br />
+        <span style={{
+          background:'linear-gradient(135deg, var(--accent-bright) 0%, var(--accent2) 100%)',
+          WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent',
+        }}>Fundamentals</span>
+      </h1>
+      <p style={{ fontFamily:'var(--font-display)', fontStyle:'italic', fontSize:'clamp(18px, 2.5vw, 24px)', color:'var(--text-secondary)', maxWidth:500, lineHeight:1.5, marginBottom:48, animation:'fadeInUp 1s var(--ease-out-expo) 0.25s both' }}>
+        From points and lines to angles and circles — build the geometric vocabulary.
+      </p>
+      <button onClick={onStart} style={{ fontFamily:'var(--font-body)', fontSize:17, fontWeight:500, color:'#fff', background:'linear-gradient(135deg, var(--accent), var(--accent2))', border:'none', borderRadius:12, padding:'14px 44px', cursor:'pointer', transition:'all 0.3s', boxShadow:'0 4px 24px rgba(6, 182, 212,0.3)', animation:'fadeInUp 1s var(--ease-out-expo) 0.4s both' }} onMouseEnter={e => e.target.style.boxShadow='0 6px 36px rgba(6, 182, 212,0.5)'} onMouseLeave={e => e.target.style.boxShadow='0 4px 24px rgba(6, 182, 212,0.3)'}>
+        Begin &rarr;
+      </button>
+    </div>
+  );
+}
+
+function StepLines() {
+  return (
+    <div style={{ paddingTop:80 }}>
+      <SectionHeader
+        title="Points, Lines & Segments"
+        subtitle="Understand the basic building blocks of geometry."
+      />
+      <Card style={{ marginBottom:24, animation:'fadeInUp 0.7s var(--ease-out-expo) 0.1s both' }}>
+        <p style={{...bodyStyle}}>
+          Content for this section is coming soon. The interactive visualizations and explanations below are under development.
+        </p>
+      </Card>
+      <TodoPlaceholder description="Interactive point/line/ray/segment explorer" />
+      <TodoPlaceholder description="Parallel and perpendicular lines" />
+      <TodoPlaceholder description="Midpoints and segment addition" />
+    </div>
+  );
+}
+
+function StepAngles() {
+  return (
+    <div style={{ paddingTop:80 }}>
+      <SectionHeader
+        title="Angles"
+        subtitle="Measure and classify angles of all types."
+      />
+      <Card style={{ marginBottom:24, animation:'fadeInUp 0.7s var(--ease-out-expo) 0.1s both' }}>
+        <p style={{...bodyStyle}}>
+          Content for this section is coming soon. The interactive visualizations and explanations below are under development.
+        </p>
+      </Card>
+      <TodoPlaceholder description="Interactive protractor tool" />
+      <TodoPlaceholder description="Angle types: right, acute, obtuse, reflex" />
+      <TodoPlaceholder description="Vertical angles and angle sums" />
+    </div>
+  );
+}
+
+function StepAdvancedAngles() {
+  return (
+    <div style={{ paddingTop:80 }}>
+      <SectionHeader
+        title="Advanced Angles"
+        subtitle="Explore angle relationships formed by parallel lines."
+      />
+      <Card style={{ marginBottom:24, animation:'fadeInUp 0.7s var(--ease-out-expo) 0.1s both' }}>
+        <p style={{...bodyStyle}}>
+          Content for this section is coming soon. The interactive visualizations and explanations below are under development.
+        </p>
+      </Card>
+      <TodoPlaceholder description="Complementary and supplementary angles" />
+      <TodoPlaceholder description="Corresponding and alternate angles" />
+      <TodoPlaceholder description="Angle and segment bisectors" />
+    </div>
+  );
+}
+
+function StepCircles() {
+  return (
+    <div style={{ paddingTop:80 }}>
+      <SectionHeader
+        title="Circles"
+        subtitle="Understand circles, their parts, and key measurements."
+      />
+      <Card style={{ marginBottom:24, animation:'fadeInUp 0.7s var(--ease-out-expo) 0.1s both' }}>
+        <p style={{...bodyStyle}}>
+          Content for this section is coming soon. The interactive visualizations and explanations below are under development.
+        </p>
+      </Card>
+      <TodoPlaceholder description="Circle anatomy explorer" />
+      <TodoPlaceholder description="Circumference calculator" />
+      <TodoPlaceholder description="Area of a circle visualizer" />
+    </div>
+  );
+}
+
+function StepPractice() {
+  return (
+    <div style={{ paddingTop:80 }}>
+      <SectionHeader
+        title="Summary & Practice"
+        subtitle="Review the key concepts from this chapter."
+      />
+      <Card style={{ marginBottom:24, animation:'fadeInUp 0.7s var(--ease-out-expo) 0.1s both' }}>
+        <p style={{...bodyStyle}}>In this chapter, you explored:</p>
+        <ul style={{...bodyStyle, paddingLeft:24}}>
+            <li style={{marginBottom:8}}>Points, Lines & Segments</li>
+            <li style={{marginBottom:8}}>Angles</li>
+            <li style={{marginBottom:8}}>Advanced Angles</li>
+            <li style={{marginBottom:8}}>Circles</li>
+        </ul>
+      </Card>
+      <TodoPlaceholder description="Interactive practice problems for this chapter" />
+    </div>
+  );
+}
+
+function App() {
+  const [step, setStep] = useState(0);
+  useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, [step]);
+  useEffect(() => {
+    if (step === TOTAL_STEPS - 1) {
+      try {
+        const progress = JSON.parse(localStorage.getItem('math-progress') || '[]');
+        if (!progress.includes('mf1-12')) { progress.push('mf1-12'); localStorage.setItem('math-progress', JSON.stringify(progress)); }
+      } catch(e) {}
+    }
+  }, [step]);
+
+  function renderStep() {
+    switch(step) {
+      case 0: return <StepLanding onStart={() => setStep(1)} />;
+      case 1: return <StepLines />;
+      case 2: return <StepAngles />;
+      case 3: return <StepAdvancedAngles />;
+      case 4: return <StepCircles />;
+      case 5: return <StepPractice />;
+      default: return <StepLanding onStart={() => setStep(1)} />;
+    }
+  }
+
+  return (
+    <div style={{ position:'relative', zIndex:1 }}>
+      <GridBackground />
+      <DraftBanner />
+      <ProgressBar step={step} total={TOTAL_STEPS} />
+      <div style={{ maxWidth:780, margin:'0 auto', padding:'clamp(24px, 4vh, 48px) 20px 60px' }}>
+        <div key={step}>{renderStep()}</div>
+        {step > 0 && (<NavButtons step={step} setStep={setStep} total={TOTAL_STEPS} />)}
+        {step === TOTAL_STEPS - 1 && (
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:32,padding:'16px 0',borderTop:'1px solid var(--border-subtle)'}}>
+            <a href="11-polynomials.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>&larr; Previous: Polynomials</a>
+            <a href="13-polygons.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>Next: Polygons &rarr;</a>
+          </div>
+        )}
+      </div>
+      <footer style={{ textAlign:'center', padding:'40px 24px 32px', borderTop:'1px solid var(--border-subtle)', marginTop:20 }}>
+        <p style={{ fontFamily:'var(--font-body)', fontSize:13, color:'var(--text-tertiary)', fontWeight:300 }}>Chapter 12 &mdash; Geometry Fundamentals</p>
+      </footer>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>

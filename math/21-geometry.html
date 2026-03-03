@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Coordinate Geometry | Math Foundations</title>
+<title>Geometry & Solid Geometry — Math Foundations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -135,7 +135,7 @@ const { useState, useEffect, useRef, useCallback, useMemo } = React;
    CONSTANTS & HELPERS
    ================================================================ */
 const TOTAL_STEPS = 7;
-const LESSON_ID = 9;
+const LESSON_ID = 'mf2-08';
 
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 function lerp(a, b, t) { return a + (b - a) * t; }
@@ -428,7 +428,7 @@ function LandingStep({ onNext }) {
           boxShadow: '0 0 8px var(--accent)',
           animation: 'pulseGlow 2s ease-in-out infinite',
         }} />
-        Lesson 09
+        Chapter 21
       </div>
 
       <h1 style={{
@@ -440,7 +440,7 @@ function LandingStep({ onNext }) {
         <span style={{
           background: 'linear-gradient(135deg, #e8e6f0 0%, rgba(232,230,240,0.6) 100%)',
           WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-        }}>Coordinate</span>
+        }}>Geometry &</span>
         {' '}
         <span style={{
           fontStyle: 'italic',
@@ -448,7 +448,7 @@ function LandingStep({ onNext }) {
           backgroundSize: '200% 100%',
           animation: 'heroGradient 8s ease infinite',
           WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-        }}>Geometry</span>
+        }}>Solid Geometry</span>
       </h1>
 
       <p style={{
@@ -457,8 +457,8 @@ function LandingStep({ onNext }) {
         maxWidth: 460, margin: '0 auto 40px', lineHeight: 1.7,
         animation: 'fadeInUp 1s var(--ease-out-expo) 0.55s both',
       }}>
-        Navigate the plane with precision. Discover the distance formula,
-        midpoints, line equations, and circles through interactive exploration.
+        From coordinate geometry to geometric transformations and solid figures.
+        Explore distance, midpoints, lines, and circles through interactive visualization.
       </p>
 
       <button onClick={onNext} style={{
@@ -2322,8 +2322,8 @@ function CompletionScreen() {
         marginBottom: 36,
         animation: 'fadeInUp 0.8s var(--ease-out-expo) 0.45s both',
       }}>
-        You've explored the distance formula, midpoints, line equations,
-        parallel and perpendicular lines, and circles. Well done.
+        You've explored coordinate geometry, the distance formula, midpoints,
+        line equations, parallel and perpendicular lines, and circles. Well done.
       </p>
       <div style={{
         display: 'flex', gap: 12,
@@ -2348,8 +2348,8 @@ function CompletionScreen() {
         </a>
       </div>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:32,padding:'16px 0',borderTop:'1px solid var(--border-subtle)',maxWidth:500,width:'100%'}}>
-        <a href="08-functions.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>&larr; Previous Lesson: Functions &amp; Transformations</a>
-        <a href="10-trigonometry.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>Next Lesson: Trigonometry &rarr;</a>
+        <a href="20-sequences.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>&larr; Previous Lesson: Sequences</a>
+        <a href="22-trigonometry.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>Next Lesson: Trigonometry &rarr;</a>
       </div>
     </div>
   );
@@ -2438,7 +2438,7 @@ function App() {
               onMouseEnter={e => e.target.style.color = 'var(--text-secondary)'}
               onMouseLeave={e => e.target.style.color = 'var(--text-tertiary)'}
             >
-              Back to all lessons
+              Chapter 21 — Geometry & Solid Geometry
             </a>
           </footer>
         )}

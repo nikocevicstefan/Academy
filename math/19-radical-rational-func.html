@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Rational Expressions — Math Foundations</title>
+<title>Radical & Rational Functions — Math Foundations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -122,23 +122,18 @@ const { useState, useEffect, useRef, useCallback, useMemo, memo } = React;
 /* ================================================================
    CONSTANTS & HELPERS
    ================================================================ */
-const TOTAL_STEPS = 8;
+const TOTAL_STEPS = 3;
 const STEP_TITLES = [
   'Welcome',
-  'What Is a Rational Expression?',
-  'Simplifying',
-  'Multiplying & Dividing',
-  'Adding & Subtracting',
   'Asymptotes & Holes',
-  'Solving Rational Equations',
-  'Practice'
+  'Summary & Practice'
 ];
 
 function saveProgress() {
   try {
     const prev = JSON.parse(localStorage.getItem('math-progress') || '[]');
-    if (!prev.includes(11)) {
-      prev.push(11);
+    if (!prev.includes('mf2-06')) {
+      prev.push('mf2-06');
       localStorage.setItem('math-progress', JSON.stringify(prev));
     }
   } catch(e) {}
@@ -475,7 +470,7 @@ function StepLanding({ onStart }) {
     <div style={{ textAlign:'center', padding:'clamp(40px, 8vh, 80px) 0' }}>
       {/* Floating symbols */}
       <div style={{ position:'relative', height:0 }}>
-        {['p/q', 'x+1', '\u2260 0', '\u00F7', 'LCD', '\u221E'].map((s, i) => (
+        {['f(x)', 'y \u2192 \u221E', '\u2260 0', 'asymptote', '\u221A x', 'holes'].map((s, i) => (
           <span key={i} style={{
             position:'absolute', fontFamily:'var(--font-display)',
             fontSize:`${16 + Math.random()*14}px`,
@@ -502,7 +497,7 @@ function StepLanding({ onStart }) {
           boxShadow:'0 0 8px var(--accent)',
           animation:'pulseGlow 2s ease-in-out infinite',
         }} />
-        Lesson 11
+        Lesson 19
       </div>
 
       <h1 style={{
@@ -515,13 +510,13 @@ function StepLanding({ onStart }) {
         <span style={{
           background:'linear-gradient(135deg, #e8e6f0 0%, rgba(232,230,240,0.6) 100%)',
           WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent',
-        }}>Rational</span>
+        }}>Radical & Rational</span>
         <br/>
         <span style={{
           fontStyle:'italic',
           background:'linear-gradient(135deg, var(--accent), var(--accent2))',
           WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent',
-        }}>Expressions</span>
+        }}>Functions</span>
       </h1>
 
       <p style={{
@@ -530,7 +525,7 @@ function StepLanding({ onStart }) {
         maxWidth:480, margin:'0 auto 20px', lineHeight:1.65,
         animation:'fadeInUp 1s var(--ease-out-expo) 0.25s both',
       }}>
-        Fractions, but with polynomials. Simplify, combine, and solve.
+        Graph and analyze rational and radical functions -- asymptotes, holes, and end behavior.
       </p>
 
       {/* Draft badge */}
@@ -556,9 +551,9 @@ function StepLanding({ onStart }) {
           display:'flex', justifyContent:'center', gap:40,
         }}>
           {[
-            { num:'x + 1', den:'x - 2' },
-            { num:'x\u00B2 + 3x', den:'x + 5' },
-            { num:'5', den:'x - 1' },
+            { num:'f(x)', den:'\u221Ax' },
+            { num:'x\u00B2 - 1', den:'x - 1' },
+            { num:'1', den:'x\u00B2' },
           ].map((frac, i) => (
             <div key={i} style={{
               display:'flex', flexDirection:'column', alignItems:'center', gap:2,
@@ -598,379 +593,6 @@ function StepLanding({ onStart }) {
 }
 
 
-/* ================================================================
-   STEP 1 — WHAT IS A RATIONAL EXPRESSION?
-   ================================================================ */
-function Step1WhatIs() {
-  return (
-    <div style={{ animation:'fadeIn 0.5s ease both' }}>
-      <SectionHeader
-        title="What Is a Rational Expression?"
-        subtitle="Just like a rational number is a ratio of integers, a rational expression is a ratio of polynomials."
-      />
-
-      <P>
-        You already know fractions like <M>3/4</M> or <M>7/2</M>. A <strong style={{ color:'var(--accent-bright)' }}>rational expression</strong> is
-        the same idea, except the numerator and denominator are polynomials instead of plain numbers. The
-        word "rational" comes from "ratio" -- it is literally a ratio of two polynomial expressions.
-      </P>
-
-      <P>
-        Any time you see one polynomial divided by another, you are looking at a rational expression.
-        These appear constantly in algebra, calculus, physics, and engineering. Mastering them means
-        mastering the art of working with algebraic fractions.
-      </P>
-
-      <ConceptBox label="Definition">
-        <P style={{ marginBottom:0 }}>
-          A <strong style={{ color:'var(--accent-bright)' }}>rational expression</strong> has the form{' '}
-          <M>P(x) / Q(x)</M>, where <M>P(x)</M> and <M>Q(x)</M> are polynomials
-          and <M>Q(x) {'\u2260'} 0</M>.
-        </P>
-      </ConceptBox>
-
-      <P>Here are some examples of rational expressions:</P>
-
-      <div style={{ display:'flex', gap:16, flexWrap:'wrap', justifyContent:'center', margin:'24px 0' }}>
-        {[
-          { num:'x + 1', den:'x - 2', note:'Linear over linear' },
-          { num:'x\u00B2 + 3x', den:'x + 5', note:'Quadratic over linear' },
-          { num:'5', den:'x - 1', note:'Constant over linear' },
-          { num:'x\u00B3 - 1', den:'x\u00B2 + x + 1', note:'Cubic over quadratic' },
-        ].map((ex, i) => (
-          <Card key={i} style={{ flex:'0 0 auto', minWidth:140, textAlign:'center', padding:'16px 20px' }}>
-            <div style={{
-              fontFamily:'var(--font-mono)', fontSize:17,
-              color:'var(--accent-bright)', marginBottom:8,
-              display:'flex', flexDirection:'column', alignItems:'center', gap:3,
-            }}>
-              <span>{ex.num}</span>
-              <div style={{ width:'80%', height:1, background:'var(--accent)', opacity:0.4 }}/>
-              <span>{ex.den}</span>
-            </div>
-            <div style={{
-              fontFamily:'var(--font-body)', fontSize:12, fontWeight:300,
-              color:'var(--text-tertiary)',
-            }}>
-              {ex.note}
-            </div>
-          </Card>
-        ))}
-      </div>
-
-      <P>
-        The most critical rule with rational expressions is this: <strong style={{ color:'var(--error)' }}>the denominator
-        can never equal zero</strong>. Division by zero is undefined in mathematics, so any value of{' '}
-        <M>x</M> that makes the denominator zero must be excluded from the domain. These excluded values
-        are called <strong style={{ color:'var(--accent-bright)' }}>domain restrictions</strong>.
-      </P>
-
-      <ConceptBox label="Key Insight" color="var(--warning)">
-        <P style={{ marginBottom:8 }}>
-          For the expression <M>(x + 1) / (x - 2)</M>, the denominator <M>x - 2 = 0</M> when{' '}
-          <M>x = 2</M>. So the domain is all real numbers except <M>x = 2</M>.
-        </P>
-        <P style={{ marginBottom:0 }}>
-          Always state domain restrictions when working with rational expressions. Factor the denominator
-          and set each factor equal to zero to find the restricted values.
-        </P>
-      </ConceptBox>
-
-      <P>
-        Finding domain restrictions is a skill you will use repeatedly. For <M>5 / (x{'\u00B2'} - 9)</M>,
-        factor the denominator: <M>(x - 3)(x + 3)</M>. Setting each factor to zero
-        gives <M>x {'\u2260'} 3</M> and <M>x {'\u2260'} -3</M>. Those two values are excluded from
-        the domain because they would create division by zero.
-      </P>
-
-      {/* TODO: Interactive visualization -- type in a rational expression, see its graph with asymptote */}
-      <VisualizationPlaceholder label="Type in a rational expression and see its graph with vertical asymptotes highlighted" />
-    </div>
-  );
-}
-
-
-/* ================================================================
-   STEP 2 — SIMPLIFYING
-   ================================================================ */
-function Step2Simplifying() {
-  return (
-    <div style={{ animation:'fadeIn 0.5s ease both' }}>
-      <SectionHeader
-        title="Simplifying"
-        subtitle="Factor, then cancel common factors between numerator and denominator."
-      />
-
-      <P>
-        Simplifying a rational expression works exactly like simplifying a numeric fraction. With{' '}
-        <M>6/8</M> you factor out the common factor of 2 to get <M>3/4</M>. With rational expressions,
-        you factor the numerator and denominator as polynomials, then cancel any factors they share.
-      </P>
-
-      <P>
-        The process has three steps: (1) factor the numerator completely, (2) factor the denominator
-        completely, and (3) divide out (cancel) any common factors. After canceling, what remains is
-        the simplified form. But remember: the domain restrictions from the original expression still
-        apply, even after simplification.
-      </P>
-
-      <WorkedExample title="Example 1">
-        <P style={{ marginBottom:8, color:'var(--text-primary)' }}>
-          Simplify: <M>(x{'\u00B2'} - 9) / (x + 3)</M>
-        </P>
-        <MathBlock>
-          {'(x\u00B2 - 9) / (x + 3)'}<br/>
-          {'= (x - 3)(x + 3) / (x + 3)'}<br/>
-          {'= x - 3'}
-        </MathBlock>
-        <P style={{ marginBottom:0 }}>
-          The numerator is a difference of squares: <M>x{'\u00B2'} - 9 = (x - 3)(x + 3)</M>. The
-          factor <M>(x + 3)</M> appears in both numerator and denominator, so it cancels. The
-          simplified form is <M>x - 3</M>, but with the restriction that <M>x {'\u2260'} -3</M>{' '}
-          because the original denominator would be zero there.
-        </P>
-      </WorkedExample>
-
-      <WorkedExample title="Example 2">
-        <P style={{ marginBottom:8, color:'var(--text-primary)' }}>
-          Simplify: <M>(2x{'\u00B2'} + 4x) / (2x)</M>
-        </P>
-        <MathBlock>
-          {'(2x\u00B2 + 4x) / (2x)'}<br/>
-          {'= 2x(x + 2) / (2x)'}<br/>
-          {'= x + 2'}
-        </MathBlock>
-        <P style={{ marginBottom:0 }}>
-          Factor <M>2x</M> from the numerator to get <M>2x(x + 2)</M>. Cancel the common
-          factor <M>2x</M>. The result is <M>x + 2</M>, with the restriction <M>x {'\u2260'} 0</M>.
-        </P>
-      </WorkedExample>
-
-      <ConceptBox label="Common Mistake" color="var(--error)">
-        <P style={{ marginBottom:8, color:'var(--text-primary)', fontWeight:400 }}>
-          You can only cancel <strong>factors</strong>, not <strong>terms</strong>.
-        </P>
-        <P style={{ marginBottom:8 }}>
-          A factor is something multiplied. A term is something added or subtracted. In the
-          expression <M>(x + 3) / (x + 5)</M>, the <M>x</M>'s are terms being added, not factors
-          being multiplied. You absolutely cannot "cancel the x's" to get <M>3/5</M>.
-        </P>
-        <MathBlock style={{ background:'rgba(248,113,113,0.06)', borderColor:'rgba(248,113,113,0.15)' }}>
-          <span style={{ color:'var(--error)' }}>{'(x + 3) / (x + 5) \u2260 3/5'}</span>
-          <span style={{ color:'var(--text-tertiary)', fontSize:14 }}>{' '} WRONG!
-          </span>
-        </MathBlock>
-        <P style={{ marginBottom:0 }}>
-          This is one of the most common errors in all of algebra. Only entire factors that multiply
-          the rest of the expression can be canceled. If it is connected by addition or subtraction,
-          it is a term and cannot be canceled.
-        </P>
-      </ConceptBox>
-
-      <P>
-        Another helpful check: after simplifying, you can plug in a test value (other than a restricted
-        one) into both the original and simplified expressions. If they give the same result, you are
-        likely on the right track. If they differ, you made an error in factoring or canceling.
-      </P>
-
-      {/* TODO: Interactive -- drag to factor and cancel steps */}
-      <VisualizationPlaceholder label="Drag-and-drop factoring: factor numerator and denominator, then drag to cancel common factors" />
-    </div>
-  );
-}
-
-
-/* ================================================================
-   STEP 3 — MULTIPLYING & DIVIDING
-   ================================================================ */
-function Step3MultiplyDivide() {
-  return (
-    <div style={{ animation:'fadeIn 0.5s ease both' }}>
-      <SectionHeader
-        title="Multiplying & Dividing"
-        subtitle="Multiply straight across. Divide by flipping the second fraction."
-      />
-
-      <P>
-        Multiplying rational expressions follows the same rule as multiplying numeric fractions:
-        multiply the numerators together and multiply the denominators together. Before doing so,
-        it is always wise to factor everything first and cancel common factors. This prevents the
-        product from becoming unnecessarily complex.
-      </P>
-
-      <ConceptBox label="Rule: Multiplication">
-        <MathBlock style={{ margin:'8px 0', background:'transparent', border:'none', padding:'8px 0' }}>
-          {'(A / B) \u00D7 (C / D) = (A \u00D7 C) / (B \u00D7 D)'}
-        </MathBlock>
-        <P style={{ marginBottom:0 }}>
-          Factor all numerators and denominators first, cancel common factors across all four positions,
-          then multiply what remains.
-        </P>
-      </ConceptBox>
-
-      <WorkedExample title="Multiplication Example">
-        <P style={{ marginBottom:8, color:'var(--text-primary)' }}>
-          Simplify: <M>(x / (x + 1)) {'\u00D7'} ((x + 1) / x{'\u00B2'})</M>
-        </P>
-        <MathBlock>
-          {'x / (x + 1) \u00D7 (x + 1) / x\u00B2'}<br/>
-          {'= x(x + 1) / ((x + 1) \u00D7 x\u00B2)'}<br/>
-          {'= 1 / x'}
-        </MathBlock>
-        <P style={{ marginBottom:0 }}>
-          The factor <M>(x + 1)</M> cancels between the first denominator and the second numerator. One
-          factor of <M>x</M> cancels between the first numerator and the second denominator. What
-          remains is <M>1/x</M>. The restrictions are <M>x {'\u2260'} 0</M> and <M>x {'\u2260'} -1</M>.
-        </P>
-      </WorkedExample>
-
-      <P>
-        Division of rational expressions uses the same principle you learned with numeric fractions:
-        dividing by a fraction is the same as multiplying by its reciprocal. Flip the second fraction
-        (swap its numerator and denominator), then multiply.
-      </P>
-
-      <ConceptBox label="Rule: Division">
-        <MathBlock style={{ margin:'8px 0', background:'transparent', border:'none', padding:'8px 0' }}>
-          {'(A / B) \u00F7 (C / D) = (A / B) \u00D7 (D / C) = (AD) / (BC)'}
-        </MathBlock>
-        <P style={{ marginBottom:0 }}>
-          "Multiply by the reciprocal." Flip the divisor, then proceed as with multiplication.
-          Don't forget: the new denominator <M>C</M> also cannot be zero.
-        </P>
-      </ConceptBox>
-
-      <WorkedExample title="Division Example">
-        <P style={{ marginBottom:8, color:'var(--text-primary)' }}>
-          Simplify: <M>(x{'\u00B2'} / (x + 3)) {'\u00F7'} (x / (x - 1))</M>
-        </P>
-        <MathBlock>
-          {'x\u00B2 / (x + 3) \u00F7 x / (x - 1)'}<br/>
-          {'= x\u00B2 / (x + 3) \u00D7 (x - 1) / x'}<br/>
-          {'= x\u00B2(x - 1) / (x(x + 3))'}<br/>
-          {'= x(x - 1) / (x + 3)'}
-        </MathBlock>
-        <P style={{ marginBottom:0 }}>
-          Flip the second fraction to get <M>(x - 1) / x</M>, then multiply. One factor of{' '}
-          <M>x</M> cancels from <M>x{'\u00B2'}</M> in the numerator with the <M>x</M> in the
-          denominator. The result is <M>x(x - 1) / (x + 3)</M>. The restrictions
-          are <M>x {'\u2260'} 0</M>, <M>x {'\u2260'} -3</M>, and <M>x {'\u2260'} 1</M>.
-        </P>
-      </WorkedExample>
-
-      <ConceptBox label="Key Insight">
-        <P style={{ marginBottom:0 }}>
-          Always factor before multiplying. If you multiply the numerators and denominators first without
-          factoring, you will get a much more complex expression that is harder to simplify afterward.
-          Factor first, cancel, then multiply what is left. This keeps the algebra manageable.
-        </P>
-      </ConceptBox>
-
-      {/* TODO: Interactive -- step-by-step multiply/divide builder */}
-      <VisualizationPlaceholder label="Step-by-step multiply/divide builder: choose operation, see each cancellation highlighted" />
-    </div>
-  );
-}
-
-
-/* ================================================================
-   STEP 4 — ADDING & SUBTRACTING
-   ================================================================ */
-function Step4AddSubtract() {
-  return (
-    <div style={{ animation:'fadeIn 0.5s ease both' }}>
-      <SectionHeader
-        title="Adding & Subtracting"
-        subtitle="Find a common denominator, rewrite each fraction, then combine numerators."
-      />
-
-      <P>
-        Adding and subtracting rational expressions requires a <strong style={{ color:'var(--accent-bright)' }}>common
-        denominator</strong>, just like adding numeric fractions. You cannot simply add numerators if the
-        denominators are different. The strategy is to find the Least Common Denominator (LCD), rewrite
-        each fraction with that LCD, then combine the numerators over the shared denominator.
-      </P>
-
-      <P>
-        The LCD is found by factoring each denominator, then taking the highest power of every distinct
-        factor that appears. For example, if one denominator has <M>(x + 1)</M> and the other
-        has <M>(x - 1)</M>, the LCD is <M>(x + 1)(x - 1)</M>. If one denominator
-        has <M>(x + 1){'\u00B2'}</M> and the other has <M>(x + 1)</M>, the LCD
-        is <M>(x + 1){'\u00B2'}</M> because you take the higher power.
-      </P>
-
-      <ConceptBox label="Strategy">
-        <ol style={{
-          fontFamily:'var(--font-body)', fontSize:15, fontWeight:300,
-          color:'var(--text-secondary)', lineHeight:1.75, paddingLeft:20,
-        }}>
-          <li style={{ marginBottom:6 }}>Factor every denominator completely.</li>
-          <li style={{ marginBottom:6 }}>Identify the LCD: include each factor at its highest power.</li>
-          <li style={{ marginBottom:6 }}>Multiply each fraction's numerator and denominator by whatever is missing from the LCD.</li>
-          <li style={{ marginBottom:6 }}>Combine the numerators over the common denominator.</li>
-          <li>Simplify the resulting numerator (combine like terms, factor if possible).</li>
-        </ol>
-      </ConceptBox>
-
-      <WorkedExample title="Example 1: Addition">
-        <P style={{ marginBottom:8, color:'var(--text-primary)' }}>
-          Add: <M>1/(x + 1) + 1/(x - 1)</M>
-        </P>
-        <MathBlock>
-          {'1/(x + 1) + 1/(x - 1)'}<br/>
-          {'LCD = (x + 1)(x - 1)'}<br/>
-          {'= (x - 1)/((x + 1)(x - 1)) + (x + 1)/((x + 1)(x - 1))'}<br/>
-          {'= (x - 1 + x + 1) / ((x + 1)(x - 1))'}<br/>
-          {'= 2x / (x\u00B2 - 1)'}
-        </MathBlock>
-        <P style={{ marginBottom:0 }}>
-          The LCD is <M>(x + 1)(x - 1)</M>. Multiply the first fraction by <M>(x - 1)/(x - 1)</M>{' '}
-          and the second by <M>(x + 1)/(x + 1)</M>. The numerators combine
-          to <M>x - 1 + x + 1 = 2x</M>. The denominator can also be written
-          as <M>x{'\u00B2'} - 1</M>.
-        </P>
-      </WorkedExample>
-
-      <WorkedExample title="Example 2: Subtraction">
-        <P style={{ marginBottom:8, color:'var(--text-primary)' }}>
-          Subtract: <M>3/x - 2/(x + 4)</M>
-        </P>
-        <MathBlock>
-          {'3/x - 2/(x + 4)'}<br/>
-          {'LCD = x(x + 4)'}<br/>
-          {'= 3(x + 4) / (x(x + 4)) - 2x / (x(x + 4))'}<br/>
-          {'= (3x + 12 - 2x) / (x(x + 4))'}<br/>
-          {'= (x + 12) / (x(x + 4))'}
-        </MathBlock>
-        <P style={{ marginBottom:0 }}>
-          The LCD is <M>x(x + 4)</M>. Multiply the first fraction's numerator and denominator
-          by <M>(x + 4)</M>, giving <M>3(x + 4) = 3x + 12</M>. Multiply the second
-          by <M>x</M>, giving <M>2x</M>. Subtract: <M>3x + 12 - 2x = x + 12</M>.
-        </P>
-      </WorkedExample>
-
-      <ConceptBox label="Common Mistake" color="var(--error)">
-        <P style={{ marginBottom:0 }}>
-          When subtracting, be extremely careful to distribute the negative sign across the entire
-          second numerator. A common error is to write <M>3x + 12 - 2x</M> when it should
-          be <M>3x + 12 - 2x</M> (which happens to be the same here). But if the second numerator
-          were <M>2x + 1</M>, the subtraction would yield <M>3x + 12 - 2x - 1 = x + 11</M>.
-          Forgetting to distribute the minus sign to every term in the second numerator is a very
-          frequent source of errors.
-        </P>
-      </ConceptBox>
-
-      <P>
-        After combining, always check whether the resulting numerator can be factored and simplified
-        with the denominator. Sometimes a factor cancels, giving a simpler final answer. And always
-        state the domain restrictions inherited from the original denominators.
-      </P>
-
-      {/* TODO: Interactive -- LCD finder and fraction combiner */}
-      <VisualizationPlaceholder label="LCD finder: enter two denominators, see the LCD computed step-by-step, then combine fractions" />
-    </div>
-  );
-}
 
 
 /* ================================================================
@@ -1122,121 +744,12 @@ function Step5Asymptotes() {
 }
 
 
-/* ================================================================
-   STEP 6 — SOLVING RATIONAL EQUATIONS
-   ================================================================ */
-function Step6Solving() {
-  return (
-    <div style={{ animation:'fadeIn 0.5s ease both' }}>
-      <SectionHeader
-        title="Solving Rational Equations"
-        subtitle="Clear the fractions by multiplying both sides by the LCD, then check for extraneous solutions."
-      />
-
-      <P>
-        A rational <em>equation</em> is different from a rational <em>expression</em>. An equation has
-        an equals sign and you are solving for specific values of <M>x</M>. The standard strategy is
-        to multiply every term on both sides by the Least Common Denominator to eliminate all fractions,
-        transforming the equation into a polynomial equation you already know how to solve.
-      </P>
-
-      <ConceptBox label="Strategy">
-        <ol style={{
-          fontFamily:'var(--font-body)', fontSize:15, fontWeight:300,
-          color:'var(--text-secondary)', lineHeight:1.75, paddingLeft:20,
-        }}>
-          <li style={{ marginBottom:6 }}>Identify the LCD of all rational expressions in the equation.</li>
-          <li style={{ marginBottom:6 }}>Multiply every term on both sides by the LCD.</li>
-          <li style={{ marginBottom:6 }}>Simplify -- the denominators should cancel, leaving a polynomial equation.</li>
-          <li style={{ marginBottom:6 }}>Solve the resulting polynomial equation.</li>
-          <li><strong style={{ color:'var(--error)' }}>Check every solution</strong> in the original equation. Reject any that make a denominator zero.</li>
-        </ol>
-      </ConceptBox>
-
-      <P>
-        That last step is absolutely critical. When you multiply both sides by the LCD (which contains
-        variables), you may introduce solutions that do not actually satisfy the original equation. These
-        are called <strong style={{ color:'var(--error)' }}>extraneous solutions</strong>. If a solution
-        makes any original denominator equal to zero, it must be rejected.
-      </P>
-
-      <WorkedExample title="Example 1: Valid Solutions">
-        <P style={{ marginBottom:8, color:'var(--text-primary)' }}>
-          Solve: <M>1/x + 1/(x + 2) = 1</M>
-        </P>
-        <MathBlock>
-          {'LCD = x(x + 2)'}<br/>
-          {'Multiply both sides: (x + 2) + x = x(x + 2)'}<br/>
-          {'2x + 2 = x\u00B2 + 2x'}<br/>
-          {'2 = x\u00B2'}<br/>
-          {'x = \u00B1\u221A2'}
-        </MathBlock>
-        <P style={{ marginBottom:8 }}>
-          Check: <M>x = {'\u221A'}2 {'\u2248'} 1.414</M>. Neither <M>{'\u221A'}2</M> nor <M>-{'\u221A'}2</M>{' '}
-          makes any denominator zero (<M>x = 0</M> or <M>x = -2</M> would be problematic, but{' '}
-          <M>{'\u00B1'}{'\u221A'}2</M> are neither). Both solutions are valid.
-        </P>
-        <div style={{
-          display:'inline-block', padding:'6px 14px', borderRadius:8,
-          background:'rgba(74,222,128,0.08)', border:'1px solid rgba(74,222,128,0.2)',
-          fontFamily:'var(--font-mono)', fontSize:14, color:'var(--success)',
-        }}>
-          x = {'\u221A'}2 and x = -{'\u221A'}2 (both valid)
-        </div>
-      </WorkedExample>
-
-      <WorkedExample title="Example 2: Extraneous Solution">
-        <P style={{ marginBottom:8, color:'var(--text-primary)' }}>
-          Solve: <M>x/(x - 3) = 3/(x - 3) + 2</M>
-        </P>
-        <MathBlock>
-          {'LCD = (x - 3)'}<br/>
-          {'Multiply both sides: x = 3 + 2(x - 3)'}<br/>
-          {'x = 3 + 2x - 6'}<br/>
-          {'x = 2x - 3'}<br/>
-          {'-x = -3'}<br/>
-          {'x = 3'}
-        </MathBlock>
-        <P style={{ marginBottom:8 }}>
-          Check: plugging <M>x = 3</M> back into the original equation gives <M>3/(3-3) = 3/0</M>,
-          which is undefined. The solution <M>x = 3</M> makes the original denominator zero.
-        </P>
-        <div style={{
-          display:'inline-block', padding:'6px 14px', borderRadius:8,
-          background:'rgba(248,113,113,0.08)', border:'1px solid rgba(248,113,113,0.2)',
-          fontFamily:'var(--font-mono)', fontSize:14, color:'var(--error)',
-        }}>
-          x = 3 is EXTRANEOUS -- No Solution
-        </div>
-      </WorkedExample>
-
-      <ConceptBox label="Common Mistake" color="var(--error)">
-        <P style={{ marginBottom:0 }}>
-          Forgetting to check solutions is the single most common error with rational equations. Every
-          time you solve a rational equation, you must substitute each answer back into the original
-          equation and verify that no denominator becomes zero. Extraneous solutions are not rare edge
-          cases -- they appear frequently, especially when variables are in the denominators.
-        </P>
-      </ConceptBox>
-
-      <P>
-        Some rational equations, after clearing fractions, produce quadratic equations. Use the
-        quadratic formula, factoring, or completing the square to solve them. Then check every
-        candidate solution against the original denominators. It is entirely possible for a rational
-        equation to have two solutions, one solution, or no solutions at all.
-      </P>
-
-      {/* TODO: Interactive -- equation solver with extraneous solution checker */}
-      <VisualizationPlaceholder label="Rational equation solver: enter an equation, see step-by-step solution with automatic extraneous solution detection" />
-    </div>
-  );
-}
 
 
 /* ================================================================
    STEP 7 — PRACTICE / COMPLETION
    ================================================================ */
-function Step7Practice() {
+function Step2Practice() {
   useEffect(() => {
     saveProgress();
   }, []);
@@ -1245,13 +758,12 @@ function Step7Practice() {
     <div style={{ animation:'fadeIn 0.5s ease both' }}>
       <SectionHeader
         title="Summary & Practice"
-        subtitle="You have covered the essential techniques for working with rational expressions and equations."
+        subtitle="You have covered the key features of rational and radical function graphs."
       />
 
       <P>
-        This lesson covered a lot of ground. Let's review the core ideas before you move on.
-        Rational expressions are the gateway to more advanced algebra and calculus topics, so building
-        solid intuition here pays dividends later.
+        Graphing rational and radical functions requires understanding a handful of core features.
+        Let's review them before you move on.
       </P>
 
       <Card style={{ marginBottom:20 }}>
@@ -1265,16 +777,11 @@ function Step7Practice() {
 
         <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
           {[
-            { title:'Rational Expression', desc:'A fraction P(x)/Q(x) where P and Q are polynomials and Q \u2260 0.' },
-            { title:'Domain Restrictions', desc:'Values of x that make the denominator zero must be excluded.' },
-            { title:'Simplifying', desc:'Factor numerator and denominator completely, then cancel common factors.' },
-            { title:'Multiplying', desc:'Multiply numerators together and denominators together. Factor first, cancel, then multiply.' },
-            { title:'Dividing', desc:'Flip the second fraction (reciprocal) and multiply.' },
-            { title:'Adding/Subtracting', desc:'Find the LCD, rewrite each fraction, combine numerators. Watch the minus sign!' },
-            { title:'Vertical Asymptotes', desc:'Occur where the denominator = 0 but the numerator \u2260 0.' },
-            { title:'Holes', desc:'Occur where both numerator and denominator = 0 (removable discontinuities).' },
+            { title:'Vertical Asymptotes', desc:'Occur where the denominator = 0 but the numerator \u2260 0. The graph shoots toward infinity.' },
+            { title:'Holes', desc:'Occur where both numerator and denominator = 0 (removable discontinuities). A single missing point.' },
             { title:'Horizontal Asymptotes', desc:'Determined by comparing the degrees of numerator and denominator.' },
-            { title:'Solving Equations', desc:'Multiply by LCD to clear fractions, solve, then check for extraneous solutions.' },
+            { title:'Oblique Asymptotes', desc:'When the numerator degree exceeds the denominator degree by one, the graph approaches a slant line.' },
+            { title:'Graphing Strategy', desc:'Find vertical asymptotes, holes, horizontal/oblique asymptote, x-intercepts, and y-intercept.' },
           ].map((item, i) => (
             <div key={i} style={{
               display:'flex', gap:12, padding:'10px 14px',
@@ -1312,16 +819,14 @@ function Step7Practice() {
 
       <ConceptBox label="The Big Picture">
         <P style={{ marginBottom:8 }}>
-          Rational expressions unify many ideas from earlier lessons: factoring from polynomials,
-          domain restrictions from functions, and equation-solving techniques from linear and
-          quadratic equations. They also introduce new ideas like asymptotic behavior that become
-          central in calculus.
+          Rational and radical functions introduce asymptotic behavior -- the idea that a function
+          can approach a value without ever reaching it. This concept becomes central in calculus
+          when studying limits and continuity.
         </P>
         <P style={{ marginBottom:0 }}>
-          The key habit is: <strong style={{ color:'var(--accent-bright)' }}>always factor first</strong>.
-          Whether simplifying, multiplying, dividing, adding, or solving, factoring is almost always
-          the first step. And when solving equations, <strong style={{ color:'var(--error)' }}>always
-          check your solutions</strong> against the original denominators.
+          The graphing strategy is systematic: <strong style={{ color:'var(--accent-bright)' }}>factor the
+          numerator and denominator</strong>, identify the five key features (vertical asymptotes, holes,
+          horizontal/oblique asymptote, intercepts), and then sketch the curve through those landmarks.
         </P>
       </ConceptBox>
 
@@ -1340,8 +845,8 @@ function Step7Practice() {
           Lesson Complete
         </div>
         <P style={{ textAlign:'center', maxWidth:420, margin:'0 auto' }}>
-          You now have the tools to work with rational expressions. These skills will be essential
-          as you continue into more advanced mathematics.
+          You now understand how to analyze and graph rational and radical functions. These skills
+          lay the groundwork for limits and calculus.
         </P>
       </div>
     </div>
@@ -1368,13 +873,8 @@ function App() {
   function renderStep() {
     switch(step) {
       case 0: return <StepLanding onStart={() => setStep(1)} />;
-      case 1: return <Step1WhatIs />;
-      case 2: return <Step2Simplifying />;
-      case 3: return <Step3MultiplyDivide />;
-      case 4: return <Step4AddSubtract />;
-      case 5: return <Step5Asymptotes />;
-      case 6: return <Step6Solving />;
-      case 7: return <Step7Practice />;
+      case 1: return <Step5Asymptotes />;
+      case 2: return <Step2Practice />;
       default: return <StepLanding onStart={() => setStep(1)} />;
     }
   }
@@ -1398,8 +898,8 @@ function App() {
         )}
         {step === TOTAL_STEPS - 1 && (
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:32,padding:'16px 0',borderTop:'1px solid var(--border-subtle)'}}>
-            <a href="10-trigonometry.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>&larr; Previous Lesson: Trigonometry</a>
-            <a href="index.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>Back to All Lessons &rarr;</a>
+            <a href="18-exponentials-logarithms.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>&larr; Previous: Exponentials &amp; Logarithms</a>
+            <a href="20-sequences.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>Next: Sequences &rarr;</a>
           </div>
         )}
       </div>
@@ -1412,7 +912,7 @@ function App() {
         <p style={{
           fontFamily:'var(--font-body)', fontSize:13, color:'var(--text-tertiary)', fontWeight:300,
         }}>
-          Lesson 11 &mdash; Rational Expressions &amp; Equations
+          Chapter 19 &mdash; Radical &amp; Rational Functions
         </p>
       </footer>
     </div>

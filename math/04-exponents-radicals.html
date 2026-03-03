@@ -1722,7 +1722,7 @@ function StepPractice({ step, setStep }) {
     if (stats.total >= 5 && stats.correct >= 3) {
       try {
         const progress = JSON.parse(localStorage.getItem('math-progress') || '[]');
-        if (!progress.includes(5)) { progress.push(5); localStorage.setItem('math-progress', JSON.stringify(progress)); }
+        if (!progress.includes('mf1-04')) { progress.push('mf1-04'); localStorage.setItem('math-progress', JSON.stringify(progress)); }
       } catch (e) {}
     }
   }, [stats]);
@@ -2724,8 +2724,8 @@ function App() {
         {step === 6 && <StepPractice step={step} setStep={setStep} />}
         {step === TOTAL_STEPS - 1 && (
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:32,padding:'16px 0',borderTop:'1px solid var(--border)'}}>
-            <a href="04-systems.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>&larr; Previous Lesson: Systems of Equations</a>
-            <a href="06-polynomials.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>Next Lesson: Polynomials &amp; Factoring &rarr;</a>
+            <a href="06b-systems.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>&larr; Previous Lesson: Systems of Equations</a>
+            <a href="05a-equations.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>Next Lesson: Equations &rarr;</a>
           </div>
         )}
       </div>

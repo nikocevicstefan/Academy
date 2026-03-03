@@ -175,8 +175,8 @@ function fmtAngle(deg) { return `${Math.round(deg)}\u00b0`; }
 function saveProgress() {
   try {
     const prev = JSON.parse(localStorage.getItem('math-progress') || '[]');
-    if (!prev.includes(10)) {
-      prev.push(10);
+    if (!prev.includes('mf2-09')) {
+      prev.push('mf2-09');
       localStorage.setItem('math-progress', JSON.stringify(prev));
     }
   } catch(e) {}
@@ -2784,8 +2784,9 @@ function Celebration({ score, total }) {
             Return to Curriculum &rarr;
           </a>
         </div>
-        <div style={{display:'flex',justifyContent:'flex-start',marginTop:32,padding:'16px 0',borderTop:'1px solid rgba(232,165,48,0.15)'}}>
-          <a href="09-coordinate-geometry.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>&larr; Previous Lesson: Coordinate Geometry</a>
+        <div style={{display:'flex',justifyContent:'space-between',marginTop:32,padding:'16px 0',borderTop:'1px solid rgba(232,165,48,0.15)'}}>
+          <a href="21-geometry.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>&larr; Previous Lesson: Geometry</a>
+          <a href="23-vectors.html" style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--accent)',textDecoration:'none',transition:'opacity 0.2s',opacity:0.8}} onMouseEnter={e=>e.target.style.opacity='1'} onMouseLeave={e=>e.target.style.opacity='0.8'}>Next Lesson: Vectors &rarr;</a>
         </div>
       </div>
     </div>
