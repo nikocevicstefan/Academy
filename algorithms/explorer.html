@@ -1,0 +1,2345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Algorithm Explorer — Academy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg-deep: #101010;
+    --bg: #171615;
+    --bg-card: #1e1c1a;
+    --bg-elevated: #252320;
+    --bg-inset: #0d0c0b;
+    --border: #2a2725;
+    --border-subtle: #222019;
+    --amber: #e8a838;
+    --amber-dim: #b57e1e;
+    --amber-glow: #e8a83825;
+    --teal: #4fd1c5;
+    --teal-dim: #2c7a7b;
+    --teal-glow: #4fd1c520;
+    --rose: #f27a7a;
+    --rose-dim: #9b3c3c;
+    --rose-glow: #f27a7a18;
+    --violet: #a78bfa;
+    --violet-dim: #6d5aad;
+    --lime: #a3e635;
+    --lime-dim: #5d8016;
+    --text: #e8e4de;
+    --text-secondary: #a39e94;
+    --text-muted: #6b665d;
+    --text-faint: #3d3a35;
+    --font-display: "Instrument Serif", Georgia, serif;
+    --font-body: "DM Sans", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", "SF Mono", monospace;
+  }
+  html { font-family: var(--font-body); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  body { background: var(--bg-deep); color: var(--text); min-height: 100vh; }
+  #root { min-height: 100vh; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+/* ========================================================================
+   SHARED STYLES & COMPONENTS
+   ======================================================================== */
+
+const S = {
+  sectionTitle: {
+    fontFamily: "var(--font-display)", fontSize: 26, fontWeight: 400,
+    color: "var(--text)", marginBottom: 6, fontStyle: "italic", letterSpacing: "-0.01em",
+  },
+  subtitle: {
+    color: "var(--text-secondary)", fontSize: 13, lineHeight: 1.65, marginBottom: 20, maxWidth: 600,
+  },
+  vizBox: {
+    background: "var(--bg-inset)", borderRadius: 14, padding: 20, marginBottom: 18,
+    border: "1px solid var(--border-subtle)", position: "relative", overflow: "hidden",
+  },
+  vizLabel: {
+    fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase",
+    letterSpacing: "1.5px", marginBottom: 12, fontFamily: "var(--font-mono)", fontWeight: 500,
+  },
+  insight: (color) => ({
+    padding: 16, background: `${color}08`, border: `1px solid ${color}20`,
+    borderRadius: 0, borderLeft: `3px solid ${color}`,
+  }),
+  insightTitle: (color) => ({
+    color, fontSize: 12, fontWeight: 600, marginBottom: 4,
+    fontFamily: "var(--font-mono)", textTransform: "uppercase", letterSpacing: "0.5px",
+  }),
+  insightBody: { color: "var(--text-secondary)", fontSize: 12.5, lineHeight: 1.6, margin: 0 },
+  code: (color) => ({
+    color, fontSize: 11, fontFamily: "var(--font-mono)",
+    background: `${color}12`, padding: "1px 5px", borderRadius: 4,
+  }),
+  stepBtn: (active) => ({
+    padding: "7px 14px",
+    background: active ? "var(--amber-glow)" : "transparent",
+    border: `1px solid ${active ? "var(--amber)" : "var(--border)"}`,
+    borderRadius: 8, color: active ? "var(--amber)" : "var(--text-muted)",
+    fontSize: 11, fontFamily: "var(--font-mono)", cursor: "pointer",
+    fontWeight: active ? 600 : 400, transition: "all 0.25s ease", letterSpacing: "0.3px",
+  }),
+  complexityBadge: (color) => ({
+    display: "inline-flex", alignItems: "center", gap: 5,
+    padding: "4px 10px", background: `${color}12`, border: `1px solid ${color}25`,
+    borderRadius: 20, color, fontSize: 11, fontFamily: "var(--font-mono)", fontWeight: 500,
+  }),
+};
+
+const SPEEDS = [
+  { label: "0.5x", value: 0.5 }, { label: "1x", value: 1 },
+  { label: "2x", value: 2 }, { label: "3x", value: 3 },
+];
+const DEFAULT_SPEED = 0.5;
+
+function Controls({ step, maxStep, playing, setPlaying, setStep, speed, setSpeed, extra }) {
+  const finished = step >= maxStep;
+  return (
+    <>
+    <style>{`
+      @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(79, 209, 197, 0); }
+        50% { box-shadow: 0 0 12px 2px rgba(79, 209, 197, 0.3); }
+      }
+    `}</style>
+    <div style={{ display: "flex", gap: 8, marginBottom: 18, alignItems: "center", flexWrap: "wrap" }}>
+      <button onClick={() => { setStep(0); setPlaying(false); }}
+        style={finished ? {
+          ...S.stepBtn(false), background: "var(--teal-glow)", borderColor: "var(--teal)",
+          color: "var(--teal)", fontWeight: 600, animation: "pulse-glow 2s ease-in-out infinite",
+        } : S.stepBtn(false)}>Reset</button>
+      <button onClick={() => { setPlaying(false); setStep((s) => Math.max(0, s - 1)); }} style={S.stepBtn(false)} disabled={step === 0}>Prev</button>
+      <button onClick={() => {
+        if (finished) { setStep(0); setPlaying(true); } else { setPlaying(!playing); }
+      }} style={S.stepBtn(playing)}>{playing ? "Pause" : finished ? "Replay" : "Play"}</button>
+      <button onClick={() => { setPlaying(false); setStep((s) => Math.min(maxStep, s + 1)); }} style={S.stepBtn(false)} disabled={step >= maxStep}>Next</button>
+      <div style={{ display: "flex", gap: 2, alignItems: "center", marginLeft: 4 }}>
+        {SPEEDS.map((s) => (
+          <button key={s.value} onClick={() => setSpeed(s.value)} style={{
+            padding: "4px 8px",
+            background: speed === s.value ? "var(--amber)" : "transparent",
+            border: `1px solid ${speed === s.value ? "var(--amber)" : "var(--border-subtle)"}`,
+            borderRadius: 5, color: speed === s.value ? "var(--bg-deep)" : "var(--text-faint)",
+            fontSize: 9, fontFamily: "var(--font-mono)", fontWeight: speed === s.value ? 700 : 400,
+            cursor: "pointer", transition: "all 0.2s", lineHeight: 1,
+          }}>{s.label}</button>
+        ))}
+      </div>
+      {extra}
+      <span style={{ marginLeft: "auto", color: "var(--text-muted)", fontSize: 11, fontFamily: "var(--font-mono)" }}>{step}/{maxStep}</span>
+    </div>
+    </>
+  );
+}
+
+function ExplainStep({ number, title, desc, active, color = "var(--amber)" }) {
+  return (
+    <div style={{
+      padding: "10px 12px", background: active ? `${color}08` : "transparent",
+      borderLeft: `2px solid ${active ? color : "var(--border-subtle)"}`,
+      borderRadius: "0 8px 8px 0", marginBottom: 6, transition: "all 0.3s ease", opacity: active ? 1 : 0.5,
+    }}>
+      <div style={{ fontSize: 10, fontFamily: "var(--font-mono)", color: active ? color : "var(--text-faint)", marginBottom: 2, fontWeight: 600, letterSpacing: "0.5px" }}>STEP {number}</div>
+      <div style={{ fontSize: 12, fontWeight: 600, color: active ? "var(--text)" : "var(--text-muted)", marginBottom: 2 }}>{title}</div>
+      {active && desc && (<div style={{ fontSize: 11.5, color: "var(--text-secondary)", lineHeight: 1.55 }}>{desc}</div>)}
+    </div>
+  );
+}
+
+function AlgoLayout({ viz, explanation }) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 20 }}>
+      <style>{`@media (min-width: 900px) { .algo-layout { grid-template-columns: 1fr 280px !important; } }`}</style>
+      <div className="algo-layout" style={{ display: "grid", gridTemplateColumns: "1fr", gap: 20, alignItems: "start" }}>
+        <div>{viz}</div>
+        <div style={{ position: "sticky", top: 24 }}>{explanation}</div>
+      </div>
+    </div>
+  );
+}
+
+/* ========================================================================
+   ALGORITHM COMPONENTS
+   ======================================================================== */
+
+function BubbleSortTab() {
+  const initial = [38, 12, 85, 27, 64, 9, 51, 43];
+  const [step, setStep] = useState(0);
+
+  const computeSteps = () => {
+    const steps = [];
+    const arr = [...initial];
+    steps.push({ arr: [...arr], comparing: [-1, -1], swapped: false, sorted: [], pass: 0 });
+    for (let pass = 0; pass < arr.length - 1; pass++) {
+      const sorted = [];
+      for (let k = arr.length - 1; k >= arr.length - pass; k--) sorted.push(k);
+      for (let j = 0; j < arr.length - 1 - pass; j++) {
+        steps.push({ arr: [...arr], comparing: [j, j + 1], swapped: false, sorted: [...sorted], pass });
+        if (arr[j] > arr[j + 1]) {
+          [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
+          steps.push({ arr: [...arr], comparing: [j, j + 1], swapped: true, sorted: [...sorted], pass });
+        }
+      }
+      sorted.push(arr.length - 1 - pass);
+    }
+    const allSorted = arr.map((_, i) => i);
+    steps.push({ arr: [...arr], comparing: [-1, -1], swapped: false, sorted: allSorted, pass: -1 });
+    return steps;
+  };
+
+  const allSteps = useRef(computeSteps()).current;
+  const current = allSteps[Math.min(step, allSteps.length - 1)];
+  const maxVal = Math.max(...initial);
+
+  const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState(DEFAULT_SPEED);
+  useEffect(() => {
+    if (!playing) return;
+    if (step >= allSteps.length - 1) { setPlaying(false); return; }
+    const t = setTimeout(() => setStep((s) => s + 1), 1200 / speed);
+    return () => clearTimeout(t);
+  }, [playing, step, allSteps.length]);
+
+  const getPhase = () => {
+    if (step === 0) return 0;
+    if (current.comparing[0] >= 0 && !current.swapped) return 1;
+    if (current.swapped) return 2;
+    if (current.pass === -1) return 3;
+    return 1;
+  };
+
+  const viz = (
+    <div>
+      <h3 style={S.sectionTitle}>Bubble Sort</h3>
+      <p style={S.subtitle}>
+        Repeatedly walk through the list, compare adjacent pairs, and swap if they're in the wrong order.
+        Each pass "bubbles" the largest unsorted element to its correct position at the end.
+      </p>
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+        <span style={S.complexityBadge("var(--rose)")}>O(n²) worst</span>
+        <span style={S.complexityBadge("var(--amber)")}>O(n) best</span>
+        <span style={S.complexityBadge("var(--teal)")}>In-place</span>
+        <span style={S.complexityBadge("var(--violet)")}>Stable</span>
+      </div>
+
+      <Controls step={step} maxStep={allSteps.length - 1} playing={playing} setPlaying={setPlaying} setStep={setStep} speed={speed} setSpeed={setSpeed} />
+
+      <div style={S.vizBox}>
+        <div style={S.vizLabel}>Array State</div>
+        <svg viewBox="0 0 520 200" style={{ width: "100%", height: "auto" }}>
+          {current.arr.map((val, i) => {
+            const barW = 48, gap = 14;
+            const x = 12 + i * (barW + gap);
+            const barH = (val / maxVal) * 130;
+            const y = 170 - barH;
+            const isComparing = current.comparing.includes(i);
+            const isSorted = current.sorted.includes(i);
+            let fill = "var(--text-faint)";
+            if (isSorted) fill = "var(--teal)";
+            if (isComparing && current.swapped) fill = "var(--rose)";
+            else if (isComparing) fill = "var(--amber)";
+            return (
+              <g key={i}>
+                <rect x={x} y={y} width={barW} height={barH} rx={6} fill={fill}
+                  opacity={isSorted && !isComparing ? 0.7 : 0.9}
+                  style={{ transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)" }} />
+                <text x={x + barW / 2} y={y - 8} fill={isComparing ? fill : "var(--text-muted)"}
+                  fontSize={12} fontFamily="var(--font-mono)" fontWeight={isComparing ? 600 : 400}
+                  textAnchor="middle" style={{ transition: "all 0.3s" }}>{val}</text>
+                <text x={x + barW / 2} y={190} fill="var(--text-faint)" fontSize={9}
+                  fontFamily="var(--font-mono)" textAnchor="middle">[{i}]</text>
+                {isComparing && i === current.comparing[0] && (
+                  <text x={x + barW + gap / 2} y={y + barH / 2}
+                    fill={current.swapped ? "var(--rose)" : "var(--amber)"}
+                    fontSize={16} textAnchor="middle" fontWeight={700}
+                    style={{ transition: "all 0.3s" }}>
+                    {current.swapped ? "\u21D4" : "\u27F7"}
+                  </text>
+                )}
+              </g>
+            );
+          })}
+        </svg>
+        <div style={{ marginTop: 8, padding: "8px 12px", background: "var(--bg)", borderRadius: 8, display: "flex", gap: 16, flexWrap: "wrap" }}>
+          {current.pass >= 0 && (
+            <span style={{ fontSize: 11, color: "var(--text-secondary)", fontFamily: "var(--font-mono)" }}>
+              Pass <span style={{ color: "var(--amber)" }}>{current.pass + 1}</span>
+            </span>
+          )}
+          {current.comparing[0] >= 0 && (
+            <span style={{ fontSize: 11, color: "var(--text-secondary)", fontFamily: "var(--font-mono)" }}>
+              Comparing <span style={{ color: "var(--amber)" }}>[{current.comparing[0]}]</span>
+              {" & "}<span style={{ color: "var(--amber)" }}>[{current.comparing[1]}]</span>
+            </span>
+          )}
+          {current.swapped && <span style={{ fontSize: 11, color: "var(--rose)", fontFamily: "var(--font-mono)" }}>Swapped!</span>}
+          {current.pass === -1 && step > 0 && <span style={{ fontSize: 11, color: "var(--teal)", fontFamily: "var(--font-mono)", fontWeight: 600 }}>Sorted!</span>}
+        </div>
+      </div>
+
+      <div style={S.vizBox}>
+        <div style={S.vizLabel}>Pseudocode</div>
+        <pre style={{ fontFamily: "var(--font-mono)", fontSize: 12, lineHeight: 1.8, color: "var(--text-muted)", margin: 0 }}>
+          {[
+            { code: "for pass = 0 to n-1:", hl: current.pass >= 0 },
+            { code: "  for j = 0 to n-1-pass:", hl: current.comparing[0] >= 0 },
+            { code: "    if arr[j] > arr[j+1]:", hl: current.comparing[0] >= 0 && !current.swapped },
+            { code: "      swap(arr[j], arr[j+1])", hl: current.swapped },
+          ].map((line, i) => (
+            <div key={i} style={{
+              color: line.hl ? "var(--text)" : undefined,
+              background: line.hl ? "var(--amber-glow)" : undefined,
+              padding: "0 8px", borderRadius: 4,
+              borderLeft: line.hl ? "2px solid var(--amber)" : "2px solid transparent",
+              transition: "all 0.3s",
+            }}>{line.code}</div>
+          ))}
+        </pre>
+      </div>
+    </div>
+  );
+
+  const explanation = (
+    <div>
+      <div style={{ marginBottom: 16 }}>
+        <div style={S.vizLabel}>How it works</div>
+      </div>
+      <ExplainStep number={1} title="Start a pass" active={getPhase() === 0 || (current.pass >= 0 && current.comparing[0] >= 0)}
+        desc="Walk from left to right through the unsorted portion of the array." />
+      <ExplainStep number={2} title="Compare neighbors" active={getPhase() === 1} color="var(--amber)"
+        desc={`Compare arr[${current.comparing[0]}] and arr[${current.comparing[1]}]. Are they in the wrong order?`} />
+      <ExplainStep number={3} title="Swap if needed" active={getPhase() === 2} color="var(--rose)"
+        desc="The left element is larger — swap the pair so the bigger value moves right." />
+      <ExplainStep number={4} title="Pass complete" active={getPhase() === 3} color="var(--teal)"
+        desc="After each full pass, the largest unsorted element has 'bubbled' to its final position at the end." />
+
+      <div style={{ ...S.insight("var(--amber)"), marginTop: 16 }}>
+        <p style={S.insightTitle("var(--amber)")}>Why O(n²)?</p>
+        <p style={S.insightBody}>
+          With n elements, we do up to n passes, each scanning up to n elements. In the worst case (reverse sorted), every pair gets swapped.
+          Best case is O(n) when the array is already sorted — one pass with zero swaps.
+        </p>
+      </div>
+
+      <div style={{ ...S.insight("var(--teal)"), marginTop: 10 }}>
+        <p style={S.insightTitle("var(--teal)")}>Stable sort</p>
+        <p style={S.insightBody}>
+          Equal elements are never swapped, so their original relative order is preserved. This matters when sorting objects by one field while keeping a previous sort order.
+        </p>
+      </div>
+    </div>
+  );
+
+  return <AlgoLayout viz={viz} explanation={explanation} />;
+}
+
+function MergeSortTab() {
+  const [step, setStep] = useState(0);
+
+  const steps = [
+    { rows: [{ cells: [38, 27, 43, 3, 9, 82, 10], colors: Array(7).fill("var(--text-faint)") }], phase: "start", desc: "Original unsorted array" },
+    { rows: [
+      { cells: [38, 27, 43, 3, 9, 82, 10], colors: Array(7).fill("var(--text-faint)") },
+      { cells: [38, 27, 43, null, 3, 9, 82, 10], colors: ["var(--amber)","var(--amber)","var(--amber)",null,"var(--violet)","var(--violet)","var(--violet)","var(--violet)"] },
+    ], phase: "split", desc: "Split into two halves: [38,27,43] and [3,9,82,10]" },
+    { rows: [
+      { cells: [38, 27, 43, 3, 9, 82, 10], colors: Array(7).fill("var(--text-faint)") },
+      { cells: [38, 27, 43, null, 3, 9, 82, 10], colors: ["var(--amber)","var(--amber)","var(--amber)",null,"var(--violet)","var(--violet)","var(--violet)","var(--violet)"] },
+      { cells: [38, null, 27, 43, null, 3, 9, null, 82, 10], colors: ["var(--amber)",null,"var(--teal)","var(--teal)",null,"var(--violet)","var(--violet)",null,"var(--rose)","var(--rose)"] },
+    ], phase: "split", desc: "Continue splitting: [38] [27,43] | [3,9] [82,10]" },
+    { rows: [
+      { cells: [38, 27, 43, 3, 9, 82, 10], colors: Array(7).fill("var(--text-faint)") },
+      { cells: [38, 27, 43, null, 3, 9, 82, 10], colors: ["var(--amber)","var(--amber)","var(--amber)",null,"var(--violet)","var(--violet)","var(--violet)","var(--violet)"] },
+      { cells: [38, null, 27, 43, null, 3, 9, null, 82, 10], colors: ["var(--amber)",null,"var(--teal)","var(--teal)",null,"var(--violet)","var(--violet)",null,"var(--rose)","var(--rose)"] },
+      { cells: [38, null, 27, null, 43, null, 3, null, 9, null, 82, null, 10], colors: ["var(--amber)",null,"var(--teal)",null,"var(--teal)",null,"var(--violet)",null,"var(--violet)",null,"var(--rose)",null,"var(--rose)"] },
+    ], phase: "split", desc: "Split down to individual elements \u2014 base case reached" },
+    { rows: [
+      { cells: [38, 27, 43, 3, 9, 82, 10], colors: Array(7).fill("var(--text-faint)") },
+      { cells: [38, 27, 43, null, 3, 9, 82, 10], colors: ["var(--amber)","var(--amber)","var(--amber)",null,"var(--violet)","var(--violet)","var(--violet)","var(--violet)"] },
+      { cells: [38, null, 27, 43, null, 3, 9, null, 10, 82], colors: ["var(--amber)",null,"var(--teal)","var(--teal)",null,"var(--violet)","var(--violet)",null,"var(--rose)","var(--rose)"] },
+    ], phase: "merge", desc: "Merge pairs: [27,43] already sorted, [10,82] swapped" },
+    { rows: [
+      { cells: [38, 27, 43, 3, 9, 82, 10], colors: Array(7).fill("var(--text-faint)") },
+      { cells: [27, 38, 43, null, 3, 9, 10, 82], colors: ["var(--amber)","var(--amber)","var(--amber)",null,"var(--violet)","var(--violet)","var(--violet)","var(--violet)"] },
+    ], phase: "merge", desc: "Merge up: [27,38,43] and [3,9,10,82]" },
+    { rows: [
+      { cells: [3, 9, 10, 27, 38, 43, 82], colors: ["var(--teal)","var(--teal)","var(--teal)","var(--teal)","var(--teal)","var(--teal)","var(--teal)"] },
+    ], phase: "done", desc: "Final merge: [3, 9, 10, 27, 38, 43, 82] \u2014 sorted!" },
+  ];
+
+  const current = steps[Math.min(step, steps.length - 1)];
+  const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState(DEFAULT_SPEED);
+  useEffect(() => {
+    if (!playing) return;
+    if (step >= steps.length - 1) { setPlaying(false); return; }
+    const t = setTimeout(() => setStep((s) => s + 1), 3600 / speed);
+    return () => clearTimeout(t);
+  }, [playing, step]);
+
+  const getPhase = () => {
+    if (current.phase === "start") return 0;
+    if (current.phase === "split") return 1;
+    if (current.phase === "merge") return 2;
+    return 3;
+  };
+
+  const viz = (
+    <div>
+      <h3 style={S.sectionTitle}>Merge Sort</h3>
+      <p style={S.subtitle}>
+        A <strong style={{ color: "var(--teal)" }}>divide and conquer</strong> algorithm.
+        Recursively split the array in half until each piece has one element, then merge the pieces back in sorted order.
+      </p>
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+        <span style={S.complexityBadge("var(--teal)")}>O(n log n) always</span>
+        <span style={S.complexityBadge("var(--amber)")}>O(n) space</span>
+        <span style={S.complexityBadge("var(--violet)")}>Stable</span>
+        <span style={S.complexityBadge("var(--rose)")}>Not in-place</span>
+      </div>
+
+      <Controls step={step} maxStep={steps.length - 1} playing={playing} setPlaying={setPlaying} setStep={setStep} speed={speed} setSpeed={setSpeed} />
+
+      <div style={S.vizBox}>
+        <div style={S.vizLabel}>Divide & Merge Tree</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {current.rows.map((row, ri) => (
+            <div key={ri} style={{
+              display: "flex", justifyContent: "center", gap: 4, alignItems: "center",
+              opacity: ri === current.rows.length - 1 ? 1 : 0.45,
+              transition: "opacity 0.4s",
+            }}>
+              {row.cells.map((cell, ci) => {
+                if (cell === null) return <div key={ci} style={{ width: 16 }} />;
+                const color = row.colors[ci] || "var(--text-faint)";
+                return (
+                  <div key={ci} style={{
+                    width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center",
+                    background: `${color}15`, border: `1.5px solid ${color}`,
+                    borderRadius: 8, fontFamily: "var(--font-mono)", fontSize: 14, fontWeight: 600,
+                    color, transition: "all 0.4s",
+                  }}>{cell}</div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+        {current.rows.length > 1 && (
+          <div style={{ textAlign: "center", marginTop: 8 }}>
+            <span style={{
+              fontFamily: "var(--font-mono)", fontSize: 10,
+              color: current.phase === "merge" ? "var(--teal)" : "var(--amber)",
+              letterSpacing: 1,
+            }}>
+              {current.phase === "split" ? "\u25BC SPLITTING \u25BC" : current.phase === "merge" ? "\u25B2 MERGING \u25B2" : ""}
+            </span>
+          </div>
+        )}
+        <div style={{ marginTop: 10, padding: "8px 12px", background: "var(--bg)", borderRadius: 8,
+          fontFamily: "var(--font-mono)", fontSize: 11,
+          color: current.phase === "done" ? "var(--teal)" : "var(--text-secondary)",
+          fontWeight: current.phase === "done" ? 600 : 400 }}>
+          {current.desc}
+        </div>
+      </div>
+
+      <div style={S.vizBox}>
+        <div style={S.vizLabel}>Pseudocode</div>
+        <pre style={{ fontFamily: "var(--font-mono)", fontSize: 12, lineHeight: 1.8, color: "var(--text-muted)", margin: 0 }}>
+          {[
+            { code: "mergeSort(arr):", hl: true },
+            { code: "  if len(arr) <= 1: return arr", hl: getPhase() === 0 || step === 3 },
+            { code: "  mid = len(arr) / 2", hl: getPhase() === 1 },
+            { code: "  left  = mergeSort(arr[:mid])", hl: getPhase() === 1 },
+            { code: "  right = mergeSort(arr[mid:])", hl: getPhase() === 1 },
+            { code: "  return merge(left, right)", hl: getPhase() === 2 || getPhase() === 3 },
+          ].map((line, i) => (
+            <div key={i} style={{
+              color: line.hl ? "var(--text)" : undefined,
+              background: line.hl ? "var(--amber-glow)" : undefined,
+              padding: "0 8px", borderRadius: 4,
+              borderLeft: line.hl ? "2px solid var(--amber)" : "2px solid transparent",
+              transition: "all 0.3s",
+            }}>{line.code}</div>
+          ))}
+        </pre>
+      </div>
+    </div>
+  );
+
+  const explanation = (
+    <div>
+      <div style={{ marginBottom: 16 }}><div style={S.vizLabel}>How it works</div></div>
+      <ExplainStep number={1} title="Divide" active={getPhase() <= 1}
+        desc="Recursively split the array into halves until each sub-array has at most one element." />
+      <ExplainStep number={2} title="Base case" active={step === 3} color="var(--amber)"
+        desc="A single element is trivially sorted. This is where recursion stops." />
+      <ExplainStep number={3} title="Merge" active={getPhase() === 2} color="var(--teal)"
+        desc="Combine two sorted sub-arrays by comparing their front elements and picking the smaller one each time." />
+      <ExplainStep number={4} title="Sorted" active={getPhase() === 3} color="var(--teal)"
+        desc="The final merge produces the fully sorted array." />
+
+      <div style={{ ...S.insight("var(--teal)"), marginTop: 16 }}>
+        <p style={S.insightTitle("var(--teal)")}>Always O(n log n)</p>
+        <p style={S.insightBody}>
+          Unlike Bubble Sort, Merge Sort is O(n log n) in every case — best, average, and worst.
+          The tradeoff: it needs O(n) extra space for the temporary merge arrays.
+        </p>
+      </div>
+
+      <div style={{ ...S.insight("var(--violet)"), marginTop: 10 }}>
+        <p style={S.insightTitle("var(--violet)")}>Divide & conquer</p>
+        <p style={S.insightBody}>
+          The same pattern appears in Quick Sort, binary search, and many tree algorithms.
+          Split the problem → solve halves → combine results.
+        </p>
+      </div>
+    </div>
+  );
+
+  return <AlgoLayout viz={viz} explanation={explanation} />;
+}
+
+function BinarySearchTab() {
+  const arr = [3, 7, 11, 15, 22, 29, 35, 42, 58, 63, 71, 84, 90, 96];
+  const target = 63;
+  const [step, setStep] = useState(0);
+
+  const computeSteps = () => {
+    const steps = [];
+    let lo = 0, hi = arr.length - 1;
+    steps.push({ lo, hi, mid: -1, status: "start", found: false });
+    while (lo <= hi) {
+      const mid = Math.floor((lo + hi) / 2);
+      if (arr[mid] === target) {
+        steps.push({ lo, hi, mid, status: "found", found: true });
+        return steps;
+      } else if (arr[mid] < target) {
+        steps.push({ lo, hi, mid, status: "too_low", found: false });
+        lo = mid + 1;
+      } else {
+        steps.push({ lo, hi, mid, status: "too_high", found: false });
+        hi = mid - 1;
+      }
+    }
+    steps.push({ lo, hi, mid: -1, status: "not_found", found: false });
+    return steps;
+  };
+
+  const allSteps = useRef(computeSteps()).current;
+  const current = allSteps[Math.min(step, allSteps.length - 1)];
+
+  const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState(DEFAULT_SPEED);
+  useEffect(() => {
+    if (!playing) return;
+    if (step >= allSteps.length - 1) { setPlaying(false); return; }
+    const t = setTimeout(() => setStep((s) => s + 1), 2700 / speed);
+    return () => clearTimeout(t);
+  }, [playing, step, allSteps.length]);
+
+  const statusMessages = {
+    start: "Initialize low=0, high=13. Begin search.",
+    too_low: `arr[${current.mid}] = ${current.mid >= 0 ? arr[current.mid] : "?"} < ${target}  \u2192  search right half`,
+    too_high: `arr[${current.mid}] = ${current.mid >= 0 ? arr[current.mid] : "?"} > ${target}  \u2192  search left half`,
+    found: `arr[${current.mid}] = ${target}  \u2192  Found at index ${current.mid}!`,
+    not_found: `Element not found in array.`,
+  };
+
+  const getPhase = () => {
+    if (current.status === "start") return 0;
+    if (current.status === "too_low") return 1;
+    if (current.status === "too_high") return 2;
+    if (current.status === "found") return 3;
+    return 0;
+  };
+
+  const viz = (
+    <div>
+      <h3 style={S.sectionTitle}>Binary Search</h3>
+      <p style={S.subtitle}>
+        Efficiently find an element in a <strong style={{ color: "var(--amber)" }}>sorted</strong> array by
+        repeatedly halving the search space. Each comparison eliminates half the remaining candidates.
+      </p>
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+        <span style={S.complexityBadge("var(--teal)")}>O(log n) time</span>
+        <span style={S.complexityBadge("var(--amber)")}>O(1) space</span>
+        <span style={S.complexityBadge("var(--violet)")}>Requires sorted input</span>
+      </div>
+
+      <Controls step={step} maxStep={allSteps.length - 1} playing={playing} setPlaying={setPlaying} setStep={setStep} speed={speed} setSpeed={setSpeed}
+        extra={<span style={{ fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--text-muted)" }}>target = <span style={{ color: "var(--amber)" }}>{target}</span></span>} />
+
+      <div style={S.vizBox}>
+        <div style={S.vizLabel}>Sorted Array</div>
+        <svg viewBox="0 0 600 140" style={{ width: "100%", height: "auto" }}>
+          {arr.map((val, i) => {
+            const cellW = 38, gap = 4;
+            const x = 8 + i * (cellW + gap), y = 40;
+            const inRange = i >= current.lo && i <= current.hi;
+            const isMid = i === current.mid;
+            const isFound = current.found && isMid;
+            const isEliminated = !inRange && step > 0;
+
+            let fill = "var(--bg-elevated)", stroke = "var(--border)", textColor = "var(--text-secondary)";
+            if (isFound) { fill = "var(--teal-glow)"; stroke = "var(--teal)"; textColor = "var(--teal)"; }
+            else if (isMid) { fill = "var(--amber-glow)"; stroke = "var(--amber)"; textColor = "var(--amber)"; }
+            else if (isEliminated) { fill = "var(--bg-inset)"; stroke = "var(--border-subtle)"; textColor = "var(--text-faint)"; }
+
+            return (
+              <g key={i}>
+                <rect x={x} y={y} width={cellW} height={38} rx={6} fill={fill} stroke={stroke}
+                  strokeWidth={isMid || isFound ? 2 : 1} style={{ transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)" }} />
+                <text x={x + cellW / 2} y={y + 23} fill={textColor} fontSize={13} fontFamily="var(--font-mono)"
+                  fontWeight={isMid || isFound ? 700 : 400} textAnchor="middle" style={{ transition: "all 0.4s" }}>{val}</text>
+                <text x={x + cellW / 2} y={y + 52} fill="var(--text-faint)" fontSize={8} fontFamily="var(--font-mono)" textAnchor="middle">{i}</text>
+                {step > 0 && !isFound && (() => {
+                  const isLo = i === current.lo;
+                  const isHi = i === current.hi;
+                  const same = current.lo === current.hi;
+                  if (isLo && same) {
+                    return (
+                      <g><text x={x + cellW / 2} y={y - 8} fill="var(--teal)" fontSize={9} fontFamily="var(--font-mono)" textAnchor="middle" fontWeight={600}>lo/hi</text>
+                      <line x1={x + cellW / 2} y1={y - 4} x2={x + cellW / 2} y2={y} stroke="var(--teal)" strokeWidth={1.5} /></g>
+                    );
+                  }
+                  if (isLo) {
+                    return (
+                      <g><text x={x + cellW / 2} y={y - 8} fill="var(--teal)" fontSize={9} fontFamily="var(--font-mono)" textAnchor="middle" fontWeight={600}>lo</text>
+                      <line x1={x + cellW / 2} y1={y - 4} x2={x + cellW / 2} y2={y} stroke="var(--teal)" strokeWidth={1.5} /></g>
+                    );
+                  }
+                  if (isHi) {
+                    return (
+                      <g><text x={x + cellW / 2} y={y - 8} fill="var(--violet)" fontSize={9} fontFamily="var(--font-mono)" textAnchor="middle" fontWeight={600}>hi</text>
+                      <line x1={x + cellW / 2} y1={y - 4} x2={x + cellW / 2} y2={y} stroke="var(--violet)" strokeWidth={1.5} /></g>
+                    );
+                  }
+                  return null;
+                })()}
+                {isMid && (
+                  <g><text x={x + cellW / 2} y={y + 72} fill={isFound ? "var(--teal)" : "var(--amber)"} fontSize={9} fontFamily="var(--font-mono)" textAnchor="middle" fontWeight={600}>
+                    {isFound ? "FOUND" : "mid"}</text>
+                  <line x1={x + cellW / 2} y1={y + 56} x2={x + cellW / 2} y2={y + 62} stroke={isFound ? "var(--teal)" : "var(--amber)"} strokeWidth={1.5} /></g>
+                )}
+              </g>
+            );
+          })}
+          {step > 0 && current.lo <= current.hi && (
+            <rect x={8 + current.lo * 42 - 2} y={36} width={(current.hi - current.lo + 1) * 42} height={46} rx={8}
+              fill="none" stroke="var(--text-faint)" strokeWidth={1} strokeDasharray="4,3"
+              style={{ transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)" }} />
+          )}
+        </svg>
+        <div style={{ marginTop: 8, padding: "8px 12px", background: "var(--bg)", borderRadius: 8,
+          fontFamily: "var(--font-mono)", fontSize: 11,
+          color: current.found ? "var(--teal)" : "var(--text-secondary)", fontWeight: current.found ? 600 : 400 }}>
+          {statusMessages[current.status]}
+        </div>
+      </div>
+
+      <div style={S.vizBox}>
+        <div style={S.vizLabel}>Search space reduction</div>
+        <div style={{ display: "flex", gap: 6, alignItems: "flex-end" }}>
+          {allSteps.slice(0, -1).map((s, i) => {
+            const range = Math.max(0, s.hi - s.lo + 1);
+            const barH = (range / arr.length) * 60;
+            const active = i <= step;
+            return (
+              <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: active ? "var(--amber)" : "var(--text-faint)" }}>{range}</span>
+                <div style={{ width: 40, height: barH, background: active ? "var(--amber)" : "var(--text-faint)",
+                  borderRadius: 4, opacity: active ? 0.7 : 0.2, transition: "all 0.3s" }} />
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: 8, color: "var(--text-faint)" }}>Step {i}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+
+  const explanation = (
+    <div>
+      <div style={{ marginBottom: 16 }}><div style={S.vizLabel}>How it works</div></div>
+      <ExplainStep number={1} title="Check the middle" active={getPhase() >= 0}
+        desc="Compute mid = (lo + hi) / 2 and check arr[mid] against the target." />
+      <ExplainStep number={2} title="Target is larger" active={getPhase() === 1} color="var(--amber)"
+        desc="arr[mid] is too small. The target must be in the right half. Move lo = mid + 1." />
+      <ExplainStep number={3} title="Target is smaller" active={getPhase() === 2} color="var(--violet)"
+        desc="arr[mid] is too large. The target must be in the left half. Move hi = mid - 1." />
+      <ExplainStep number={4} title="Found!" active={getPhase() === 3} color="var(--teal)"
+        desc={`arr[mid] equals the target. Return the index ${current.mid}.`} />
+
+      <div style={{ ...S.insight("var(--teal)"), marginTop: 16 }}>
+        <p style={S.insightTitle("var(--teal)")}>The power of halving</p>
+        <p style={S.insightBody}>
+          With 14 elements, at most 4 comparisons. With 1 billion, at most 30.
+          Each step halves the problem — that's O(log n). A linear scan would need up to n steps.
+        </p>
+      </div>
+
+      <div style={{ ...S.insight("var(--rose)"), marginTop: 10 }}>
+        <p style={S.insightTitle("var(--rose)")}>Common pitfall</p>
+        <p style={S.insightBody}>
+          Using (lo + hi) / 2 can overflow in languages with fixed-size integers. Safer: lo + (hi - lo) / 2.
+        </p>
+      </div>
+    </div>
+  );
+
+  return <AlgoLayout viz={viz} explanation={explanation} />;
+}
+
+function BFSTab() {
+  const [step, setStep] = useState(0);
+
+  const nodes = [
+    { x: 240, y: 35, label: "A" }, { x: 120, y: 110, label: "B" }, { x: 360, y: 110, label: "C" },
+    { x: 55, y: 195, label: "D" }, { x: 190, y: 200, label: "E" }, { x: 305, y: 200, label: "F" },
+    { x: 420, y: 195, label: "G" }, { x: 120, y: 280, label: "H" }, { x: 250, y: 285, label: "I" },
+    { x: 380, y: 280, label: "J" },
+  ];
+  const edges = [[0,1],[0,2],[1,3],[1,4],[2,5],[2,6],[3,7],[4,8],[5,8],[6,9]];
+
+  const bfsSteps = [
+    { visited: [], queue: [0], current: -1, exploring: [], level: -1, desc: "Start: enqueue A" },
+    { visited: [0], queue: [1, 2], current: 0, exploring: [1, 2], level: 0, desc: "Dequeue A \u2192 visit. Enqueue neighbors B, C" },
+    { visited: [0, 1], queue: [2, 3, 4], current: 1, exploring: [3, 4], level: 1, desc: "Dequeue B \u2192 visit. Enqueue neighbors D, E" },
+    { visited: [0, 1, 2], queue: [3, 4, 5, 6], current: 2, exploring: [5, 6], level: 1, desc: "Dequeue C \u2192 visit. Enqueue neighbors F, G" },
+    { visited: [0, 1, 2, 3], queue: [4, 5, 6, 7], current: 3, exploring: [7], level: 2, desc: "Dequeue D \u2192 visit. Enqueue neighbor H" },
+    { visited: [0, 1, 2, 3, 4], queue: [5, 6, 7, 8], current: 4, exploring: [8], level: 2, desc: "Dequeue E \u2192 visit. Enqueue neighbor I" },
+    { visited: [0, 1, 2, 3, 4, 5], queue: [6, 7, 8], current: 5, exploring: [], level: 2, desc: "Dequeue F \u2192 visit. I already queued, skip" },
+    { visited: [0, 1, 2, 3, 4, 5, 6], queue: [7, 8, 9], current: 6, exploring: [9], level: 2, desc: "Dequeue G \u2192 visit. Enqueue neighbor J" },
+    { visited: [0, 1, 2, 3, 4, 5, 6, 7], queue: [8, 9], current: 7, exploring: [], level: 3, desc: "Dequeue H \u2192 visit. No new neighbors" },
+    { visited: [0, 1, 2, 3, 4, 5, 6, 7, 8], queue: [9], current: 8, exploring: [], level: 3, desc: "Dequeue I \u2192 visit. No new neighbors" },
+    { visited: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], queue: [], current: 9, exploring: [], level: 3, desc: "Dequeue J \u2192 visit. Queue empty \u2192 done!" },
+  ];
+
+  const current = bfsSteps[Math.min(step, bfsSteps.length - 1)];
+  const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState(DEFAULT_SPEED);
+  useEffect(() => {
+    if (!playing) return;
+    if (step >= bfsSteps.length - 1) { setPlaying(false); return; }
+    const t = setTimeout(() => setStep((s) => s + 1), 2400 / speed);
+    return () => clearTimeout(t);
+  }, [playing, step]);
+
+  const levelColors = ["var(--amber)", "var(--teal)", "var(--violet)", "var(--rose)"];
+  const nodeLevel = [0, 1, 1, 2, 2, 2, 2, 3, 3, 3];
+
+  const viz = (
+    <div>
+      <h3 style={S.sectionTitle}>Breadth-First Search</h3>
+      <p style={S.subtitle}>
+        Explore a graph level by level using a <strong style={{ color: "var(--amber)" }}>queue</strong> (FIFO).
+        Visit all neighbors before moving deeper.
+      </p>
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+        <span style={S.complexityBadge("var(--teal)")}>O(V + E) time</span>
+        <span style={S.complexityBadge("var(--amber)")}>O(V) space</span>
+        <span style={S.complexityBadge("var(--violet)")}>Level-order</span>
+      </div>
+
+      <Controls step={step} maxStep={bfsSteps.length - 1} playing={playing} setPlaying={setPlaying} setStep={setStep} speed={speed} setSpeed={setSpeed} />
+
+      <div style={S.vizBox}>
+        <div style={S.vizLabel}>Graph Traversal</div>
+        <svg viewBox="0 0 480 320" style={{ width: "100%", height: "auto" }}>
+          {[0,1,2,3].map((lvl) => (
+            <g key={`lvl${lvl}`}>
+              <line x1={0} y1={35 + lvl * 82} x2={480} y2={35 + lvl * 82} stroke="var(--border-subtle)" strokeWidth={0.5} strokeDasharray="4,8" />
+              <text x={475} y={30 + lvl * 82} fill={step > 0 && current.level >= lvl ? levelColors[lvl] : "var(--text-faint)"}
+                fontSize={8} fontFamily="var(--font-mono)" textAnchor="end" opacity={0.6}>L{lvl}</text>
+            </g>
+          ))}
+          {edges.map(([from, to], i) => {
+            const n1 = nodes[from], n2 = nodes[to];
+            const bothVisited = current.visited.includes(from) && current.visited.includes(to);
+            const isExploring = current.current === from && current.exploring.includes(to);
+            return (
+              <line key={`e${i}`} x1={n1.x} y1={n1.y} x2={n2.x} y2={n2.y}
+                stroke={isExploring ? "var(--amber)" : bothVisited ? `${levelColors[nodeLevel[to]]}60` : "var(--border)"}
+                strokeWidth={isExploring ? 3 : bothVisited ? 2 : 1}
+                strokeDasharray={isExploring ? "6,3" : "none"} style={{ transition: "all 0.4s" }} />
+            );
+          })}
+          {nodes.map((n, i) => {
+            const isVisited = current.visited.includes(i);
+            const isCurrent = current.current === i;
+            const inQueue = current.queue.includes(i) && !isVisited;
+            const isExploring = current.exploring.includes(i);
+            const lvl = nodeLevel[i];
+            let fill = "var(--bg-elevated)", stroke = "var(--border)", textColor = "var(--text-muted)", r = 18;
+            if (isCurrent) { fill = `${levelColors[lvl]}30`; stroke = levelColors[lvl]; textColor = levelColors[lvl]; r = 22; }
+            else if (isVisited) { fill = `${levelColors[lvl]}18`; stroke = `${levelColors[lvl]}70`; textColor = levelColors[lvl]; }
+            else if (inQueue || isExploring) { fill = "var(--amber-glow)"; stroke = "var(--amber-dim)"; textColor = "var(--amber)"; }
+            return (
+              <g key={`n${i}`}>
+                {isCurrent && <circle cx={n.x} cy={n.y} r={r + 6} fill={`${levelColors[lvl]}10`} style={{ transition: "all 0.4s" }} />}
+                <circle cx={n.x} cy={n.y} r={r} fill={fill} stroke={stroke}
+                  strokeWidth={isCurrent ? 2.5 : 1.5} style={{ transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)" }} />
+                <text x={n.x} y={n.y + 5} fill={textColor} fontSize={14} fontFamily="var(--font-mono)" fontWeight={600} textAnchor="middle"
+                  style={{ transition: "all 0.4s" }}>{n.label}</text>
+              </g>
+            );
+          })}
+        </svg>
+        <div style={{ marginTop: 10, padding: "10px 12px", background: "var(--bg)", borderRadius: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+            <span style={{ fontSize: 10, color: "var(--text-muted)", fontFamily: "var(--font-mono)", textTransform: "uppercase", letterSpacing: 1 }}>Queue</span>
+            <div style={{ display: "flex", gap: 4 }}>
+              {current.queue.length === 0 && step > 0 ? (
+                <span style={{ fontSize: 11, color: "var(--teal)", fontFamily: "var(--font-mono)" }}>empty</span>
+              ) : current.queue.map((idx, qi) => (
+                <span key={qi} style={{
+                  padding: "3px 8px", background: qi === 0 ? "var(--amber-glow)" : "var(--bg-elevated)",
+                  border: `1px solid ${qi === 0 ? "var(--amber)" : "var(--border)"}`, borderRadius: 5,
+                  fontSize: 11, fontFamily: "var(--font-mono)", color: qi === 0 ? "var(--amber)" : "var(--text-secondary)",
+                  fontWeight: qi === 0 ? 600 : 400,
+                }}>{nodes[idx].label}</span>
+              ))}
+            </div>
+            {current.queue.length > 0 && <span style={{ fontSize: 9, color: "var(--text-faint)", fontFamily: "var(--font-mono)" }}>{"\u2190"} front</span>}
+          </div>
+          <p style={{ fontSize: 11, color: "var(--text-secondary)", fontFamily: "var(--font-mono)", margin: 0 }}>{current.desc}</p>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", gap: 12, marginBottom: 18 }}>
+        {["Level 0","Level 1","Level 2","Level 3"].map((l, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            <div style={{ width: 10, height: 10, borderRadius: "50%", background: levelColors[i], opacity: 0.7 }} />
+            <span style={{ fontSize: 10, color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>{l}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const explanation = (
+    <div>
+      <div style={{ marginBottom: 16 }}><div style={S.vizLabel}>How it works</div></div>
+      <ExplainStep number={1} title="Enqueue start node" active={step === 0}
+        desc="Place the starting node into an empty queue. Mark it as discovered." />
+      <ExplainStep number={2} title="Dequeue front" active={step > 0 && current.queue.length > 0} color="var(--amber)"
+        desc="Remove the front node from the queue. This is the node we're currently visiting." />
+      <ExplainStep number={3} title="Enqueue neighbors" active={current.exploring.length > 0} color="var(--teal)"
+        desc="For each unvisited neighbor of the current node, add it to the back of the queue." />
+      <ExplainStep number={4} title="Repeat until empty" active={current.queue.length === 0 && step > 0} color="var(--violet)"
+        desc="When the queue empties, every reachable node has been visited exactly once." />
+
+      <div style={{ ...S.insight("var(--violet)"), marginTop: 16 }}>
+        <p style={S.insightTitle("var(--violet)")}>BFS guarantees shortest path</p>
+        <p style={S.insightBody}>
+          In an unweighted graph, BFS finds the shortest path (fewest edges) because it explores all nodes at distance d before any at d+1.
+        </p>
+      </div>
+
+      <div style={{ ...S.insight("var(--amber)"), marginTop: 10 }}>
+        <p style={S.insightTitle("var(--amber)")}>BFS vs DFS</p>
+        <p style={S.insightBody}>
+          BFS uses a queue (FIFO) → wide exploration. DFS uses a stack (LIFO) → deep exploration. Same graph, different traversal order.
+        </p>
+      </div>
+    </div>
+  );
+
+  return <AlgoLayout viz={viz} explanation={explanation} />;
+}
+
+function DFSTab() {
+  const [step, setStep] = useState(0);
+
+  const nodes = [
+    { x: 240, y: 35, label: "A" }, { x: 120, y: 115, label: "B" }, { x: 360, y: 115, label: "C" },
+    { x: 55, y: 200, label: "D" }, { x: 190, y: 200, label: "E" }, { x: 305, y: 200, label: "F" },
+    { x: 420, y: 200, label: "G" }, { x: 120, y: 280, label: "H" }, { x: 305, y: 280, label: "I" },
+  ];
+  const edges = [[0,1],[0,2],[1,3],[1,4],[2,5],[2,6],[3,7],[5,8]];
+
+  const dfsSteps = [
+    { visited: [], stack: [0], current: -1, backtracking: false, desc: "Start: push A onto stack" },
+    { visited: [0], stack: [2, 1], current: 0, backtracking: false, desc: "Pop A \u2192 visit. Push neighbors C, B (reverse for left-first)" },
+    { visited: [0, 1], stack: [2, 4, 3], current: 1, backtracking: false, desc: "Pop B \u2192 visit. Push E, D" },
+    { visited: [0, 1, 3], stack: [2, 4, 7], current: 3, backtracking: false, desc: "Pop D \u2192 visit. Push H" },
+    { visited: [0, 1, 3, 7], stack: [2, 4], current: 7, backtracking: false, desc: "Pop H \u2192 visit. No unvisited neighbors \u2192 leaf node" },
+    { visited: [0, 1, 3, 7, 4], stack: [2], current: 4, backtracking: true, desc: "Backtrack! Pop E \u2192 visit. No unvisited children" },
+    { visited: [0, 1, 3, 7, 4, 2], stack: [6, 5], current: 2, backtracking: true, desc: "Backtrack! Pop C \u2192 visit. Push G, F" },
+    { visited: [0, 1, 3, 7, 4, 2, 5], stack: [6, 8], current: 5, backtracking: false, desc: "Pop F \u2192 visit. Push I" },
+    { visited: [0, 1, 3, 7, 4, 2, 5, 8], stack: [6], current: 8, backtracking: false, desc: "Pop I \u2192 visit. No unvisited neighbors" },
+    { visited: [0, 1, 3, 7, 4, 2, 5, 8, 6], stack: [], current: 6, backtracking: true, desc: "Pop G \u2192 visit. Stack empty \u2192 done!" },
+  ];
+
+  const current = dfsSteps[Math.min(step, dfsSteps.length - 1)];
+  const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState(DEFAULT_SPEED);
+  useEffect(() => {
+    if (!playing) return;
+    if (step >= dfsSteps.length - 1) { setPlaying(false); return; }
+    const t = setTimeout(() => setStep((s) => s + 1), 2700 / speed);
+    return () => clearTimeout(t);
+  }, [playing, step]);
+
+  const parentMap = { 0: -1, 1: 0, 2: 0, 3: 1, 4: 1, 5: 2, 6: 2, 7: 3, 8: 5 };
+
+  const getPhase = () => {
+    if (step === 0) return 0;
+    if (current.backtracking) return 2;
+    if (current.stack.length === 0 && step > 0) return 3;
+    return 1;
+  };
+
+  const viz = (
+    <div>
+      <h3 style={S.sectionTitle}>Depth-First Search</h3>
+      <p style={S.subtitle}>
+        Explore as <strong style={{ color: "var(--rose)" }}>deep</strong> as possible along each branch before backtracking.
+        Uses a <strong style={{ color: "var(--amber)" }}>stack</strong> (LIFO) — or recursion, which implicitly uses the call stack.
+      </p>
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+        <span style={S.complexityBadge("var(--teal)")}>O(V + E) time</span>
+        <span style={S.complexityBadge("var(--amber)")}>O(V) space</span>
+        <span style={S.complexityBadge("var(--rose)")}>Depth-first</span>
+      </div>
+
+      <Controls step={step} maxStep={dfsSteps.length - 1} playing={playing} setPlaying={setPlaying} setStep={setStep} speed={speed} setSpeed={setSpeed} />
+
+      <div style={S.vizBox}>
+        <div style={S.vizLabel}>Graph Traversal</div>
+        <svg viewBox="0 0 480 320" style={{ width: "100%", height: "auto" }}>
+          {edges.map(([from, to], i) => {
+            const n1 = nodes[from], n2 = nodes[to];
+            const bothVisited = current.visited.includes(from) && current.visited.includes(to);
+            const isCurrentEdge = (current.current === to && parentMap[to] === from);
+            return (
+              <line key={`e${i}`} x1={n1.x} y1={n1.y} x2={n2.x} y2={n2.y}
+                stroke={isCurrentEdge ? "var(--rose)" : bothVisited ? "var(--rose)50" : "var(--border)"}
+                strokeWidth={isCurrentEdge ? 3 : bothVisited ? 2 : 1}
+                style={{ transition: "all 0.4s" }} />
+            );
+          })}
+          {nodes.map((n, i) => {
+            const isVisited = current.visited.includes(i);
+            const isCurrent = current.current === i;
+            const inStack = current.stack.includes(i) && !isVisited;
+            const visitOrder = current.visited.indexOf(i);
+
+            let fill = "var(--bg-elevated)", stroke = "var(--border)", textColor = "var(--text-muted)", r = 18;
+            if (isCurrent) {
+              fill = current.backtracking ? "var(--amber-glow)" : "var(--rose-glow)";
+              stroke = current.backtracking ? "var(--amber)" : "var(--rose)";
+              textColor = current.backtracking ? "var(--amber)" : "var(--rose)";
+              r = 22;
+            } else if (isVisited) {
+              fill = "var(--rose-glow)"; stroke = "var(--rose-dim)"; textColor = "var(--rose)";
+            } else if (inStack) {
+              fill = "var(--amber-glow)"; stroke = "var(--amber-dim)"; textColor = "var(--amber)";
+            }
+
+            return (
+              <g key={`n${i}`}>
+                {isCurrent && <circle cx={n.x} cy={n.y} r={r + 6} fill={current.backtracking ? "var(--amber-glow)" : "var(--rose-glow)"} style={{ transition: "all 0.4s" }} />}
+                <circle cx={n.x} cy={n.y} r={r} fill={fill} stroke={stroke}
+                  strokeWidth={isCurrent ? 2.5 : 1.5} style={{ transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)" }} />
+                <text x={n.x} y={n.y + 5} fill={textColor} fontSize={14} fontFamily="var(--font-mono)"
+                  fontWeight={600} textAnchor="middle" style={{ transition: "all 0.4s" }}>{n.label}</text>
+                {isVisited && (
+                  <text x={n.x + 22} y={n.y - 12} fill="var(--text-faint)" fontSize={8}
+                    fontFamily="var(--font-mono)" textAnchor="middle">#{visitOrder + 1}</text>
+                )}
+              </g>
+            );
+          })}
+        </svg>
+
+        <div style={{ marginTop: 10, padding: "10px 12px", background: "var(--bg)", borderRadius: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+            <span style={{ fontSize: 10, color: "var(--text-muted)", fontFamily: "var(--font-mono)", textTransform: "uppercase", letterSpacing: 1 }}>Stack</span>
+            <div style={{ display: "flex", gap: 4 }}>
+              {current.stack.length === 0 && step > 0 ? (
+                <span style={{ fontSize: 11, color: "var(--teal)", fontFamily: "var(--font-mono)" }}>empty</span>
+              ) : [...current.stack].reverse().map((idx, qi) => (
+                <span key={qi} style={{
+                  padding: "3px 8px",
+                  background: qi === current.stack.length - 1 ? "var(--rose-glow)" : "var(--bg-elevated)",
+                  border: `1px solid ${qi === current.stack.length - 1 ? "var(--rose)" : "var(--border)"}`,
+                  borderRadius: 5, fontSize: 11, fontFamily: "var(--font-mono)",
+                  color: qi === current.stack.length - 1 ? "var(--rose)" : "var(--text-secondary)",
+                  fontWeight: qi === current.stack.length - 1 ? 600 : 400,
+                }}>{nodes[idx].label}</span>
+              ))}
+            </div>
+            {current.stack.length > 0 && <span style={{ fontSize: 9, color: "var(--text-faint)", fontFamily: "var(--font-mono)" }}>{"\u2190"} top</span>}
+          </div>
+          <p style={{ fontSize: 11, color: current.backtracking ? "var(--amber)" : "var(--text-secondary)", fontFamily: "var(--font-mono)", margin: 0 }}>
+            {current.desc}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
+  const explanation = (
+    <div>
+      <div style={{ marginBottom: 16 }}><div style={S.vizLabel}>How it works</div></div>
+      <ExplainStep number={1} title="Push start" active={getPhase() === 0}
+        desc="Push the starting node onto the stack." />
+      <ExplainStep number={2} title="Go deep" active={getPhase() === 1} color="var(--rose)"
+        desc="Pop the top of the stack, visit it, and push all unvisited neighbors. Always explore the newest (deepest) discovery first." />
+      <ExplainStep number={3} title="Backtrack" active={getPhase() === 2} color="var(--amber)"
+        desc="Hit a dead end \u2014 no unvisited neighbors. The stack unwinds back to a node that still has unexplored paths." />
+      <ExplainStep number={4} title="Complete" active={getPhase() === 3} color="var(--teal)"
+        desc="Stack is empty. Every reachable node has been visited." />
+
+      <div style={{ ...S.insight("var(--rose)"), marginTop: 16 }}>
+        <p style={S.insightTitle("var(--rose)")}>DFS vs BFS</p>
+        <p style={S.insightBody}>
+          DFS goes deep before wide. It's natural for problems like maze solving, topological sort, cycle detection, and finding connected components.
+          BFS is better when you need shortest paths.
+        </p>
+      </div>
+
+      <div style={{ ...S.insight("var(--amber)"), marginTop: 10 }}>
+        <p style={S.insightTitle("var(--amber)")}>Recursion = implicit stack</p>
+        <p style={S.insightBody}>
+          Recursive DFS uses the call stack instead of an explicit stack data structure. Same traversal order, but deep graphs can cause stack overflow.
+        </p>
+      </div>
+    </div>
+  );
+
+  return <AlgoLayout viz={viz} explanation={explanation} />;
+}
+
+function DijkstraTab() {
+  const [step, setStep] = useState(0);
+  const nodes = [
+    { x: 60, y: 60, label: "S" }, { x: 200, y: 40, label: "A" }, { x: 350, y: 55, label: "B" },
+    { x: 100, y: 175, label: "C" }, { x: 260, y: 165, label: "D" }, { x: 410, y: 170, label: "E" },
+    { x: 170, y: 280, label: "F" }, { x: 340, y: 275, label: "T" },
+  ];
+  const edges = [
+    { from: 0, to: 1, w: 4 }, { from: 0, to: 3, w: 2 }, { from: 1, to: 2, w: 5 },
+    { from: 1, to: 4, w: 10 }, { from: 2, to: 5, w: 3 }, { from: 3, to: 4, w: 8 },
+    { from: 3, to: 6, w: 7 }, { from: 4, to: 5, w: 2 }, { from: 4, to: 7, w: 6 },
+    { from: 5, to: 7, w: 1 }, { from: 6, to: 7, w: 4 },
+  ];
+  const INF = Infinity;
+  const dijkstraSteps = [
+    { dist: [0, INF, INF, INF, INF, INF, INF, INF], visited: [], current: -1, relaxing: [], desc: "Initialize: dist[S]=0, all others \u221E", path: [] },
+    { dist: [0, 4, INF, 2, INF, INF, INF, INF], visited: [0], current: 0, relaxing: [1, 3], desc: "Visit S (dist=0). Relax edges to A(4) and C(2)", path: [] },
+    { dist: [0, 4, INF, 2, 10, INF, 9, INF], visited: [0, 3], current: 3, relaxing: [4, 6], desc: "Visit C (dist=2). Relax edges to D(2+8=10) and F(2+7=9)", path: [] },
+    { dist: [0, 4, 9, 2, 10, INF, 9, INF], visited: [0, 3, 1], current: 1, relaxing: [2], desc: "Visit A (dist=4). Relax to B(4+5=9). D stays 10 (14>10)", path: [] },
+    { dist: [0, 4, 9, 2, 10, 12, 9, INF], visited: [0, 3, 1, 2], current: 2, relaxing: [5], desc: "Visit B (dist=9). Relax to E(9+3=12)", path: [] },
+    { dist: [0, 4, 9, 2, 10, 12, 9, 13], visited: [0, 3, 1, 2, 6], current: 6, relaxing: [7], desc: "Visit F (dist=9). Relax to T(9+4=13)", path: [] },
+    { dist: [0, 4, 9, 2, 10, 12, 9, 13], visited: [0, 3, 1, 2, 6, 4], current: 4, relaxing: [5, 7], desc: "Visit D (dist=10). D\u2192E: 10+2=12, same. D\u2192T: 10+6=16 > 13, no improve", path: [] },
+    { dist: [0, 4, 9, 2, 10, 12, 9, 13], visited: [0, 3, 1, 2, 6, 4, 5], current: 5, relaxing: [7], desc: "Visit E (dist=12). E\u2192T: 12+1=13, same as current. No improve", path: [] },
+    { dist: [0, 4, 9, 2, 10, 12, 9, 13], visited: [0, 3, 1, 2, 6, 4, 5, 7], current: 7, relaxing: [], desc: "Visit T (dist=13). All nodes visited. Shortest path S\u2192A\u2192B\u2192E\u2192T = 13", path: [0, 1, 2, 5, 7] },
+  ];
+
+  const current = dijkstraSteps[Math.min(step, dijkstraSteps.length - 1)];
+  const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState(DEFAULT_SPEED);
+  useEffect(() => {
+    if (!playing) return;
+    if (step >= dijkstraSteps.length - 1) { setPlaying(false); return; }
+    const t = setTimeout(() => setStep((s) => s + 1), 3300 / speed);
+    return () => clearTimeout(t);
+  }, [playing, step]);
+
+  const isOnPath = (from, to) => {
+    const p = current.path;
+    for (let i = 0; i < p.length - 1; i++) {
+      if ((p[i] === from && p[i + 1] === to) || (p[i] === to && p[i + 1] === from)) return true;
+    }
+    return false;
+  };
+
+  const getPhase = () => {
+    if (step === 0) return 0;
+    if (current.relaxing.length > 0) return 1;
+    if (current.path.length > 0) return 3;
+    return 2;
+  };
+
+  const viz = (
+    <div>
+      <h3 style={S.sectionTitle}>Dijkstra's Algorithm</h3>
+      <p style={S.subtitle}>
+        Find the shortest weighted path from a source to all other nodes. Greedily picks the unvisited node
+        with the smallest known distance, then relaxes its neighbors.
+      </p>
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+        <span style={S.complexityBadge("var(--teal)")}>O((V+E) log V)</span>
+        <span style={S.complexityBadge("var(--amber)")}>Greedy</span>
+        <span style={S.complexityBadge("var(--rose)")}>No negative weights</span>
+      </div>
+
+      <Controls step={step} maxStep={dijkstraSteps.length - 1} playing={playing} setPlaying={setPlaying} setStep={setStep} speed={speed} setSpeed={setSpeed} />
+
+      <div style={S.vizBox}>
+        <div style={S.vizLabel}>Weighted Graph</div>
+        <svg viewBox="0 0 480 320" style={{ width: "100%", height: "auto" }}>
+          {edges.map((e, i) => {
+            const n1 = nodes[e.from], n2 = nodes[e.to];
+            const mx = (n1.x + n2.x) / 2, my = (n1.y + n2.y) / 2;
+            const bothVisited = current.visited.includes(e.from) && current.visited.includes(e.to);
+            const isRelaxing = current.current === e.from && current.relaxing.includes(e.to);
+            const onPath = isOnPath(e.from, e.to);
+            let color = "var(--border)", width = 1;
+            if (onPath) { color = "var(--lime)"; width = 3.5; }
+            else if (isRelaxing) { color = "var(--amber)"; width = 2.5; }
+            else if (bothVisited) { color = "var(--text-faint)"; width = 1.5; }
+            return (
+              <g key={`e${i}`}>
+                <line x1={n1.x} y1={n1.y} x2={n2.x} y2={n2.y} stroke={color} strokeWidth={width}
+                  strokeDasharray={isRelaxing ? "6,3" : "none"} style={{ transition: "all 0.5s" }} />
+                <g transform={`translate(${mx}, ${my})`}>
+                  <rect x={-10} y={-8} width={20} height={16} rx={4} fill="var(--bg-inset)" stroke="var(--border-subtle)" strokeWidth={0.5} />
+                  <text x={0} y={4} fill={isRelaxing ? "var(--amber)" : onPath ? "var(--lime)" : "var(--text-muted)"}
+                    fontSize={10} fontFamily="var(--font-mono)" fontWeight={isRelaxing || onPath ? 600 : 400} textAnchor="middle">{e.w}</text>
+                </g>
+              </g>
+            );
+          })}
+          {nodes.map((n, i) => {
+            const isVisited = current.visited.includes(i);
+            const isCurrent = current.current === i;
+            const onPath = current.path.includes(i);
+            const dist = current.dist[i];
+            const isSource = i === 0, isTarget = i === 7;
+            let fill = "var(--bg-elevated)", stroke = "var(--border)", textColor = "var(--text-muted)";
+            if (onPath) { fill = "var(--lime)"; stroke = "var(--lime)"; textColor = "var(--bg-deep)"; }
+            else if (isCurrent) { fill = "var(--amber-glow)"; stroke = "var(--amber)"; textColor = "var(--amber)"; }
+            else if (isVisited) { fill = "var(--teal-glow)"; stroke = "var(--teal-dim)"; textColor = "var(--teal)"; }
+            else if (isSource) { fill = "var(--amber-glow)"; stroke = "var(--amber-dim)"; textColor = "var(--amber)"; }
+            return (
+              <g key={`n${i}`}>
+                {isCurrent && <circle cx={n.x} cy={n.y} r={28} fill="var(--amber-glow)" style={{ transition: "all 0.4s" }} />}
+                <circle cx={n.x} cy={n.y} r={20} fill={fill} stroke={stroke}
+                  strokeWidth={isCurrent || onPath ? 2.5 : 1.5} style={{ transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)" }} />
+                <text x={n.x} y={n.y + 5} fill={textColor} fontSize={isSource || isTarget ? 14 : 12}
+                  fontFamily="var(--font-mono)" fontWeight={700} textAnchor="middle">{n.label}</text>
+                {step > 0 && (
+                  <g transform={`translate(${n.x + 16}, ${n.y - 18})`}>
+                    <rect x={-12} y={-8} width={24} height={16} rx={4}
+                      fill={dist === INF ? "var(--bg-inset)" : isCurrent ? "var(--amber)" : onPath ? "var(--lime)" : "var(--bg-elevated)"}
+                      stroke={dist === INF ? "var(--border-subtle)" : isCurrent ? "var(--amber)" : onPath ? "var(--lime)" : "var(--border)"} strokeWidth={0.8} />
+                    <text x={0} y={4} fill={dist === INF ? "var(--text-faint)" : (isCurrent || onPath) ? "var(--bg-deep)" : "var(--text-secondary)"}
+                      fontSize={9} fontFamily="var(--font-mono)" fontWeight={600} textAnchor="middle">{dist === INF ? "\u221E" : dist}</text>
+                  </g>
+                )}
+              </g>
+            );
+          })}
+        </svg>
+        <div style={{ marginTop: 8, padding: "8px 12px", background: "var(--bg)", borderRadius: 8,
+          fontFamily: "var(--font-mono)", fontSize: 11,
+          color: current.path.length > 0 ? "var(--lime)" : "var(--text-secondary)", fontWeight: current.path.length > 0 ? 600 : 400 }}>
+          {current.desc}
+        </div>
+      </div>
+
+      <div style={S.vizBox}>
+        <div style={S.vizLabel}>Distance Table</div>
+        <div style={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
+          {nodes.map((n, i) => {
+            const dist = current.dist[i];
+            const isVisited = current.visited.includes(i);
+            const isCurrent = current.current === i;
+            const onPath = current.path.includes(i);
+            return (
+              <div key={i} style={{
+                flex: "1 0 auto", minWidth: 50, padding: "8px 6px",
+                background: isCurrent ? "var(--amber-glow)" : onPath ? "#a3e63518" : "var(--bg)",
+                border: `1px solid ${isCurrent ? "var(--amber)" : onPath ? "var(--lime)" : "var(--border-subtle)"}`,
+                borderRadius: 6, textAlign: "center",
+              }}>
+                <div style={{ fontSize: 11, fontFamily: "var(--font-mono)", fontWeight: 600,
+                  color: onPath ? "var(--lime)" : isCurrent ? "var(--amber)" : isVisited ? "var(--teal)" : "var(--text-muted)", marginBottom: 2 }}>{n.label}</div>
+                <div style={{ fontSize: 13, fontFamily: "var(--font-mono)", fontWeight: 700,
+                  color: dist === INF ? "var(--text-faint)" : onPath ? "var(--lime)" : "var(--text)" }}>{dist === INF ? "\u221E" : dist}</div>
+                {isVisited && <div style={{ fontSize: 8, color: "var(--teal-dim)", fontFamily: "var(--font-mono)", marginTop: 2 }}>done</div>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+
+  const explanation = (
+    <div>
+      <div style={{ marginBottom: 16 }}><div style={S.vizLabel}>How it works</div></div>
+      <ExplainStep number={1} title="Initialize distances" active={getPhase() === 0}
+        desc="Set source distance to 0, all others to \u221E. Nothing visited yet." />
+      <ExplainStep number={2} title="Visit & relax" active={getPhase() === 1} color="var(--amber)"
+        desc="Pick the unvisited node with smallest distance. For each neighbor, check if going through this node is shorter than the current known distance." />
+      <ExplainStep number={3} title="Mark visited" active={getPhase() === 2} color="var(--teal)"
+        desc="Once a node is visited, its shortest distance is finalized \u2014 it will never be updated again." />
+      <ExplainStep number={4} title="Path found" active={getPhase() === 3} color="var(--lime)"
+        desc="When the target is visited, trace back through predecessors to reconstruct the shortest path." />
+
+      <div style={{ ...S.insight("var(--lime)"), marginTop: 16 }}>
+        <p style={S.insightTitle("var(--lime)")}>Relaxation</p>
+        <p style={S.insightBody}>
+          "Relaxing" an edge (u, v): if dist[u] + weight(u,v) &lt; dist[v], update dist[v]. This is the core operation that propagates shortest distances through the graph.
+        </p>
+      </div>
+
+      <div style={{ ...S.insight("var(--rose)"), marginTop: 10 }}>
+        <p style={S.insightTitle("var(--rose)")}>No negative weights</p>
+        <p style={S.insightBody}>
+          Dijkstra's greedy choice assumes visiting a node finalizes its distance. Negative edges break this \u2014 use Bellman-Ford instead.
+        </p>
+      </div>
+    </div>
+  );
+
+  return <AlgoLayout viz={viz} explanation={explanation} />;
+}
+
+function HashTableTab() {
+  const [step, setStep] = useState(0);
+  const TABLE_SIZE = 7;
+
+  const ops = [
+    { key: null, hash: null, action: "init", table: Array(TABLE_SIZE).fill(null),
+      desc: "Empty hash table with 7 slots. Hash function: h(key) = (char sum) mod 7" },
+    { key: "cat", hash: 4, action: "insert", table: [null, null, null, null, ["cat"], null, null],
+      desc: 'Insert "cat": h("cat") = 4 \u2192 place in slot 4' },
+    { key: "dog", hash: 2, action: "insert", table: [null, null, ["dog"], null, ["cat"], null, null],
+      desc: 'Insert "dog": h("dog") = 2 \u2192 place in slot 2' },
+    { key: "ant", hash: 6, action: "insert", table: [null, null, ["dog"], null, ["cat"], null, ["ant"]],
+      desc: 'Insert "ant": h("ant") = 6 \u2192 place in slot 6' },
+    { key: "fox", hash: 2, action: "collision", table: [null, null, ["dog", "fox"], null, ["cat"], null, ["ant"]],
+      desc: 'Insert "fox": h("fox") = 2 \u2192 COLLISION with "dog"! Chain in slot 2' },
+    { key: "bee", hash: 4, action: "collision", table: [null, null, ["dog", "fox"], null, ["cat", "bee"], null, ["ant"]],
+      desc: 'Insert "bee": h("bee") = 4 \u2192 COLLISION with "cat"! Chain in slot 4' },
+    { key: "cow", hash: 0, action: "insert", table: [["cow"], null, ["dog", "fox"], null, ["cat", "bee"], null, ["ant"]],
+      desc: 'Insert "cow": h("cow") = 0 \u2192 place in slot 0' },
+    { key: "dog", hash: 2, action: "lookup", table: [["cow"], null, ["dog", "fox"], null, ["cat", "bee"], null, ["ant"]],
+      desc: 'Lookup "dog": h("dog") = 2 \u2192 go to slot 2, scan chain \u2192 found!' },
+    { key: "pig", hash: 5, action: "miss", table: [["cow"], null, ["dog", "fox"], null, ["cat", "bee"], null, ["ant"]],
+      desc: 'Lookup "pig": h("pig") = 5 \u2192 slot 5 is empty \u2192 not found!' },
+  ];
+
+  const current = ops[Math.min(step, ops.length - 1)];
+  const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState(DEFAULT_SPEED);
+  useEffect(() => {
+    if (!playing) return;
+    if (step >= ops.length - 1) { setPlaying(false); return; }
+    const t = setTimeout(() => setStep((s) => s + 1), 3600 / speed);
+    return () => clearTimeout(t);
+  }, [playing, step]);
+
+  const getPhase = () => {
+    if (current.action === "init") return 0;
+    if (current.action === "insert") return 1;
+    if (current.action === "collision") return 2;
+    if (current.action === "lookup") return 3;
+    if (current.action === "miss") return 4;
+    return 0;
+  };
+
+  const viz = (
+    <div>
+      <h3 style={S.sectionTitle}>Hash Table</h3>
+      <p style={S.subtitle}>
+        Store key-value pairs with <strong style={{ color: "var(--amber)" }}>O(1) average</strong> lookup.
+        A hash function maps each key to a bucket index. Collisions are handled by chaining.
+      </p>
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+        <span style={S.complexityBadge("var(--teal)")}>O(1) avg lookup</span>
+        <span style={S.complexityBadge("var(--rose)")}>O(n) worst case</span>
+        <span style={S.complexityBadge("var(--amber)")}>O(n) space</span>
+      </div>
+
+      <Controls step={step} maxStep={ops.length - 1} playing={playing} setPlaying={setPlaying} setStep={setStep} speed={speed} setSpeed={setSpeed}
+        extra={current.key && (
+          <span style={{ fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--text-muted)" }}>
+            key = <span style={{ color: current.action === "collision" ? "var(--rose)" : current.action === "miss" ? "var(--rose)" : "var(--amber)" }}>"{current.key}"</span>
+          </span>
+        )} />
+
+      <div style={S.vizBox}>
+        <div style={S.vizLabel}>Hash Table (chaining)</div>
+
+        {current.key && (
+          <div style={{
+            display: "flex", alignItems: "center", gap: 8, marginBottom: 16, padding: "8px 12px",
+            background: "var(--bg)", borderRadius: 8, flexWrap: "wrap",
+          }}>
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--text-secondary)" }}>
+              h(<span style={{ color: "var(--amber)" }}>"{current.key}"</span>)
+            </span>
+            <span style={{ color: "var(--text-faint)" }}>=</span>
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--text-secondary)" }}>
+              ... mod {TABLE_SIZE}
+            </span>
+            <span style={{ color: "var(--text-faint)" }}>=</span>
+            <span style={{
+              fontFamily: "var(--font-mono)", fontSize: 14, fontWeight: 700,
+              color: current.action === "collision" ? "var(--rose)" : "var(--amber)",
+            }}>
+              {current.hash}
+            </span>
+          </div>
+        )}
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          {current.table.map((bucket, i) => {
+            const isTarget = current.hash === i && step > 0;
+            const isCollision = isTarget && current.action === "collision";
+            const isMiss = isTarget && current.action === "miss";
+            const isLookup = isTarget && current.action === "lookup";
+            return (
+              <div key={i} style={{
+                display: "flex", alignItems: "center", gap: 8,
+                padding: "6px 10px",
+                background: isCollision ? "var(--rose-glow)" : isTarget ? "var(--amber-glow)" : "transparent",
+                borderRadius: 8, transition: "all 0.3s",
+                border: `1px solid ${isTarget ? (isCollision || isMiss ? "var(--rose)" : "var(--amber)") : "var(--border-subtle)"}`,
+              }}>
+                <div style={{
+                  width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center",
+                  background: isTarget ? (isCollision || isMiss ? "var(--rose)" : "var(--amber)") : "var(--bg-elevated)",
+                  borderRadius: 6, fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 600,
+                  color: isTarget ? "var(--bg-deep)" : "var(--text-muted)",
+                  transition: "all 0.3s",
+                }}>
+                  {i}
+                </div>
+                <span style={{ color: "var(--text-faint)", fontSize: 12 }}>{"\u2192"}</span>
+                <div style={{ display: "flex", gap: 4, flex: 1 }}>
+                  {bucket === null ? (
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: isMiss ? "var(--rose)" : "var(--text-faint)", fontStyle: "italic" }}>
+                      {isMiss ? "empty \u2014 not found!" : "empty"}
+                    </span>
+                  ) : (
+                    bucket.map((item, j) => {
+                      const isNew = isTarget && j === bucket.length - 1 && (current.action === "insert" || current.action === "collision");
+                      const isFound = isLookup && item === current.key;
+                      return (
+                        <div key={j} style={{
+                          padding: "4px 10px",
+                          background: isFound ? "var(--teal-glow)" : isNew ? "var(--amber-glow)" : "var(--bg-elevated)",
+                          border: `1px solid ${isFound ? "var(--teal)" : isNew ? "var(--amber)" : "var(--border)"}`,
+                          borderRadius: 6, fontFamily: "var(--font-mono)", fontSize: 12,
+                          color: isFound ? "var(--teal)" : isNew ? "var(--amber)" : "var(--text-secondary)",
+                          fontWeight: isNew || isFound ? 600 : 400,
+                          transition: "all 0.3s",
+                        }}>
+                          {item}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+                {bucket && bucket.length > 1 && (
+                  <span style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "var(--rose)", opacity: 0.7 }}>chain</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <div style={{ marginTop: 10, padding: "8px 12px", background: "var(--bg)", borderRadius: 8,
+          fontFamily: "var(--font-mono)", fontSize: 11,
+          color: current.action === "collision" ? "var(--rose)" : current.action === "miss" ? "var(--rose)" : current.action === "lookup" ? "var(--teal)" : "var(--text-secondary)",
+          fontWeight: current.action !== "init" ? 500 : 400 }}>
+          {current.desc}
+        </div>
+      </div>
+    </div>
+  );
+
+  const explanation = (
+    <div>
+      <div style={{ marginBottom: 16 }}><div style={S.vizLabel}>How it works</div></div>
+      <ExplainStep number={1} title="Hash the key" active={getPhase() >= 1}
+        desc="Run the key through a hash function to get a bucket index. A good hash spreads keys uniformly." />
+      <ExplainStep number={2} title="Insert at index" active={getPhase() === 1} color="var(--amber)"
+        desc="Place the key in the computed bucket. If empty, this is O(1)." />
+      <ExplainStep number={3} title="Handle collision" active={getPhase() === 2} color="var(--rose)"
+        desc="Two keys hash to the same index! With chaining, we append to a linked list in that bucket. Lookup must scan the chain." />
+      <ExplainStep number={4} title="Lookup" active={getPhase() === 3 || getPhase() === 4} color="var(--teal)"
+        desc={getPhase() === 4 ? "Hash to the bucket \u2014 it's empty, so the key doesn't exist. O(1)." : "Hash to the bucket, scan the chain to find the key. O(1) average, O(n) worst."} />
+
+      <div style={{ ...S.insight("var(--amber)"), marginTop: 16 }}>
+        <p style={S.insightTitle("var(--amber)")}>Load factor</p>
+        <p style={S.insightBody}>
+          Load factor = n/m (items/buckets). When it exceeds ~0.75, resize the table (usually 2x) and rehash everything.
+          This keeps chains short and lookups fast.
+        </p>
+      </div>
+
+      <div style={{ ...S.insight("var(--rose)"), marginTop: 10 }}>
+        <p style={S.insightTitle("var(--rose)")}>Why O(n) worst case?</p>
+        <p style={S.insightBody}>
+          If every key hashes to the same bucket, the chain degenerates into a linked list. A good hash function and proper load factor management prevent this in practice.
+        </p>
+      </div>
+    </div>
+  );
+
+  return <AlgoLayout viz={viz} explanation={explanation} />;
+}
+
+/* ========================================================================
+   DATA STRUCTURES
+   ======================================================================== */
+
+function buildLinkedListSteps() {
+  const steps = [];
+  steps.push({ nodes: [], arrows: [], action: "init", highlight: null, deleteIdx: null, insertIdx: null, traverseIdx: null, desc: "Empty linked list. head = null." });
+  steps.push({ nodes: [{ id: "A", val: "A" }], arrows: [], action: "append", highlight: 0, deleteIdx: null, insertIdx: null, traverseIdx: null, desc: 'Append "A". head now points to A. A.next = null.' });
+  steps.push({ nodes: [{ id: "A", val: "A" }, { id: "B", val: "B" }], arrows: [[0, 1]], action: "append", highlight: 1, deleteIdx: null, insertIdx: null, traverseIdx: null, desc: 'Append "B". A.next now points to B. B.next = null.' });
+  steps.push({ nodes: [{ id: "A", val: "A" }, { id: "B", val: "B" }, { id: "C", val: "C" }], arrows: [[0, 1], [1, 2]], action: "append", highlight: 2, deleteIdx: null, insertIdx: null, traverseIdx: null, desc: 'Append "C". B.next now points to C. C.next = null.' });
+  steps.push({ nodes: [{ id: "A", val: "A" }, { id: "X", val: "X" }, { id: "B", val: "B" }, { id: "C", val: "C" }], arrows: [[0, 1], [1, 2], [2, 3]], action: "insert", highlight: null, deleteIdx: null, insertIdx: 1, traverseIdx: null, desc: 'Insert "X" at position 1. Rewire: A.next = X, X.next = B. No shifting needed!' });
+  steps.push({ nodes: [{ id: "A", val: "A" }, { id: "X", val: "X" }, { id: "C", val: "C" }], arrows: [[0, 1], [1, 2]], action: "delete", highlight: null, deleteIdx: null, insertIdx: null, traverseIdx: null, deletedVal: "B", desc: 'Delete "B" (was at position 2). Rewire: X.next = C, bypassing B. B is freed.' });
+  const traverseList = [{ id: "A", val: "A" }, { id: "X", val: "X" }, { id: "C", val: "C" }];
+  const traverseArrows = [[0, 1], [1, 2]];
+  steps.push({ nodes: traverseList, arrows: traverseArrows, action: "traverse", highlight: null, deleteIdx: null, insertIdx: null, traverseIdx: 0, desc: "Traverse: visiting A (index 0). Follow head pointer." });
+  steps.push({ nodes: traverseList, arrows: traverseArrows, action: "traverse", highlight: null, deleteIdx: null, insertIdx: null, traverseIdx: 1, desc: "Traverse: visiting X (index 1). Follow A.next pointer." });
+  steps.push({ nodes: traverseList, arrows: traverseArrows, action: "traverse", highlight: null, deleteIdx: null, insertIdx: null, traverseIdx: 2, desc: "Traverse: visiting C (index 2). Follow X.next pointer." });
+  steps.push({ nodes: traverseList, arrows: traverseArrows, action: "traverse", highlight: null, deleteIdx: null, insertIdx: null, traverseIdx: 3, desc: "Traverse complete: C.next = null. Reached end of list." });
+  return steps;
+}
+
+const LL_ALL_STEPS = buildLinkedListSteps();
+
+function LinkedListTab() {
+  const [step, setStep] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState(DEFAULT_SPEED);
+
+  const maxStep = LL_ALL_STEPS.length - 1;
+  const current = LL_ALL_STEPS[Math.min(step, maxStep)];
+
+  useEffect(() => {
+    if (!playing) return;
+    if (step >= maxStep) { setPlaying(false); return; }
+    const t = setTimeout(() => setStep((s) => s + 1), 3000 / speed);
+    return () => clearTimeout(t);
+  }, [playing, step, maxStep, speed]);
+
+  const getExplainPhase = () => {
+    const a = current.action;
+    if (a === "init") return 0;
+    if (a === "append") return 1;
+    if (a === "insert") return 2;
+    if (a === "delete") return 3;
+    if (a === "traverse") return 4;
+    return 0;
+  };
+
+  const nodeW = 80, nodeH = 44, gapX = 60, startX = 70, nodeY = 60, svgW = 560, svgH = 150;
+
+  const nodeColor = (idx) => {
+    if (current.insertIdx !== null && idx === current.insertIdx) return "var(--violet)";
+    if (current.highlight !== null && idx === current.highlight) return "var(--amber)";
+    if (current.traverseIdx !== null) {
+      if (idx < current.traverseIdx) return "var(--teal)";
+      if (idx === current.traverseIdx) return "var(--amber)";
+      return "var(--text-faint)";
+    }
+    if (current.action === "delete" || current.action === "traverse") return "var(--teal)";
+    if (current.highlight !== null && idx < current.highlight) return "var(--teal)";
+    return "var(--text-faint)";
+  };
+
+  const nodeOpacity = (idx) => {
+    if (current.traverseIdx !== null && idx > current.traverseIdx) return 0.4;
+    return 0.9;
+  };
+
+  const renderSvg = () => {
+    const { nodes, arrows } = current;
+    if (nodes.length === 0) {
+      return (
+        <svg viewBox={`0 0 ${svgW} ${svgH}`} style={{ width: "100%", height: "auto" }}>
+          <text x={20} y={nodeY + nodeH / 2 + 4} fill="var(--text-muted)" fontSize={11} fontFamily="var(--font-mono)" fontWeight={600}>head</text>
+          <text x={80} y={nodeY + nodeH / 2 + 4} fill="var(--text-faint)" fontSize={13} fontFamily="var(--font-mono)">= null</text>
+        </svg>
+      );
+    }
+    return (
+      <svg viewBox={`0 0 ${svgW} ${svgH}`} style={{ width: "100%", height: "auto" }}>
+        <defs>
+          <marker id="arrowAmber" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="var(--amber)" /></marker>
+          <marker id="arrowTeal" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="var(--teal)" /></marker>
+          <marker id="arrowViolet" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="var(--violet)" /></marker>
+          <marker id="arrowFaint" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="var(--text-faint)" /></marker>
+        </defs>
+        <text x={6} y={nodeY - 10} fill="var(--amber)" fontSize={10} fontFamily="var(--font-mono)" fontWeight={600}>head</text>
+        <line x1={30} y1={nodeY - 4} x2={startX - 4} y2={nodeY + nodeH / 2} stroke="var(--amber)" strokeWidth={1.5} markerEnd="url(#arrowAmber)" style={{ transition: "all 0.3s" }} />
+        {nodes.map((node, i) => {
+          const x = startX + i * (nodeW + gapX);
+          const color = nodeColor(i);
+          return (
+            <g key={node.id + "-" + i} style={{ transition: "all 0.4s ease" }}>
+              <rect x={x} y={nodeY} width={nodeW} height={nodeH} rx={8} fill="var(--bg-elevated)" stroke={color} strokeWidth={2} opacity={nodeOpacity(i)} style={{ transition: "all 0.3s ease" }} />
+              <line x1={x + nodeW * 0.6} y1={nodeY + 4} x2={x + nodeW * 0.6} y2={nodeY + nodeH - 4} stroke={color} strokeWidth={1} opacity={0.3} style={{ transition: "all 0.3s" }} />
+              <text x={x + nodeW * 0.3} y={nodeY + nodeH / 2 + 5} fill={color} fontSize={16} fontFamily="var(--font-mono)" fontWeight={700} textAnchor="middle" opacity={nodeOpacity(i)} style={{ transition: "all 0.3s" }}>{node.val}</text>
+              <text x={x + nodeW * 0.8} y={nodeY + nodeH / 2 + 4} fill={color} fontSize={8} fontFamily="var(--font-mono)" fontWeight={400} textAnchor="middle" opacity={0.6} style={{ transition: "all 0.3s" }}>next</text>
+              <text x={x + nodeW / 2} y={nodeY + nodeH + 16} fill="var(--text-faint)" fontSize={9} fontFamily="var(--font-mono)" textAnchor="middle">[{i}]</text>
+            </g>
+          );
+        })}
+        {arrows.map(([from, to], i) => {
+          const x1 = startX + from * (nodeW + gapX) + nodeW;
+          const x2 = startX + to * (nodeW + gapX);
+          const y = nodeY + nodeH / 2;
+          const fromColor = nodeColor(from);
+          const markerId = fromColor === "var(--violet)" ? "url(#arrowViolet)" : fromColor === "var(--teal)" ? "url(#arrowTeal)" : fromColor === "var(--amber)" ? "url(#arrowAmber)" : "url(#arrowFaint)";
+          return (<line key={`arrow-${i}`} x1={x1 + 2} y1={y} x2={x2 - 4} y2={y} stroke={fromColor} strokeWidth={2} markerEnd={markerId} opacity={0.8} style={{ transition: "all 0.3s ease" }} />);
+        })}
+        {nodes.length > 0 && (
+          <>
+            <line x1={startX + (nodes.length - 1) * (nodeW + gapX) + nodeW + 2} y1={nodeY + nodeH / 2} x2={startX + (nodes.length - 1) * (nodeW + gapX) + nodeW + 28} y2={nodeY + nodeH / 2} stroke="var(--text-faint)" strokeWidth={1.5} strokeDasharray="4,3" style={{ transition: "all 0.3s" }} />
+            <text x={startX + (nodes.length - 1) * (nodeW + gapX) + nodeW + 32} y={nodeY + nodeH / 2 + 4} fill="var(--text-faint)" fontSize={11} fontFamily="var(--font-mono)" fontStyle="italic">null</text>
+          </>
+        )}
+      </svg>
+    );
+  };
+
+  const renderMemoryLayout = () => {
+    const { nodes } = current;
+    if (nodes.length === 0) return (<div style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--text-faint)", fontStyle: "italic", padding: "8px 0" }}>No nodes allocated.</div>);
+    return (
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+        {nodes.map((node, i) => {
+          const color = nodeColor(i);
+          const nextVal = i < nodes.length - 1 ? nodes[i + 1].val : "null";
+          return (
+            <div key={node.id + "-mem-" + i} style={{ display: "flex", alignItems: "center", gap: 0 }}>
+              <div style={{ display: "flex", border: `1.5px solid ${color}`, borderRadius: 6, overflow: "hidden", opacity: nodeOpacity(i), transition: "all 0.3s ease" }}>
+                <div style={{ padding: "6px 12px", background: `${color}12`, fontFamily: "var(--font-mono)", fontSize: 13, fontWeight: 600, color, borderRight: `1px solid ${color}40` }}>{node.val}</div>
+                <div style={{ padding: "6px 10px", background: "var(--bg-elevated)", fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: 4 }}>
+                  <span style={{ color: "var(--text-faint)", fontSize: 9 }}>next:</span>
+                  <span style={{ color: nextVal === "null" ? "var(--text-faint)" : color, fontWeight: 500 }}>{nextVal === "null" ? "null" : `*${nextVal}`}</span>
+                </div>
+              </div>
+              {i < nodes.length - 1 && (<span style={{ color: "var(--text-faint)", fontSize: 14, margin: "0 2px", fontFamily: "var(--font-mono)" }}>{"\u2192"}</span>)}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const viz = (
+    <div>
+      <h3 style={S.sectionTitle}>Singly Linked List</h3>
+      <p style={S.subtitle}>A linear data structure where each node stores a value and a pointer to the next node. Unlike arrays, elements are not stored contiguously in memory.</p>
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+        <span style={S.complexityBadge("var(--teal)")}>O(1) insert at head</span>
+        <span style={S.complexityBadge("var(--amber)")}>O(n) access by index</span>
+        <span style={S.complexityBadge("var(--rose)")}>O(n) search</span>
+        <span style={S.complexityBadge("var(--violet)")}>Dynamic size</span>
+      </div>
+      <Controls step={step} maxStep={maxStep} playing={playing} setPlaying={setPlaying} setStep={setStep} speed={speed} setSpeed={setSpeed} />
+      <div style={S.vizBox}>
+        <div style={S.vizLabel}>Linked List Structure</div>
+        {renderSvg()}
+        <div style={{ marginTop: 8, padding: "8px 12px", background: "var(--bg)", borderRadius: 8, fontFamily: "var(--font-mono)", fontSize: 11,
+          color: current.action === "insert" ? "var(--violet)" : current.action === "delete" ? "var(--rose)" : current.action === "traverse" ? "var(--teal)" : "var(--text-secondary)",
+          fontWeight: current.action !== "init" ? 500 : 400 }}>{current.desc}</div>
+      </div>
+      <div style={S.vizBox}>
+        <div style={S.vizLabel}>Memory Layout</div>
+        {renderMemoryLayout()}
+        {current.action === "delete" && current.deletedVal && (
+          <div style={{ marginTop: 10, padding: "6px 10px", borderRadius: 6, background: "var(--rose-glow)", border: "1px solid var(--rose)", fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--rose)" }}>
+            Node "{current.deletedVal}" removed from memory (garbage collected)
+          </div>
+        )}
+        {current.action === "insert" && (
+          <div style={{ marginTop: 10, padding: "6px 10px", borderRadius: 6, background: "var(--violet-dim)", border: "1px solid var(--violet)", fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--violet)" }}>
+            New node allocated and linked into position {current.insertIdx}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const phase = getExplainPhase();
+  const explanation = (
+    <div>
+      <div style={{ marginBottom: 16 }}><div style={S.vizLabel}>How it works</div></div>
+      <ExplainStep number={1} title="Create node" active={phase === 0 || phase === 1} desc="Allocate a new node in memory with a value field and a next pointer set to null." />
+      <ExplainStep number={2} title="Link pointers" active={phase === 1} color="var(--amber)" desc="Set the previous node's next pointer to the new node. The new node becomes the tail with next = null." />
+      <ExplainStep number={3} title="Insert (pointer rewiring)" active={phase === 2} color="var(--violet)" desc="To insert at position i: find node at i-1, set new.next = node[i-1].next, then node[i-1].next = new. No shifting!" />
+      <ExplainStep number={4} title="Delete (bypass node)" active={phase === 3} color="var(--rose)" desc="To delete node at position i: find node at i-1, set node[i-1].next = node[i].next. The deleted node is freed." />
+      <ExplainStep number={5} title="Traverse" active={phase === 4} color="var(--teal)" desc="Start at head, follow each next pointer until null. This is the only way to reach a specific node." />
+      <div style={{ ...S.insight("var(--amber)"), marginTop: 16 }}>
+        <p style={S.insightTitle("var(--amber)")}>O(1) insert at head</p>
+        <p style={S.insightBody}>Inserting at the head of a linked list is O(1): create a node, point it to the old head, update head. Arrays require shifting every element right, making head insertion O(n). This makes linked lists ideal for stacks and queues.</p>
+      </div>
+      <div style={{ ...S.insight("var(--rose)"), marginTop: 10 }}>
+        <p style={S.insightTitle("var(--rose)")}>No random access</p>
+        <p style={S.insightBody}>To access element i, you must traverse from head through i nodes. Arrays give O(1) access via pointer arithmetic (base + i * size). This tradeoff is fundamental: linked lists trade fast random access for fast insertion and deletion anywhere.</p>
+      </div>
+    </div>
+  );
+
+  return <AlgoLayout viz={viz} explanation={explanation} />;
+}
+
+function StackTab() {
+  const [step, setStep] = useState(0);
+  const steps = [
+    { stack: [], top: -1, action: "init", actionLabel: null, highlight: -1, highlightType: null, desc: "Empty stack. No elements yet." },
+    { stack: ["A"], top: 0, action: "push", actionLabel: 'push("A")', highlight: 0, highlightType: "push", desc: 'Push "A" onto the empty stack. A is now the top element.' },
+    { stack: ["A", "B"], top: 1, action: "push", actionLabel: 'push("B")', highlight: 1, highlightType: "push", desc: 'Push "B". It goes on top of A. B is now the top element.' },
+    { stack: ["A", "B", "C"], top: 2, action: "push", actionLabel: 'push("C")', highlight: 2, highlightType: "push", desc: 'Push "C". Stack grows upward. C is now the top.' },
+    { stack: ["A", "B", "C", "D"], top: 3, action: "push", actionLabel: 'push("D")', highlight: 3, highlightType: "push", desc: 'Push "D". Stack is now [A, B, C, D] with D on top.' },
+    { stack: ["A", "B", "C", "D"], top: 3, action: "peek", actionLabel: "peek() \u2192 D", highlight: 3, highlightType: "peek", desc: 'Peek returns "D" (the top element) without removing it. Stack unchanged.' },
+    { stack: ["A", "B", "C"], top: 2, action: "pop", actionLabel: "pop() \u2192 D", highlight: -1, highlightType: "pop", popValue: "D", desc: 'Pop removes and returns "D". C is now the new top.' },
+    { stack: ["A", "B"], top: 1, action: "pop", actionLabel: "pop() \u2192 C", highlight: -1, highlightType: "pop", popValue: "C", desc: 'Pop removes and returns "C". B is now the new top.' },
+    { stack: ["A", "B", "E"], top: 2, action: "push", actionLabel: 'push("E")', highlight: 2, highlightType: "push", desc: 'Push "E". Stack is now [A, B, E] with E on top.' },
+    { stack: ["A", "B", "E"], top: 2, action: "done", actionLabel: "complete", highlight: -1, highlightType: null, desc: "Final state: [A, B, E]. Stack supports O(1) push, pop, and peek." },
+  ];
+
+  const current = steps[Math.min(step, steps.length - 1)];
+  const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState(DEFAULT_SPEED);
+  useEffect(() => {
+    if (!playing) return;
+    if (step >= steps.length - 1) { setPlaying(false); return; }
+    const t = setTimeout(() => setStep((s) => s + 1), 2400 / speed);
+    return () => clearTimeout(t);
+  }, [playing, step]);
+
+  const getPhase = () => {
+    if (current.action === "init") return 0;
+    if (current.action === "push") return 1;
+    if (current.action === "peek") return 2;
+    if (current.action === "pop") return 3;
+    if (current.action === "done") return 4;
+    return 0;
+  };
+
+  const poppingValue = current.highlightType === "pop" ? current.popValue : null;
+  const BOX_W = 80, BOX_H = 44, GAP = 6, MAX_ITEMS = 5;
+  const SVG_W = 200, SVG_H = (BOX_H + GAP) * MAX_ITEMS + 80;
+
+  const viz = (
+    <div>
+      <h3 style={S.sectionTitle}>Stack (LIFO)</h3>
+      <p style={S.subtitle}>A <strong style={{ color: "var(--amber)" }}>Last-In, First-Out</strong> data structure. The most recently added element is always the first to be removed. Think of a stack of plates: you add and remove from the top.</p>
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+        <span style={S.complexityBadge("var(--teal)")}>O(1) push</span>
+        <span style={S.complexityBadge("var(--teal)")}>O(1) pop</span>
+        <span style={S.complexityBadge("var(--teal)")}>O(1) peek</span>
+        <span style={S.complexityBadge("var(--amber)")}>O(n) space</span>
+      </div>
+      <Controls step={step} maxStep={steps.length - 1} playing={playing} setPlaying={setPlaying} setStep={setStep} speed={speed} setSpeed={setSpeed} />
+      <div style={S.vizBox}>
+        <div style={S.vizLabel}>Stack Visualization</div>
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 32, justifyContent: "center" }}>
+          <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} style={{ width: 200, height: "auto" }}>
+            <rect x={SVG_W / 2 - BOX_W / 2 - 10} y={SVG_H - 20} width={BOX_W + 20} height={4} rx={2} fill="var(--text-faint)" opacity={0.4} />
+            <text x={SVG_W / 2} y={SVG_H - 6} fill="var(--text-faint)" fontSize={9} fontFamily="var(--font-mono)" textAnchor="middle">BOTTOM</text>
+            {current.stack.map((val, i) => {
+              const yBase = SVG_H - 24;
+              const y = yBase - (i + 1) * (BOX_H + GAP);
+              const isTop = i === current.top;
+              const isHighlightPush = current.highlightType === "push" && i === current.highlight;
+              const isHighlightPeek = current.highlightType === "peek" && i === current.highlight;
+              let fill = "var(--teal-glow)", stroke = "var(--teal-dim)", textColor = "var(--teal)";
+              if (isHighlightPush) { fill = "var(--violet-dim)"; stroke = "var(--violet)"; textColor = "var(--violet)"; }
+              else if (isHighlightPeek) { fill = "var(--amber-glow)"; stroke = "var(--amber)"; textColor = "var(--amber)"; }
+              else if (isTop) { fill = "var(--amber-glow)"; stroke = "var(--amber)"; textColor = "var(--amber)"; }
+              return (
+                <g key={`item-${i}`} style={{ transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)" }}>
+                  {isHighlightPush && (<rect x={SVG_W / 2 - BOX_W / 2 - 4} y={y - 4} width={BOX_W + 8} height={BOX_H + 8} rx={12} fill={stroke} opacity={0.15} style={{ transition: "all 0.4s" }} />)}
+                  <rect x={SVG_W / 2 - BOX_W / 2} y={y} width={BOX_W} height={BOX_H} rx={8} fill={fill} stroke={stroke} strokeWidth={isTop || isHighlightPush || isHighlightPeek ? 2 : 1} style={{ transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)" }} />
+                  <text x={SVG_W / 2} y={y + BOX_H / 2 + 5} fill={textColor} fontSize={16} fontFamily="var(--font-mono)" fontWeight={600} textAnchor="middle" style={{ transition: "all 0.4s" }}>{val}</text>
+                  <text x={SVG_W / 2 - BOX_W / 2 - 14} y={y + BOX_H / 2 + 4} fill="var(--text-faint)" fontSize={9} fontFamily="var(--font-mono)" textAnchor="end">[{i}]</text>
+                </g>
+              );
+            })}
+            {current.top >= 0 && (() => {
+              const yBase = SVG_H - 24;
+              const topY = yBase - (current.top + 1) * (BOX_H + GAP) + BOX_H / 2;
+              return (
+                <g style={{ transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)" }}>
+                  <line x1={SVG_W / 2 + BOX_W / 2 + 10} y1={topY} x2={SVG_W / 2 + BOX_W / 2 + 30} y2={topY} stroke="var(--amber)" strokeWidth={2} style={{ transition: "all 0.4s" }} />
+                  <polygon points={`${SVG_W / 2 + BOX_W / 2 + 10},${topY - 4} ${SVG_W / 2 + BOX_W / 2 + 10},${topY + 4} ${SVG_W / 2 + BOX_W / 2 + 4},${topY}`} fill="var(--amber)" style={{ transition: "all 0.4s" }} />
+                  <text x={SVG_W / 2 + BOX_W / 2 + 34} y={topY + 4} fill="var(--amber)" fontSize={11} fontFamily="var(--font-mono)" fontWeight={600}>TOP</text>
+                </g>
+              );
+            })()}
+            {poppingValue && (() => {
+              const yBase = SVG_H - 24;
+              const popY = yBase - (current.stack.length + 1) * (BOX_H + GAP);
+              return (
+                <g opacity={0.5}>
+                  <rect x={SVG_W / 2 - BOX_W / 2} y={popY} width={BOX_W} height={BOX_H} rx={8} fill="var(--rose-glow)" stroke="var(--rose)" strokeWidth={2} strokeDasharray="4 3" />
+                  <text x={SVG_W / 2} y={popY + BOX_H / 2 + 5} fill="var(--rose)" fontSize={16} fontFamily="var(--font-mono)" fontWeight={600} textAnchor="middle">{poppingValue}</text>
+                  <text x={SVG_W / 2} y={popY - 8} fill="var(--rose)" fontSize={14} textAnchor="middle" fontFamily="var(--font-mono)">{"\u2191"} removed</text>
+                </g>
+              );
+            })()}
+            {current.stack.length === 0 && (<text x={SVG_W / 2} y={SVG_H / 2} fill="var(--text-faint)" fontSize={12} fontFamily="var(--font-mono)" textAnchor="middle" fontStyle="italic">empty stack</text>)}
+          </svg>
+        </div>
+        <div style={{ marginTop: 14, padding: "10px 14px", background: "var(--bg)", borderRadius: 8, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <span style={{ fontSize: 10, color: "var(--text-muted)", fontFamily: "var(--font-mono)", textTransform: "uppercase", letterSpacing: 1 }}>Last operation</span>
+          <span style={{ padding: "3px 10px", background: current.action === "pop" ? "var(--rose-glow)" : current.action === "push" ? "var(--violet-dim)" : current.action === "peek" ? "var(--amber-glow)" : "var(--bg-elevated)",
+            border: `1px solid ${current.action === "pop" ? "var(--rose)" : current.action === "push" ? "var(--violet)" : current.action === "peek" ? "var(--amber)" : "var(--border)"}`,
+            borderRadius: 6, fontSize: 12, fontFamily: "var(--font-mono)",
+            color: current.action === "pop" ? "var(--rose)" : current.action === "push" ? "var(--violet)" : current.action === "peek" ? "var(--amber)" : "var(--text-muted)", fontWeight: 600 }}>
+            {current.actionLabel || "\u2014"}
+          </span>
+        </div>
+        <div style={{ marginTop: 8, padding: "8px 12px", background: "var(--bg)", borderRadius: 8, fontFamily: "var(--font-mono)", fontSize: 11,
+          color: current.action === "pop" ? "var(--rose)" : current.action === "push" ? "var(--violet)" : current.action === "peek" ? "var(--amber)" : current.action === "done" ? "var(--teal)" : "var(--text-secondary)",
+          fontWeight: current.action !== "init" ? 500 : 400 }}>{current.desc}</div>
+      </div>
+      <div style={S.vizBox}>
+        <div style={S.vizLabel}>Array Representation</div>
+        <div style={{ display: "flex", gap: 4, alignItems: "center", flexWrap: "wrap" }}>
+          <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--text-faint)" }}>[</span>
+          {current.stack.length === 0 ? (<span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--text-faint)", fontStyle: "italic" }}>empty</span>) : (
+            current.stack.map((val, i) => {
+              const isTop = i === current.top;
+              const isHighlightPush = current.highlightType === "push" && i === current.highlight;
+              let bg = "var(--bg-elevated)", border = "var(--border)", color = "var(--text-secondary)";
+              if (isHighlightPush) { bg = "var(--violet-dim)"; border = "var(--violet)"; color = "var(--violet)"; }
+              else if (isTop) { bg = "var(--amber-glow)"; border = "var(--amber)"; color = "var(--amber)"; }
+              else { bg = "var(--teal-glow)"; border = "var(--teal-dim)"; color = "var(--teal)"; }
+              return (
+                <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 2 }}>
+                  <span style={{ padding: "4px 10px", background: bg, border: `1px solid ${border}`, borderRadius: 6, fontFamily: "var(--font-mono)", fontSize: 12, color, fontWeight: isTop || isHighlightPush ? 600 : 400, transition: "all 0.3s" }}>{val}</span>
+                  {i < current.stack.length - 1 && (<span style={{ color: "var(--text-faint)", fontSize: 10 }}>,</span>)}
+                </span>
+              );
+            })
+          )}
+          <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--text-faint)" }}>]</span>
+          {current.top >= 0 && (<span style={{ fontSize: 9, color: "var(--amber)", fontFamily: "var(--font-mono)", marginLeft: 4 }}>{"\u2190"} top = {current.top}</span>)}
+        </div>
+      </div>
+    </div>
+  );
+
+  const explanation = (
+    <div>
+      <div style={{ marginBottom: 16 }}><div style={S.vizLabel}>How it works</div></div>
+      <ExplainStep number={1} title="Initialize" active={getPhase() === 0} desc="Create an empty stack. The top pointer starts at -1, indicating no elements." />
+      <ExplainStep number={2} title="Push (add to top)" active={getPhase() === 1} color="var(--violet)" desc="Place the new element on top of the stack. Increment the top pointer. O(1) operation." />
+      <ExplainStep number={3} title="Peek (read top)" active={getPhase() === 2} color="var(--amber)" desc="Return the top element without removing it. The stack remains unchanged. O(1) operation." />
+      <ExplainStep number={4} title="Pop (remove from top)" active={getPhase() === 3} color="var(--rose)" desc="Remove and return the top element. Decrement the top pointer. O(1) operation." />
+      <ExplainStep number={5} title="Complete" active={getPhase() === 4} color="var(--teal)" desc="All operations demonstrated. The stack supports push, pop, and peek in constant time." />
+      <div style={{ ...S.insight("var(--amber)"), marginTop: 16 }}>
+        <p style={S.insightTitle("var(--amber)")}>LIFO Principle</p>
+        <p style={S.insightBody}>Last-In, First-Out: the most recently added element is always removed first. Unlike a queue (FIFO), a stack only allows access to the top element. You cannot reach elements below without popping everything above them.</p>
+      </div>
+      <div style={{ ...S.insight("var(--teal)"), marginTop: 10 }}>
+        <p style={S.insightTitle("var(--teal)")}>Real-world stacks</p>
+        <p style={S.insightBody}>Call stacks track function execution in every programming language. Undo history in editors reverses the most recent action first. Browser back button navigates a stack of visited pages. Expression evaluation uses stacks to handle operator precedence and parentheses.</p>
+      </div>
+    </div>
+  );
+
+  return <AlgoLayout viz={viz} explanation={explanation} />;
+}
+
+function QueueTab() {
+  const [step, setStep] = useState(0);
+  const steps = [
+    { items: [], ghost: null, action: "init", value: null, adding: null, desc: "Empty queue initialized. FIFO — first in, first out." },
+    { items: ["A"], ghost: null, action: "enqueue", value: "A", adding: "A", desc: 'Enqueue "A" — enters at the back of the queue.' },
+    { items: ["A", "B"], ghost: null, action: "enqueue", value: "B", adding: "B", desc: 'Enqueue "B" — added behind "A".' },
+    { items: ["A", "B", "C"], ghost: null, action: "enqueue", value: "C", adding: "C", desc: 'Enqueue "C" — joins the back of the queue.' },
+    { items: ["A", "B", "C", "D"], ghost: null, action: "enqueue", value: "D", adding: "D", desc: 'Enqueue "D" — queue is now [A, B, C, D]. "A" is at the front.' },
+    { items: ["A", "B", "C", "D"], ghost: null, action: "peek", value: "A", adding: null, desc: 'Peek → "A" is at the front. No removal, just reading.' },
+    { items: ["B", "C", "D"], ghost: "A", action: "dequeue", value: "A", adding: null, desc: 'Dequeue → removes "A" from the front. "B" is the new front.' },
+    { items: ["C", "D"], ghost: "B", action: "dequeue", value: "B", adding: null, desc: 'Dequeue → removes "B" from the front. "C" is now first.' },
+    { items: ["C", "D", "E"], ghost: null, action: "enqueue", value: "E", adding: "E", desc: 'Enqueue "E" — enters at the back.' },
+    { items: ["C", "D", "E"], ghost: null, action: "done", value: null, adding: null, desc: "Final state: [C, D, E]. C entered first and will leave first." },
+  ];
+
+  const current = steps[Math.min(step, steps.length - 1)];
+  const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState(DEFAULT_SPEED);
+  useEffect(() => {
+    if (!playing) return;
+    if (step >= steps.length - 1) { setPlaying(false); return; }
+    const t = setTimeout(() => setStep((s) => s + 1), 2400 / speed);
+    return () => clearTimeout(t);
+  }, [playing, step, speed]);
+
+  const getPhase = () => {
+    if (current.action === "init") return 0;
+    if (current.action === "enqueue") return 1;
+    if (current.action === "peek") return 2;
+    if (current.action === "dequeue") return 3;
+    if (current.action === "done") return 4;
+    return 0;
+  };
+
+  const boxW = 60, boxH = 48, gap = 12;
+  const ghostOffset = current.ghost ? boxW + gap : 0;
+  const startX = 50 + ghostOffset;
+  const centerY = 55;
+
+  const viz = (
+    <div>
+      <h3 style={S.sectionTitle}>Queue (FIFO)</h3>
+      <p style={S.subtitle}>A queue follows <strong style={{ color: "var(--amber)" }}>First-In, First-Out</strong> ordering. Elements enter at the back and leave from the front — like a line at a checkout counter.</p>
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+        <span style={S.complexityBadge("var(--teal)")}>O(1) enqueue</span>
+        <span style={S.complexityBadge("var(--teal)")}>O(1) dequeue</span>
+        <span style={S.complexityBadge("var(--amber)")}>O(1) peek</span>
+        <span style={S.complexityBadge("var(--violet)")}>FIFO order</span>
+      </div>
+      <Controls step={step} maxStep={steps.length - 1} playing={playing} setPlaying={setPlaying} setStep={setStep} speed={speed} setSpeed={setSpeed}
+        extra={current.value && (
+          <span style={{ fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--text-muted)" }}>
+            {current.action === "enqueue" && <>enqueue(<span style={{ color: "var(--violet)" }}>"{current.value}"</span>)</>}
+            {current.action === "peek" && <>peek() → <span style={{ color: "var(--amber)" }}>"{current.value}"</span></>}
+            {current.action === "dequeue" && <>dequeue() → <span style={{ color: "var(--rose)" }}>"{current.value}"</span></>}
+          </span>
+        )} />
+      <div style={S.vizBox}>
+        <div style={S.vizLabel}>Queue State</div>
+        <svg viewBox="0 0 540 160" style={{ width: "100%", height: "auto" }}>
+          <text x="270" y="16" fill="var(--text-faint)" fontSize={9} fontFamily="var(--font-mono)" textAnchor="middle" letterSpacing="1px">FRONT ────────────────────── BACK</text>
+          {current.ghost && (
+            <g opacity={0.35}>
+              <rect x={50} y={centerY} width={boxW} height={boxH} rx={6} fill="none" stroke="var(--rose)" strokeWidth={1.5} strokeDasharray="4 3" />
+              <text x={50 + boxW / 2} y={centerY + boxH / 2 + 5} fill="var(--rose)" fontSize={16} fontFamily="var(--font-mono)" fontWeight={700} textAnchor="middle">{current.ghost}</text>
+              <line x1={50} y1={centerY + boxH / 2} x2={24} y2={centerY + boxH / 2} stroke="var(--rose)" strokeWidth={1.5} markerEnd="url(#qArrowRose)" />
+              <text x={16} y={centerY + boxH / 2 - 10} fill="var(--rose)" fontSize={8} fontFamily="var(--font-mono)" fontWeight={600} textAnchor="middle">OUT</text>
+            </g>
+          )}
+          <defs>
+            <marker id="qArrowRose" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0,0 8,3 0,6" fill="var(--rose)" opacity={0.5} /></marker>
+          </defs>
+          {current.action === "enqueue" && current.items.length > 0 && (() => {
+            const arrowX = startX + (current.items.length - 1) * (boxW + gap) + boxW + 8;
+            return (
+              <g>
+                <line x1={arrowX + 32} y1={centerY + boxH / 2} x2={arrowX + 4} y2={centerY + boxH / 2} stroke="var(--violet)" strokeWidth={1.5} strokeDasharray="4 3" opacity={0.6} />
+                <text x={arrowX + 36} y={centerY + boxH / 2 - 10} fill="var(--violet)" fontSize={8} fontFamily="var(--font-mono)" fontWeight={600} textAnchor="middle" opacity={0.7}>IN</text>
+              </g>
+            );
+          })()}
+          {current.items.map((item, i) => {
+            const x = startX + i * (boxW + gap);
+            const y = centerY;
+            const isFront = i === 0, isBack = i === current.items.length - 1;
+            const isAdding = current.adding === item && isBack;
+            const isPeeking = current.action === "peek" && isFront;
+            let color = "var(--teal)";
+            if (isAdding) color = "var(--violet)";
+            else if (isPeeking) color = "var(--amber)";
+            else if (isFront) color = "var(--amber)";
+            return (
+              <g key={`${item}-${i}-${step}`}>
+                {(isAdding || isPeeking) && (<rect x={x - 3} y={y - 3} width={boxW + 6} height={boxH + 6} rx={9} fill={`${color}15`} style={{ transition: "all 0.4s" }} />)}
+                <rect x={x} y={y} width={boxW} height={boxH} rx={6} fill={`${color}18`} stroke={color} strokeWidth={isAdding || isPeeking ? 2 : 1.5} style={{ transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)" }} />
+                <text x={x + boxW / 2} y={y + boxH / 2 + 6} fill={color} fontSize={18} fontFamily="var(--font-mono)" fontWeight={700} textAnchor="middle" style={{ transition: "all 0.3s" }}>{item}</text>
+                {isPeeking && (<g><rect x={x + boxW / 2 - 16} y={y - 18} width={32} height={14} rx={3} fill="var(--amber)" /><text x={x + boxW / 2} y={y - 8} fill="var(--bg-deep)" fontSize={8} fontFamily="var(--font-mono)" fontWeight={700} textAnchor="middle">PEEK</text></g>)}
+                {i < current.items.length - 1 && (<line x1={x + boxW + 1} y1={y + boxH / 2} x2={x + boxW + gap - 1} y2={y + boxH / 2} stroke="var(--text-faint)" strokeWidth={1} />)}
+              </g>
+            );
+          })}
+          {current.items.length === 0 && !current.ghost && (<text x="270" y={centerY + boxH / 2 + 2} fill="var(--text-faint)" fontSize={13} fontFamily="var(--font-mono)" textAnchor="middle" fontStyle="italic">empty queue</text>)}
+          {current.items.length > 0 && (() => {
+            const frontX = startX + boxW / 2;
+            const backX = startX + (current.items.length - 1) * (boxW + gap) + boxW / 2;
+            const pointerY = centerY + boxH + 8;
+            const sameElement = current.items.length === 1;
+            return (
+              <>
+                <line x1={frontX} y1={centerY + boxH} x2={frontX} y2={pointerY} stroke="var(--amber)" strokeWidth={1.5} />
+                <text x={frontX} y={pointerY + 12} fill="var(--amber)" fontSize={9} fontFamily="var(--font-mono)" fontWeight={600} textAnchor="middle">{sameElement ? "FRONT / BACK" : "FRONT"}</text>
+                {!sameElement && (
+                  <><line x1={backX} y1={centerY + boxH} x2={backX} y2={pointerY} stroke="var(--violet)" strokeWidth={1.5} /><text x={backX} y={pointerY + 12} fill="var(--violet)" fontSize={9} fontFamily="var(--font-mono)" fontWeight={600} textAnchor="middle">BACK</text></>
+                )}
+              </>
+            );
+          })()}
+        </svg>
+        <div style={{ marginTop: 4, padding: "8px 12px", background: "var(--bg)", borderRadius: 8, fontFamily: "var(--font-mono)", fontSize: 11,
+          color: current.action === "dequeue" ? "var(--rose)" : current.action === "enqueue" ? "var(--violet)" : current.action === "peek" ? "var(--amber)" : current.action === "done" ? "var(--teal)" : "var(--text-secondary)",
+          fontWeight: current.action !== "init" ? 500 : 400 }}>{current.desc}</div>
+      </div>
+      <div style={S.vizBox}>
+        <div style={S.vizLabel}>Queue Contents (front → back)</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", minHeight: 36, padding: "4px 0" }}>
+          {current.items.length === 0 ? (<span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--text-faint)", fontStyle: "italic" }}>empty</span>) : (
+            current.items.map((item, i) => {
+              const isFront = i === 0, isBack = i === current.items.length - 1;
+              const isAdding = current.adding === item && isBack;
+              let color = "var(--teal)";
+              if (isAdding) color = "var(--violet)";
+              else if (isFront) color = "var(--amber)";
+              return (
+                <span key={`${item}-${i}`} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 6, background: `${color}12`, border: `1px solid ${color}30`, fontFamily: "var(--font-mono)", fontSize: 13, fontWeight: 600, color }}>
+                    {item}
+                    {isFront && <span style={{ fontSize: 8, opacity: 0.7, fontWeight: 400 }}>front</span>}
+                    {isBack && !isFront && <span style={{ fontSize: 8, opacity: 0.7, fontWeight: 400 }}>back</span>}
+                  </span>
+                  {i < current.items.length - 1 && (<span style={{ color: "var(--text-faint)", fontSize: 11 }}>→</span>)}
+                </span>
+              );
+            })
+          )}
+        </div>
+        <div style={{ marginTop: 8, fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--text-muted)" }}>size: {current.items.length}</div>
+      </div>
+    </div>
+  );
+
+  const explanation = (
+    <div>
+      <div style={{ marginBottom: 16 }}><div style={S.vizLabel}>How it works</div></div>
+      <ExplainStep number={1} title="Initialize" active={getPhase() === 0} desc="Create an empty queue. No elements yet — front and back are undefined." />
+      <ExplainStep number={2} title="Enqueue (add to back)" active={getPhase() === 1} color="var(--violet)" desc={`Add "${current.value || "..."}" to the back of the queue. The back pointer advances. O(1) operation.`} />
+      <ExplainStep number={3} title="Peek (read front)" active={getPhase() === 2} color="var(--amber)" desc="Return the front element without removing it. The queue remains unchanged. O(1)." />
+      <ExplainStep number={4} title="Dequeue (remove front)" active={getPhase() === 3} color="var(--rose)" desc={`Remove "${current.value || "..."}" from the front. The next element becomes the new front. O(1).`} />
+      <ExplainStep number={5} title="Complete" active={getPhase() === 4} color="var(--teal)" desc="The queue has been built and manipulated. Elements always exit in the order they entered." />
+      <div style={{ ...S.insight("var(--amber)"), marginTop: 16 }}>
+        <p style={S.insightTitle("var(--amber)")}>FIFO Principle</p>
+        <p style={S.insightBody}>First-In, First-Out. The element that has been waiting the longest is served first. Unlike a stack (LIFO), a queue preserves the original insertion order for removal.</p>
+      </div>
+      <div style={{ ...S.insight("var(--teal)"), marginTop: 10 }}>
+        <p style={S.insightTitle("var(--teal)")}>Where queues appear</p>
+        <p style={S.insightBody}>BFS traversal uses a queue to explore nodes level by level. Task schedulers, print queues, message brokers (Kafka, RabbitMQ), and buffered I/O all rely on FIFO semantics.</p>
+      </div>
+    </div>
+  );
+
+  return <AlgoLayout viz={viz} explanation={explanation} />;
+}
+
+/* ── Binary Search Tree ── */
+
+const BST_POSITIONS = {
+  50: { x: 240, y: 45 }, 30: { x: 140, y: 120 }, 70: { x: 340, y: 120 },
+  20: { x: 80, y: 200 }, 40: { x: 200, y: 200 }, 60: { x: 280, y: 200 }, 80: { x: 400, y: 200 },
+};
+const BST_EDGES_MAP = { 30: 50, 70: 50, 20: 30, 40: 30, 60: 70, 80: 70 };
+
+function buildBSTSteps() {
+  const steps = [];
+  const makeNodes = (ins) => ins.map((v) => ({ value: v, x: BST_POSITIONS[v].x, y: BST_POSITIONS[v].y, visible: true }));
+  const makeEdges = (ins) => ins.filter((v) => BST_EDGES_MAP[v] !== undefined && ins.includes(BST_EDGES_MAP[v])).map((v) => ({ from: BST_EDGES_MAP[v], to: v, visible: true }));
+
+  steps.push({ nodes: [], edges: [], highlight: [], highlightEdges: [], comparisons: [], desc: "Empty tree. We will insert values one by one to build a BST.", action: "init" });
+  steps.push({ nodes: makeNodes([50]), edges: [], highlight: [50], highlightEdges: [], comparisons: [], desc: "Insert 50 \u2192 tree is empty, so 50 becomes the root.", action: "insert" });
+  steps.push({ nodes: makeNodes([50, 30]), edges: makeEdges([50, 30]), highlight: [50, 30], highlightEdges: [{ from: 50, to: 30 }], comparisons: [{ from: 50, to: 30, label: "<" }], desc: "Insert 30 \u2192 30 < 50, go left. Place as left child of 50.", action: "insert" });
+  steps.push({ nodes: makeNodes([50, 30, 70]), edges: makeEdges([50, 30, 70]), highlight: [50, 70], highlightEdges: [{ from: 50, to: 70 }], comparisons: [{ from: 50, to: 70, label: ">" }], desc: "Insert 70 \u2192 70 > 50, go right. Place as right child of 50.", action: "insert" });
+  steps.push({ nodes: makeNodes([50, 30, 70, 20]), edges: makeEdges([50, 30, 70, 20]), highlight: [50, 30, 20], highlightEdges: [{ from: 50, to: 30 }, { from: 30, to: 20 }], comparisons: [{ from: 50, to: 30, label: "<" }, { from: 30, to: 20, label: "<" }], desc: "Insert 20 \u2192 20 < 50, go left. 20 < 30, go left. Place as left child of 30.", action: "insert" });
+  steps.push({ nodes: makeNodes([50, 30, 70, 20, 40]), edges: makeEdges([50, 30, 70, 20, 40]), highlight: [50, 30, 40], highlightEdges: [{ from: 50, to: 30 }, { from: 30, to: 40 }], comparisons: [{ from: 50, to: 30, label: "<" }, { from: 30, to: 40, label: ">" }], desc: "Insert 40 \u2192 40 < 50, go left. 40 > 30, go right. Place as right child of 30.", action: "insert" });
+  steps.push({ nodes: makeNodes([50, 30, 70, 20, 40, 60]), edges: makeEdges([50, 30, 70, 20, 40, 60]), highlight: [50, 70, 60], highlightEdges: [{ from: 50, to: 70 }, { from: 70, to: 60 }], comparisons: [{ from: 50, to: 70, label: ">" }, { from: 70, to: 60, label: "<" }], desc: "Insert 60 \u2192 60 > 50, go right. 60 < 70, go left. Place as left child of 70.", action: "insert" });
+  steps.push({ nodes: makeNodes([50, 30, 70, 20, 40, 60, 80]), edges: makeEdges([50, 30, 70, 20, 40, 60, 80]), highlight: [50, 70, 80], highlightEdges: [{ from: 50, to: 70 }, { from: 70, to: 80 }], comparisons: [{ from: 50, to: 70, label: ">" }, { from: 70, to: 80, label: ">" }], desc: "Insert 80 \u2192 80 > 50, go right. 80 > 70, go right. Place as right child of 70.", action: "insert" });
+  const allN = makeNodes([50, 30, 70, 20, 40, 60, 80]), allE = makeEdges([50, 30, 70, 20, 40, 60, 80]);
+  steps.push({ nodes: allN, edges: allE, highlight: [50, 30, 40], highlightEdges: [{ from: 50, to: 30 }, { from: 30, to: 40 }], comparisons: [{ from: 50, to: 30, label: "<" }, { from: 30, to: 40, label: ">" }], found: 40, desc: "Search 40 \u2192 40 < 50, go left. 40 > 30, go right. 40 = 40 \u2014 found!", action: "search_found" });
+  steps.push({ nodes: allN, edges: allE, highlight: [50, 70, 60], highlightEdges: [{ from: 50, to: 70 }, { from: 70, to: 60 }], comparisons: [{ from: 50, to: 70, label: ">" }, { from: 70, to: 60, label: "<" }], missAt: 60, desc: "Search 55 \u2192 55 > 50, go right. 55 < 70, go left. 55 < 60, go left \u2014 null, not found!", action: "search_miss" });
+  return steps;
+}
+
+const BST_ALL_STEPS = buildBSTSteps();
+
+function BinarySearchTreeTab() {
+  const [step, setStep] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState(DEFAULT_SPEED);
+
+  useEffect(() => {
+    if (!playing) return;
+    if (step >= BST_ALL_STEPS.length - 1) { setPlaying(false); return; }
+    const t = setTimeout(() => setStep((s) => s + 1), 2700 / speed);
+    return () => clearTimeout(t);
+  }, [playing, step, speed]);
+
+  const current = BST_ALL_STEPS[Math.min(step, BST_ALL_STEPS.length - 1)];
+  const getPhase = () => { if (current.action === "init") return 0; if (current.action === "insert") return 1; if (current.action === "search_found") return 2; if (current.action === "search_miss") return 3; return 0; };
+
+  const nodeColor = (value) => {
+    if (current.action === "search_found" && current.found === value) return "var(--teal)";
+    if (current.action === "search_miss" && current.missAt === value) return "var(--rose)";
+    if (current.highlight.includes(value)) { if (current.action === "insert") return "var(--amber)"; if (current.action === "search_found") return "var(--teal)"; if (current.action === "search_miss") return "var(--rose)"; }
+    return null;
+  };
+  const edgeColor = (from, to) => { const m = current.highlightEdges.find((e) => e.from === from && e.to === to); if (!m) return null; if (current.action === "insert") return "var(--amber)"; if (current.action === "search_found") return "var(--teal)"; if (current.action === "search_miss") return "var(--rose)"; return null; };
+  const comparisonLabel = (from, to) => { const m = current.comparisons.find((c) => c.from === from && c.to === to); return m ? m.label : null; };
+  const NODE_R = 22;
+
+  const viz = (
+    <div>
+      <h3 style={S.sectionTitle}>Binary Search Tree</h3>
+      <p style={S.subtitle}>A tree where every node's <strong style={{ color: "var(--amber)" }}>left subtree</strong> contains smaller values and the <strong style={{ color: "var(--teal)" }}>right subtree</strong> contains larger values. Enables efficient search, insert, and delete operations.</p>
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+        <span style={S.complexityBadge("var(--teal)")}>O(log n) avg</span>
+        <span style={S.complexityBadge("var(--rose)")}>O(n) worst</span>
+        <span style={S.complexityBadge("var(--amber)")}>O(n) space</span>
+      </div>
+      <Controls step={step} maxStep={BST_ALL_STEPS.length - 1} playing={playing} setPlaying={setPlaying} setStep={setStep} speed={speed} setSpeed={setSpeed}
+        extra={current.action === "search_found" ? (<span style={{ fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--text-muted)" }}>search = <span style={{ color: "var(--teal)" }}>40</span></span>) : current.action === "search_miss" ? (<span style={{ fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--text-muted)" }}>search = <span style={{ color: "var(--rose)" }}>55</span></span>) : null} />
+      <div style={S.vizBox}>
+        <div style={S.vizLabel}>Tree Structure</div>
+        <svg viewBox="0 0 480 260" style={{ width: "100%", height: "auto" }}>
+          {[0, 1, 2].map((lvl) => { const yP = [45, 120, 200]; return (<g key={`lvl${lvl}`}><line x1={10} y1={yP[lvl]} x2={470} y2={yP[lvl]} stroke="var(--border-subtle)" strokeWidth={0.5} strokeDasharray="4,8" /><text x={470} y={yP[lvl] - 6} fill="var(--text-faint)" fontSize={8} fontFamily="var(--font-mono)" textAnchor="end" opacity={0.5}>depth {lvl}</text></g>); })}
+          {current.edges.map((edge, i) => {
+            const fp = BST_POSITIONS[edge.from], tp = BST_POSITIONS[edge.to];
+            const color = edgeColor(edge.from, edge.to);
+            const comp = comparisonLabel(edge.from, edge.to);
+            const mx = (fp.x + tp.x) / 2, my = (fp.y + tp.y) / 2;
+            return (<g key={`e${i}`}><line x1={fp.x} y1={fp.y + NODE_R - 4} x2={tp.x} y2={tp.y - NODE_R + 4} stroke={color || "var(--border)"} strokeWidth={color ? 2.5 : 1.5} strokeDasharray={color ? "6,3" : "none"} style={{ transition: "all 0.4s ease" }} />{comp && color && (<g><rect x={mx - 9} y={my - 9} width={18} height={18} rx={4} fill="var(--bg-card)" stroke={color} strokeWidth={1} /><text x={mx} y={my + 4} fill={color} fontSize={11} fontFamily="var(--font-mono)" fontWeight={700} textAnchor="middle">{comp}</text></g>)}</g>);
+          })}
+          {current.nodes.map((node, i) => {
+            const color = nodeColor(node.value);
+            const isFound = current.action === "search_found" && current.found === node.value;
+            const isMissNode = current.action === "search_miss" && current.missAt === node.value;
+            const isHL = color !== null;
+            let fill = "var(--bg-elevated)", stroke = "var(--border)", textColor = "var(--text-secondary)", r = NODE_R;
+            if (isFound) { fill = "var(--teal-glow)"; stroke = "var(--teal)"; textColor = "var(--teal)"; r = NODE_R + 3; }
+            else if (isMissNode) { fill = "var(--rose-glow)"; stroke = "var(--rose)"; textColor = "var(--rose)"; }
+            else if (isHL) { fill = `${color}18`; stroke = color; textColor = color; }
+            return (<g key={`n${i}`}>{(isFound || (isHL && current.highlight[current.highlight.length - 1] === node.value)) && (<circle cx={node.x} cy={node.y} r={r + 8} fill={`${color || "var(--amber)"}10`} style={{ transition: "all 0.4s ease" }} />)}<circle cx={node.x} cy={node.y} r={r} fill={fill} stroke={stroke} strokeWidth={isHL ? 2.5 : 1.5} style={{ transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)" }} /><text x={node.x} y={node.y + 5} fill={textColor} fontSize={14} fontFamily="var(--font-mono)" fontWeight={isHL ? 700 : 500} textAnchor="middle" style={{ transition: "all 0.4s" }}>{node.value}</text>{isFound && (<text x={node.x} y={node.y + r + 16} fill="var(--teal)" fontSize={10} fontFamily="var(--font-mono)" fontWeight={600} textAnchor="middle">FOUND</text>)}{isMissNode && (<text x={node.x} y={node.y + r + 16} fill="var(--rose)" fontSize={10} fontFamily="var(--font-mono)" fontWeight={600} textAnchor="middle">null left</text>)}</g>);
+          })}
+          {current.nodes.length === 0 && (<text x={240} y={140} fill="var(--text-faint)" fontSize={14} fontFamily="var(--font-mono)" textAnchor="middle" fontStyle="italic">empty tree</text>)}
+        </svg>
+        <div style={{ marginTop: 10, padding: "8px 12px", background: "var(--bg)", borderRadius: 8, fontFamily: "var(--font-mono)", fontSize: 11,
+          color: current.action === "search_found" ? "var(--teal)" : current.action === "search_miss" ? "var(--rose)" : current.action === "insert" ? "var(--amber)" : "var(--text-secondary)",
+          fontWeight: current.action !== "init" ? 500 : 400 }}>{current.desc}</div>
+      </div>
+      <div style={{ display: "flex", gap: 16, marginBottom: 18, flexWrap: "wrap" }}>
+        {[{ color: "var(--amber)", label: "Insert path" }, { color: "var(--teal)", label: "Search (found)" }, { color: "var(--rose)", label: "Search (miss)" }].map((item, i) => (<div key={i} style={{ display: "flex", alignItems: "center", gap: 5 }}><div style={{ width: 10, height: 10, borderRadius: "50%", background: item.color, opacity: 0.7 }} /><span style={{ fontSize: 10, color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>{item.label}</span></div>))}
+      </div>
+    </div>
+  );
+
+  const explanation = (
+    <div>
+      <div style={{ marginBottom: 16 }}><div style={S.vizLabel}>How it works</div></div>
+      <ExplainStep number={1} title="Insert at root" active={getPhase() === 0 || (getPhase() === 1 && current.highlight.length === 1)} desc="If the tree is empty, the new value becomes the root node." />
+      <ExplainStep number={2} title="Compare & traverse" active={getPhase() === 1 && current.highlight.length > 1} color="var(--amber)" desc="Compare the value with the current node. Go left if smaller, right if larger. Repeat until reaching an empty spot." />
+      <ExplainStep number={3} title="Search (success)" active={getPhase() === 2} color="var(--teal)" desc="Follow the same compare-and-traverse logic. When we find a matching node, the search succeeds." />
+      <ExplainStep number={4} title="Search (miss)" active={getPhase() === 3} color="var(--rose)" desc="If we reach a null child before finding the value, it does not exist in the tree." />
+      <div style={{ ...S.insight("var(--amber)"), marginTop: 16 }}>
+        <p style={S.insightTitle("var(--amber)")}>BST property</p>
+        <p style={S.insightBody}>For every node: all values in the left subtree are smaller, and all values in the right subtree are larger. This invariant is what makes O(log n) search possible.</p>
+      </div>
+      <div style={{ ...S.insight("var(--violet)"), marginTop: 10 }}>
+        <p style={S.insightTitle("var(--violet)")}>Balance matters</p>
+        <p style={S.insightBody}>If values are inserted in sorted order, the tree degenerates into a linked list with O(n) operations. Self-balancing trees (AVL, Red-Black) maintain O(log n) by rebalancing after each insertion.</p>
+      </div>
+    </div>
+  );
+
+  return <AlgoLayout viz={viz} explanation={explanation} />;
+}
+
+/* ── Heap ── */
+
+const HEAP_TREE_POS = [
+  { x: 240, y: 45 }, { x: 140, y: 120 }, { x: 340, y: 120 },
+  { x: 80, y: 200 }, { x: 200, y: 200 }, { x: 280, y: 200 }, { x: 400, y: 200 },
+];
+
+function getHeapEdges(heapSize) {
+  const edges = [];
+  for (let i = 1; i < heapSize; i++) edges.push([Math.floor((i - 1) / 2), i]);
+  return edges;
+}
+
+const HEAP_STEPS = [
+  { heap: [], highlight: [], swapping: null, action: "init", desc: "Empty min-heap. We will insert values and watch the heap property maintained." },
+  { heap: [40], highlight: [0], swapping: null, action: "insert", desc: "Insert 40. It becomes the root (only element)." },
+  { heap: [40, 20], highlight: [1], swapping: null, action: "insert", desc: "Insert 20 at next position (index 1). Parent is 40 at index 0." },
+  { heap: [20, 40], highlight: [0, 1], swapping: [0, 1], action: "bubble_up", desc: "20 < 40 — swap! 20 bubbles up to root. Heap property restored." },
+  { heap: [20, 40, 50], highlight: [2], swapping: null, action: "insert", desc: "Insert 50 at index 2. Parent is 20. 50 > 20, no swap needed." },
+  { heap: [20, 40, 50, 10], highlight: [3], swapping: null, action: "insert", desc: "Insert 10 at index 3. Parent is 40 at index 1. 10 < 40, must bubble up." },
+  { heap: [20, 10, 50, 40], highlight: [1, 3], swapping: [1, 3], action: "bubble_up", desc: "Swap 10 and 40. Now check parent: 10 at index 1, parent 20 at index 0." },
+  { heap: [10, 20, 50, 40], highlight: [0, 1], swapping: [0, 1], action: "bubble_up", desc: "10 < 20 — swap again! 10 reaches the root. Heap property restored." },
+  { heap: [10, 20, 50, 40, 30], highlight: [4], swapping: null, action: "insert", desc: "Insert 30 at index 4. Parent is 20 at index 1. 30 > 20, no swap needed." },
+  { heap: [10, 20, 50, 40, 30], highlight: [0], swapping: null, action: "extract", desc: "Extract-min: remove root (10). Replace root with last element (30)." },
+  { heap: [30, 20, 50, 40], highlight: [0, 1, 2], swapping: null, action: "sift_down", desc: "30 is now root. Compare with children: 20 (left), 50 (right). Smallest child is 20." },
+  { heap: [20, 30, 50, 40], highlight: [0, 1], swapping: [0, 1], action: "sift_down", desc: "30 > 20 — swap! 20 moves to root, 30 sifts down to index 1. Children of 30: only 40." },
+  { heap: [20, 30, 50, 40], highlight: [1, 3], swapping: null, action: "done", desc: "30 < 40, no swap needed. Heap property fully restored after extract-min." },
+  { heap: [20, 30, 50, 40], highlight: [0], swapping: null, action: "extract", desc: "Extract-min again: remove root (20). Replace root with last element (40)." },
+  { heap: [40, 30, 50], highlight: [0, 1, 2], swapping: null, action: "sift_down", desc: "40 is now root. Compare with children: 30 (left), 50 (right). Smallest child is 30." },
+  { heap: [30, 40, 50], highlight: [0, 1], swapping: [0, 1], action: "sift_down", desc: "40 > 30 — swap! Final heap: [30, 40, 50]. Min-heap property holds." },
+  { heap: [30, 40, 50], highlight: [], swapping: null, action: "done", desc: "Complete! Each parent is smaller than its children. The min is always at the root." },
+];
+
+function HeapTab() {
+  const [step, setStep] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState(DEFAULT_SPEED);
+  const current = HEAP_STEPS[Math.min(step, HEAP_STEPS.length - 1)];
+
+  useEffect(() => {
+    if (!playing) return;
+    if (step >= HEAP_STEPS.length - 1) { setPlaying(false); return; }
+    const t = setTimeout(() => setStep((s) => s + 1), 2700 / speed);
+    return () => clearTimeout(t);
+  }, [playing, step, speed]);
+
+  const getPhase = () => { const a = current.action; if (a === "init") return 0; if (a === "insert" || a === "bubble_up") return 1; if (a === "extract" || a === "sift_down") return 2; if (a === "done") return 3; return 0; };
+
+  function nodeStyle(index) {
+    const isHL = current.highlight.includes(index), isSw = current.swapping && current.swapping.includes(index), isEx = current.action === "extract" && index === 0;
+    let fill = "var(--bg-elevated)", stroke = "var(--border)", textColor = "var(--text-muted)", r = 22, glow = false;
+    if (isSw) { fill = "var(--amber-glow)"; stroke = "var(--amber)"; textColor = "var(--amber)"; r = 25; glow = true; }
+    else if (isEx) { fill = "var(--rose-glow)"; stroke = "var(--rose)"; textColor = "var(--rose)"; r = 25; glow = true; }
+    else if (current.action === "insert" && isHL) { fill = "var(--violet-dim)"; stroke = "var(--violet)"; textColor = "var(--violet)"; r = 25; glow = true; }
+    else if (isHL) { fill = "var(--teal-glow)"; stroke = "var(--teal)"; textColor = "var(--teal)"; }
+    else if (current.action === "done" && current.highlight.length === 0) { fill = "var(--teal-glow)"; stroke = "var(--teal-dim)"; textColor = "var(--teal)"; }
+    return { fill, stroke, textColor, r, glow };
+  }
+
+  function arrayCellStyle(index) {
+    const isHL = current.highlight.includes(index), isSw = current.swapping && current.swapping.includes(index), isEx = current.action === "extract" && index === 0;
+    if (isSw) return { bg: "var(--amber-glow)", border: "var(--amber)", color: "var(--amber)", fontWeight: 700 };
+    if (isEx) return { bg: "var(--rose-glow)", border: "var(--rose)", color: "var(--rose)", fontWeight: 700 };
+    if (current.action === "insert" && isHL) return { bg: "var(--violet-dim)", border: "var(--violet)", color: "var(--violet)", fontWeight: 700 };
+    if (isHL) return { bg: "var(--teal-glow)", border: "var(--teal)", color: "var(--teal)", fontWeight: 600 };
+    if (current.action === "done" && current.highlight.length === 0) return { bg: "var(--teal-glow)", border: "var(--teal-dim)", color: "var(--teal)", fontWeight: 500 };
+    return { bg: "var(--bg-elevated)", border: "var(--border)", color: "var(--text-secondary)", fontWeight: 400 };
+  }
+
+  const edges = getHeapEdges(current.heap.length);
+
+  const viz = (
+    <div>
+      <h3 style={S.sectionTitle}>Min-Heap / Priority Queue</h3>
+      <p style={S.subtitle}>A <strong style={{ color: "var(--amber)" }}>min-heap</strong> keeps the smallest element at the root. Insert bubbles up, extract-min sifts down. Both are <strong style={{ color: "var(--teal)" }}>O(log n)</strong>.</p>
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+        <span style={S.complexityBadge("var(--teal)")}>O(log n) insert</span>
+        <span style={S.complexityBadge("var(--amber)")}>O(log n) extract</span>
+        <span style={S.complexityBadge("var(--violet)")}>O(1) find-min</span>
+      </div>
+      <Controls step={step} maxStep={HEAP_STEPS.length - 1} playing={playing} setPlaying={setPlaying} setStep={setStep} speed={speed} setSpeed={setSpeed}
+        extra={<span style={{ fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--text-muted)" }}>
+          {current.action === "insert" && <span style={{ color: "var(--violet)" }}>INSERT</span>}
+          {current.action === "bubble_up" && <span style={{ color: "var(--amber)" }}>BUBBLE UP</span>}
+          {current.action === "extract" && <span style={{ color: "var(--rose)" }}>EXTRACT</span>}
+          {current.action === "sift_down" && <span style={{ color: "var(--amber)" }}>SIFT DOWN</span>}
+          {current.action === "done" && <span style={{ color: "var(--teal)" }}>DONE</span>}
+        </span>} />
+      <div style={S.vizBox}>
+        <div style={S.vizLabel}>Tree View</div>
+        <svg viewBox="0 0 480 240" style={{ width: "100%", height: "auto" }}>
+          {edges.map(([from, to], i) => {
+            const p1 = HEAP_TREE_POS[from], p2 = HEAP_TREE_POS[to];
+            const bothHL = current.highlight.includes(from) && current.highlight.includes(to);
+            const isSwE = current.swapping && ((current.swapping[0] === from && current.swapping[1] === to) || (current.swapping[0] === to && current.swapping[1] === from));
+            return (<line key={`edge-${i}`} x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke={isSwE ? "var(--amber)" : bothHL ? "var(--teal-dim)" : "var(--border)"} strokeWidth={isSwE ? 2.5 : 1.5} strokeDasharray={isSwE ? "6,3" : "none"} style={{ transition: "all 0.4s" }} />);
+          })}
+          {current.heap.map((value, i) => {
+            const pos = HEAP_TREE_POS[i], ns = nodeStyle(i);
+            return (<g key={`node-${i}`}>{ns.glow && (<circle cx={pos.x} cy={pos.y} r={ns.r + 6} fill={ns.fill} opacity={0.4} style={{ transition: "all 0.4s" }} />)}<circle cx={pos.x} cy={pos.y} r={ns.r} fill={ns.fill} stroke={ns.stroke} strokeWidth={ns.glow ? 2.5 : 1.5} style={{ transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)" }} /><text x={pos.x} y={pos.y + 5} fill={ns.textColor} fontSize={15} fontFamily="var(--font-mono)" fontWeight={700} textAnchor="middle" style={{ transition: "all 0.4s" }}>{value}</text><text x={pos.x} y={pos.y - ns.r - 6} fill="var(--text-faint)" fontSize={8} fontFamily="var(--font-mono)" textAnchor="middle">[{i}]</text></g>);
+          })}
+          {current.heap.length === 0 && (<text x={240} y={130} fill="var(--text-faint)" fontSize={13} fontFamily="var(--font-mono)" textAnchor="middle" fontStyle="italic">empty heap</text>)}
+          {current.swapping && (<>
+            <defs><marker id="heapArrowHead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="var(--amber)" /></marker></defs>
+            {(() => { const [a, b] = current.swapping, pA = HEAP_TREE_POS[a], pB = HEAP_TREE_POS[b], midX = (pA.x + pB.x) / 2, midY = (pA.y + pB.y) / 2, oX = (pB.y - pA.y) * 0.2, oY = -(pB.x - pA.x) * 0.2;
+              return (<path d={`M${pA.x + 25},${pA.y} Q${midX + oX},${midY + oY} ${pB.x - 25},${pB.y}`} fill="none" stroke="var(--amber)" strokeWidth={1.5} strokeDasharray="4,3" markerEnd="url(#heapArrowHead)" opacity={0.7} style={{ transition: "all 0.4s" }} />);
+            })()}
+          </>)}
+        </svg>
+      </div>
+      <div style={S.vizBox}>
+        <div style={S.vizLabel}>Array Representation</div>
+        {current.heap.length === 0 ? (<div style={{ padding: "12px 16px", fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--text-faint)", fontStyle: "italic" }}>[ ]</div>) : (
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "flex-end" }}>
+            {current.heap.map((value, i) => {
+              const cs = arrayCellStyle(i);
+              const parent = i === 0 ? null : Math.floor((i - 1) / 2);
+              return (<div key={`arr-${i}`} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                <span style={{ fontSize: 8, fontFamily: "var(--font-mono)", color: "var(--text-faint)" }}>{i}</span>
+                <div style={{ width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", background: cs.bg, border: `1.5px solid ${cs.border}`, borderRadius: 8, fontFamily: "var(--font-mono)", fontSize: 15, fontWeight: cs.fontWeight, color: cs.color, transition: "all 0.3s" }}>{value}</div>
+                <span style={{ fontSize: 7, fontFamily: "var(--font-mono)", color: "var(--text-faint)", textAlign: "center", lineHeight: 1.2 }}>{i === 0 ? "root" : `p:${parent}`}</span>
+              </div>);
+            })}
+          </div>
+        )}
+        <div style={{ marginTop: 12, padding: "8px 12px", background: "var(--bg)", borderRadius: 8, fontFamily: "var(--font-mono)", fontSize: 11, lineHeight: 1.5,
+          color: current.action === "extract" ? "var(--rose)" : current.action === "bubble_up" || current.action === "sift_down" ? "var(--amber)" : current.action === "done" ? "var(--teal)" : "var(--text-secondary)",
+          fontWeight: current.action !== "init" ? 500 : 400 }}>{current.desc}</div>
+      </div>
+      <div style={{ display: "flex", gap: 14, marginBottom: 18, flexWrap: "wrap" }}>
+        {[{ color: "var(--violet)", label: "Inserted" }, { color: "var(--amber)", label: "Swapping" }, { color: "var(--rose)", label: "Extracting" }, { color: "var(--teal)", label: "Settled" }].map((item, i) => (<div key={i} style={{ display: "flex", alignItems: "center", gap: 5 }}><div style={{ width: 10, height: 10, borderRadius: "50%", background: item.color, opacity: 0.7 }} /><span style={{ fontSize: 10, color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>{item.label}</span></div>))}
+      </div>
+    </div>
+  );
+
+  const explanation = (
+    <div>
+      <div style={{ marginBottom: 16 }}><div style={S.vizLabel}>How it works</div></div>
+      <ExplainStep number={1} title="Insert & bubble up" active={getPhase() === 1} desc="Add the new element at the end of the array (next open leaf). Then compare with parent and swap upward until the min-heap property holds." color="var(--violet)" />
+      <ExplainStep number={2} title="Heap property" active={getPhase() === 1 || getPhase() === 3} desc="Every parent must be smaller than or equal to its children. This invariant is maintained after every insert and extract." color="var(--teal)" />
+      <ExplainStep number={3} title="Extract-min & sift down" active={getPhase() === 2} desc="Remove the root (minimum). Move the last element to the root, then swap it down with the smaller child until the heap property is restored." color="var(--rose)" />
+      <ExplainStep number={4} title="Array representation" active={getPhase() === 3} desc="A heap is stored as a flat array. For index i: parent = floor((i-1)/2), left child = 2i+1, right child = 2i+2. No pointers needed!" color="var(--amber)" />
+      <div style={{ ...S.insight("var(--teal)"), marginTop: 16 }}>
+        <p style={S.insightTitle("var(--teal)")}>Complete binary tree</p>
+        <p style={S.insightBody}>Heaps are complete binary trees stored as arrays. No wasted space, no pointers. Parent of index i is at (i-1)/2. Children of i are at 2i+1 and 2i+2. This compact layout gives excellent cache performance.</p>
+      </div>
+      <div style={{ ...S.insight("var(--amber)"), marginTop: 10 }}>
+        <p style={S.insightTitle("var(--amber)")}>Priority queues</p>
+        <p style={S.insightBody}>Heaps power priority queues used in Dijkstra's shortest path, A* search, task scheduling, and event-driven simulation. Any time you need "give me the smallest/largest item fast," reach for a heap.</p>
+      </div>
+    </div>
+  );
+
+  return <AlgoLayout viz={viz} explanation={explanation} />;
+}
+
+/* ========================================================================
+   ALGO EXPLORER SHELL
+   ======================================================================== */
+
+const SLUG_MAP = {
+  'bubble-sort': ['algo', 0], 'merge-sort': ['algo', 1], 'binary-search': ['algo', 2],
+  'bfs': ['algo', 3], 'dfs': ['algo', 4], 'dijkstra': ['algo', 5], 'hash-table': ['algo', 6],
+  'linked-list': ['ds', 0], 'stack': ['ds', 1], 'queue': ['ds', 2],
+  'binary-search-tree': ['ds', 3], 'heap': ['ds', 4],
+};
+const SLUG_REVERSE_ALGO = ['bubble-sort', 'merge-sort', 'binary-search', 'bfs', 'dfs', 'dijkstra', 'hash-table'];
+const SLUG_REVERSE_DS = ['linked-list', 'stack', 'queue', 'binary-search-tree', 'heap'];
+
+const ALGO_TABS = [
+  { label: "Bubble Sort", icon: "01", category: "sort" },
+  { label: "Merge Sort", icon: "02", category: "sort" },
+  { label: "Binary Search", icon: "03", category: "search" },
+  { label: "BFS", icon: "04", category: "graph" },
+  { label: "DFS", icon: "05", category: "graph" },
+  { label: "Dijkstra's", icon: "06", category: "graph" },
+  { label: "Hash Table", icon: "07", category: "data" },
+];
+const ALGO_COMPONENTS = [BubbleSortTab, MergeSortTab, BinarySearchTab, BFSTab, DFSTab, DijkstraTab, HashTableTab];
+
+const DS_TABS = [
+  { label: "Linked List", icon: "01", category: "linear" },
+  { label: "Stack", icon: "02", category: "linear" },
+  { label: "Queue", icon: "03", category: "linear" },
+  { label: "Binary Search Tree", icon: "04", category: "tree" },
+  { label: "Heap", icon: "05", category: "tree" },
+];
+const DS_COMPONENTS = [LinkedListTab, StackTab, QueueTab, BinarySearchTreeTab, HeapTab];
+
+const algoCategoryColors = { sort: "var(--amber)", search: "var(--teal)", graph: "var(--violet)", data: "var(--rose)" };
+const dsCategoryColors = { linear: "var(--teal)", tree: "var(--violet)" };
+
+function AlgoExplorer() {
+  const hash = window.location.hash.slice(1);
+  const initial = SLUG_MAP[hash];
+  const [mode, setMode] = useState(initial ? initial[0] : "algo");
+  const [algoTab, setAlgoTab] = useState(initial && initial[0] === "algo" ? initial[1] : 0);
+  const [dsTab, setDsTab] = useState(initial && initial[0] === "ds" ? initial[1] : 0);
+
+  useEffect(() => {
+    const slug = mode === "algo" ? SLUG_REVERSE_ALGO[algoTab] : SLUG_REVERSE_DS[dsTab];
+    if (slug) history.replaceState(null, "", "#" + slug);
+  }, [mode, algoTab, dsTab]);
+
+  const isAlgo = mode === "algo";
+  const tabs = isAlgo ? ALGO_TABS : DS_TABS;
+  const components = isAlgo ? ALGO_COMPONENTS : DS_COMPONENTS;
+  const activeTab = isAlgo ? algoTab : dsTab;
+  const setActiveTab = isAlgo ? setAlgoTab : setDsTab;
+  const categoryColors = isAlgo ? algoCategoryColors : dsCategoryColors;
+  const TabContent = components[activeTab];
+
+  return (
+    <div style={{ background: "var(--bg-deep)", minHeight: "100vh", fontFamily: "var(--font-body)", padding: "32px 20px" }}>
+      <style>{`
+        .algo-shell { max-width: 720px; margin: 0 auto; }
+        @media (min-width: 900px) { .algo-shell { max-width: 1060px; } }
+        .tab-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+        @media (min-width: 640px) { .tab-grid { grid-template-columns: repeat(${tabs.length}, 1fr); } }
+        .mode-link { display: inline-flex; align-items: center; gap: 6px; background: none; border: none; cursor: pointer; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.5px; padding: 0; transition: all 0.25s ease; }
+        .mode-link:hover { gap: 10px; }
+        .mode-link:hover .mode-arrow { transform: translateX(2px); }
+      `}</style>
+      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", opacity: 0.03, zIndex: 0,
+        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }} />
+      <div className="algo-shell" style={{ position: "relative", zIndex: 1 }}>
+        <a href="index.html" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--text-faint)", textDecoration: "none", letterSpacing: "0.03em", marginBottom: 16, transition: "color 0.2s" }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          {"Algorithms & Data Structures"}
+        </a>
+        <div style={{ marginBottom: 28 }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 6 }}>
+            <h1 style={{ fontFamily: "var(--font-display)", fontSize: 38, fontWeight: 400, fontStyle: "italic", margin: 0, letterSpacing: "-0.02em", color: "var(--text)" }}>
+              {isAlgo ? "Algorithm Explorer" : "Data Structure Explorer"}
+            </h1>
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--text-faint)", textTransform: "uppercase", letterSpacing: "2px" }}>Interactive</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <p style={{ color: "var(--text-muted)", fontSize: 14, margin: 0, fontFamily: "var(--font-body)" }}>
+              {isAlgo ? "Step through classic algorithms with live visualizations." : "Explore fundamental data structures and their operations."}
+            </p>
+            <button className="mode-link" onClick={() => setMode(isAlgo ? "ds" : "algo")} style={{ color: isAlgo ? "var(--teal)" : "var(--amber)", marginLeft: "auto", whiteSpace: "nowrap" }}>
+              {isAlgo ? "Data Structures" : "Algorithms"}
+              <span className="mode-arrow" style={{ transition: "transform 0.25s ease", fontSize: 14 }}>→</span>
+            </button>
+          </div>
+          <div style={{ marginTop: 12, height: 1, background: `linear-gradient(90deg, ${isAlgo ? "var(--amber)" : "var(--teal)"} 0%, var(--border) 40%, transparent 100%)` }} />
+        </div>
+        <div style={{ marginBottom: 24, background: "var(--bg-card)", borderRadius: 14, border: "1px solid var(--border)", padding: 4 }}>
+          <div className="tab-grid">
+            {tabs.map((tab, i) => {
+              const catColor = categoryColors[tab.category];
+              return (
+                <button key={tab.label} onClick={() => setActiveTab(i)} style={{
+                  padding: "10px 6px", background: activeTab === i ? "var(--bg-elevated)" : "transparent",
+                  border: "none", borderRadius: 10, color: activeTab === i ? "var(--text)" : "var(--text-muted)",
+                  fontSize: 11, fontFamily: "var(--font-body)", fontWeight: activeTab === i ? 600 : 400,
+                  cursor: "pointer", transition: "all 0.25s ease",
+                  display: "flex", flexDirection: "column", alignItems: "center", gap: 3, position: "relative",
+                }}>
+                  <span style={{ fontFamily: "var(--font-mono)", fontSize: 8, color: activeTab === i ? catColor : "var(--text-faint)", letterSpacing: "1px", transition: "all 0.25s" }}>{tab.icon}</span>
+                  {tab.label}
+                  {activeTab === i && (<div style={{ position: "absolute", bottom: 2, left: "20%", right: "20%", height: 2, borderRadius: 1, background: catColor }} />)}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div style={{ background: "var(--bg-card)", borderRadius: 16, padding: "20px 20px", border: "1px solid var(--border)" }}>
+          <TabContent />
+        </div>
+        <div style={{ marginTop: 24, textAlign: "center", color: "var(--text-faint)", fontSize: 11, fontFamily: "var(--font-mono)", letterSpacing: "0.5px" }}>
+          {"Interactive algorithm & data structure explorer."}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<AlgoExplorer />);
+
+</script>
+</body>
+</html>

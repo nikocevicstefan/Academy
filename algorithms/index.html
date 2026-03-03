@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Algorithms & Data Structures</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #101010;
+    --border: rgba(255, 255, 255, 0.08);
+    --text: #e0e0e0;
+    --text-dim: rgba(255, 255, 255, 0.45);
+    --text-faint: rgba(255, 255, 255, 0.25);
+    --accent: #4a9eff;
+    --font-display: 'Instrument Serif', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  html {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body { min-height: 100vh; overflow-x: hidden; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+
+  ::selection { background: rgba(74,158,255,0.25); color: #fff; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .container {
+    max-width: 660px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  header {
+    padding: 80px 0 60px;
+    border-bottom: 1px solid var(--border);
+    animation: fadeIn 0.6s ease both;
+  }
+
+  header h1 {
+    font-family: var(--font-display);
+    font-size: clamp(36px, 6vw, 52px);
+    font-weight: 400;
+    color: #fff;
+    line-height: 1.1;
+    margin-bottom: 12px;
+  }
+
+  header p {
+    font-size: 16px;
+    font-weight: 300;
+    color: var(--text-dim);
+    line-height: 1.5;
+    max-width: 440px;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-faint);
+    text-decoration: none;
+    letter-spacing: 0.03em;
+    margin-bottom: 32px;
+    transition: color 0.2s;
+  }
+
+  .back-link:hover { color: var(--text); }
+
+  .sections {
+    padding: 32px 0 80px;
+  }
+
+  .sections-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 24px;
+  }
+
+  .sections-label + .sections-label {
+    margin-top: 48px;
+  }
+
+  .section-card {
+    display: grid;
+    grid-template-columns: 48px 1fr auto;
+    align-items: center;
+    gap: 16px;
+    padding: 20px 12px;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.2s ease;
+    animation: fadeIn 0.5s ease both;
+  }
+
+  .section-card.first {
+    border-top: 1px solid var(--border);
+  }
+
+  .section-card:hover {
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .section-num {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text-faint);
+    text-align: center;
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 20px;
+    transition: color 0.2s;
+    margin-bottom: 2px;
+  }
+
+  .section-card:hover .section-title {
+    color: #fff;
+  }
+
+  .section-desc {
+    font-size: 14px;
+    font-weight: 300;
+    color: var(--text-dim);
+    line-height: 1.4;
+  }
+
+  .section-arrow {
+    transition: stroke 0.2s, transform 0.2s;
+  }
+
+  .section-card:hover .section-arrow {
+    stroke: var(--text);
+    transform: translateX(3px);
+  }
+
+  footer {
+    padding: 32px 0;
+    border-top: 1px solid var(--border);
+    animation: fadeIn 0.6s ease 0.3s both;
+  }
+
+  footer p {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-faint);
+    letter-spacing: 0.03em;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <a href="../index.html" class="back-link">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"/>
+        <polyline points="12 19 5 12 12 5"/>
+      </svg>
+      Academy
+    </a>
+    <h1>Algorithms & Data Structures</h1>
+    <p>12 interactive visualizations. Sorting, searching, graphs, and fundamental data structures — step through each one at your own pace.</p>
+  </header>
+
+  <div class="sections">
+    <div class="sections-label">Algorithms</div>
+
+    <a href="explorer.html#bubble-sort" class="section-card first" style="animation-delay: 0.05s">
+      <span class="section-num">01</span>
+      <div>
+        <div class="section-title" style="color: #FFB703">Bubble Sort</div>
+        <div class="section-desc">Repeatedly swap adjacent elements. Simple, intuitive, O(n²).</div>
+      </div>
+      <svg class="section-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="var(--text-faint)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12"/>
+        <polyline points="12 5 19 12 12 19"/>
+      </svg>
+    </a>
+
+    <a href="explorer.html#merge-sort" class="section-card" style="animation-delay: 0.1s">
+      <span class="section-num">02</span>
+      <div>
+        <div class="section-title" style="color: #FFB703">Merge Sort</div>
+        <div class="section-desc">Divide, conquer, merge. Guaranteed O(n log n) performance.</div>
+      </div>
+      <svg class="section-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="var(--text-faint)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12"/>
+        <polyline points="12 5 19 12 12 19"/>
+      </svg>
+    </a>
+
+    <a href="explorer.html#binary-search" class="section-card" style="animation-delay: 0.15s">
+      <span class="section-num">03</span>
+      <div>
+        <div class="section-title" style="color: #00B4D8">Binary Search</div>
+        <div class="section-desc">Halve the search space each step. O(log n) on sorted data.</div>
+      </div>
+      <svg class="section-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="var(--text-faint)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12"/>
+        <polyline points="12 5 19 12 12 19"/>
+      </svg>
+    </a>
+
+    <a href="explorer.html#bfs" class="section-card" style="animation-delay: 0.2s">
+      <span class="section-num">04</span>
+      <div>
+        <div class="section-title" style="color: #9D4EDD">BFS</div>
+        <div class="section-desc">Breadth-first search. Explore layer by layer using a queue.</div>
+      </div>
+      <svg class="section-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="var(--text-faint)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12"/>
+        <polyline points="12 5 19 12 12 19"/>
+      </svg>
+    </a>
+
+    <a href="explorer.html#dfs" class="section-card" style="animation-delay: 0.25s">
+      <span class="section-num">05</span>
+      <div>
+        <div class="section-title" style="color: #9D4EDD">DFS</div>
+        <div class="section-desc">Depth-first search. Dive deep before backtracking, using a stack.</div>
+      </div>
+      <svg class="section-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="var(--text-faint)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12"/>
+        <polyline points="12 5 19 12 12 19"/>
+      </svg>
+    </a>
+
+    <a href="explorer.html#dijkstra" class="section-card" style="animation-delay: 0.3s">
+      <span class="section-num">06</span>
+      <div>
+        <div class="section-title" style="color: #9D4EDD">Dijkstra's Algorithm</div>
+        <div class="section-desc">Shortest paths in weighted graphs. Greedy expansion from source.</div>
+      </div>
+      <svg class="section-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="var(--text-faint)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12"/>
+        <polyline points="12 5 19 12 12 19"/>
+      </svg>
+    </a>
+
+    <a href="explorer.html#hash-table" class="section-card" style="animation-delay: 0.35s">
+      <span class="section-num">07</span>
+      <div>
+        <div class="section-title" style="color: #EF476F">Hash Table</div>
+        <div class="section-desc">Key-value lookup in O(1). Hashing, collisions, and chaining.</div>
+      </div>
+      <svg class="section-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="var(--text-faint)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12"/>
+        <polyline points="12 5 19 12 12 19"/>
+      </svg>
+    </a>
+
+    <div class="sections-label">Data Structures</div>
+
+    <a href="explorer.html#linked-list" class="section-card first" style="animation-delay: 0.4s">
+      <span class="section-num">08</span>
+      <div>
+        <div class="section-title" style="color: #EF476F">Linked List</div>
+        <div class="section-desc">Nodes and pointers. Insert, delete, and traverse a chain of elements.</div>
+      </div>
+      <svg class="section-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="var(--text-faint)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12"/>
+        <polyline points="12 5 19 12 12 19"/>
+      </svg>
+    </a>
+
+    <a href="explorer.html#stack" class="section-card" style="animation-delay: 0.45s">
+      <span class="section-num">09</span>
+      <div>
+        <div class="section-title" style="color: #EF476F">Stack</div>
+        <div class="section-desc">Last in, first out. Push, pop, and peek at the top.</div>
+      </div>
+      <svg class="section-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="var(--text-faint)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12"/>
+        <polyline points="12 5 19 12 12 19"/>
+      </svg>
+    </a>
+
+    <a href="explorer.html#queue" class="section-card" style="animation-delay: 0.5s">
+      <span class="section-num">10</span>
+      <div>
+        <div class="section-title" style="color: #EF476F">Queue</div>
+        <div class="section-desc">First in, first out. Enqueue, dequeue, and process in order.</div>
+      </div>
+      <svg class="section-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="var(--text-faint)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12"/>
+        <polyline points="12 5 19 12 12 19"/>
+      </svg>
+    </a>
+
+    <a href="explorer.html#binary-search-tree" class="section-card" style="animation-delay: 0.55s">
+      <span class="section-num">11</span>
+      <div>
+        <div class="section-title" style="color: #9D4EDD">Binary Search Tree</div>
+        <div class="section-desc">Ordered tree for fast lookup, insert, and delete operations.</div>
+      </div>
+      <svg class="section-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="var(--text-faint)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12"/>
+        <polyline points="12 5 19 12 12 19"/>
+      </svg>
+    </a>
+
+    <a href="explorer.html#heap" class="section-card" style="animation-delay: 0.6s">
+      <span class="section-num">12</span>
+      <div>
+        <div class="section-title" style="color: #9D4EDD">Heap</div>
+        <div class="section-desc">Complete binary tree with heap property. Extract min/max in O(log n).</div>
+      </div>
+      <svg class="section-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="var(--text-faint)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12"/>
+        <polyline points="12 5 19 12 12 19"/>
+      </svg>
+    </a>
+  </div>
+
+  <footer>
+    <p>Step-through visualizations. No tracking, no accounts.</p>
+  </footer>
+</div>
+</body>
+</html>
