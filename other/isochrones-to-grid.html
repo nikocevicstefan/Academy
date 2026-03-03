@@ -196,9 +196,9 @@ function StepLanding({onNext}){
         </p>
 
         <div style={{display:'flex',gap:16,marginTop:40,justifyContent:'center',flexWrap:'wrap'}}>
-          <Tag color="var(--red)">8 Steps</Tag>
+          <Tag color="var(--red)">6 Steps</Tag>
           <Tag color="var(--green)">Interactive</Tag>
-          <Tag color="var(--amber)">~15 min read</Tag>
+          <Tag color="var(--amber)">~10 min read</Tag>
         </div>
 
         <button onClick={onNext} style={{
@@ -1713,248 +1713,17 @@ function Step6(){
           ['Total geo/ output','~500 KB','~1.2 MB'],
         ]}
       />
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════
-   STEP 7: CLICK-TO-QUERY
-   ═══════════════════════════════════════════════ */
-function SequenceDiagramViz(){
-  const [activeStep,setActiveStep]=useState(-1);
-  const steps=[
-    {from:'User',to:'Server',label:'GET /api/check?lat=X&lng=Y',color:'var(--blue)'},
-    {from:'Server',to:'Turf',label:'booleanPointInPolygon()',color:'var(--amber)'},
-    {from:'Turf',to:'Server',label:'restricted = true/false',color:'var(--amber)'},
-    {from:'Server',to:'Turf',label:'findNearbyPOIs(500m)',color:'var(--red)'},
-    {from:'Turf',to:'Server',label:'5 nearest POIs',color:'var(--red)'},
-    {from:'Server',to:'Valhalla',label:'Walking route per POI',color:'var(--green)'},
-    {from:'Valhalla',to:'Server',label:'distance + geometry',color:'var(--green)'},
-    {from:'Server',to:'User',label:'{ restricted, nearby[] }',color:'var(--blue)'},
-  ];
-
-  useEffect(()=>{
-    const t=setInterval(()=>{
-      setActiveStep(s=>(s+1)%(steps.length+2));
-    },700);
-    return()=>clearInterval(t);
-  },[]);
-
-  const actors=['User','Server','Turf','Valhalla'];
-  const actorX={User:60,Server:180,Turf:300,Valhalla:420};
-  const H=steps.length*45+60;
-
-  return(
-    <div style={{margin:'24px 0',overflowX:'auto'}}>
-      <svg viewBox={`0 0 500 ${H}`} style={{width:'100%',maxWidth:500,background:'var(--bg2)',borderRadius:8,border:'1px solid var(--bg4)'}}>
-        {/* Actor lines */}
-        {actors.map(a=>(
-          <g key={a}>
-            <line x1={actorX[a]} y1={35} x2={actorX[a]} y2={H} stroke="#ffffff08" strokeWidth={1} strokeDasharray="4,4"/>
-            <rect x={actorX[a]-30} y={8} width={60} height={22} rx={4} fill="var(--bg3)" stroke="var(--bg4)" strokeWidth={1}/>
-            <text x={actorX[a]} y={23} textAnchor="middle" fontSize="10" fontFamily="DM Mono" fill="var(--text-dim)">{a}</text>
-          </g>
-        ))}
-
-        {/* Messages */}
-        {steps.map((s,i)=>{
-          const y=50+i*45;
-          const x1=actorX[s.from],x2=actorX[s.to];
-          const isActive=i===activeStep;
-          return(
-            <g key={i} style={{opacity:i<=activeStep?1:0.3,transition:'opacity .3s'}}>
-              <line x1={x1} y1={y} x2={x2} y2={y} stroke={isActive?s.color:'#ffffff20'} strokeWidth={isActive?2:1} markerEnd="url(#arrowhead)"/>
-              <text x={(x1+x2)/2} y={y-8} textAnchor="middle" fontSize="8" fontFamily="DM Mono" fill={isActive?s.color:'var(--text-dim)'}>{s.label}</text>
-            </g>
-          );
-        })}
-
-        <defs>
-          <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-            <polygon points="0 0, 8 3, 0 6" fill="var(--text-dim)"/>
-          </marker>
-        </defs>
-      </svg>
-    </div>
-  );
-}
-
-function Step7(){
-  return(
-    <div>
-      <SectionLabel number={7} title="Click-to-Query Runtime"/>
-
-      <p style={{fontSize:16,lineHeight:1.9,marginBottom:16}}>
-        The precomputed zone map is the first line of defense. But when a user clicks the map, the backend provides a <strong style={{color:'var(--text-bright)'}}>second verification layer</strong> with individual Valhalla route calculations.
-      </p>
-
-      <h3 style={{fontFamily:'var(--font-display)',fontSize:20,color:'var(--text-bright)',margin:'32px 0 16px',fontWeight:500}}>
-        Request Flow
-      </h3>
-
-      <SequenceDiagramViz/>
-
-      <h3 style={{fontFamily:'var(--font-display)',fontSize:20,color:'var(--text-bright)',margin:'32px 0 16px',fontWeight:500}}>
-        Dual Verification
-      </h3>
-
-      <div style={{display:'grid',gap:16,margin:'16px 0'}}>
-        <div style={{background:'var(--bg2)',borderRadius:8,padding:'16px 20px',display:'flex',gap:16,alignItems:'flex-start'}}>
-          <div style={{width:36,height:36,borderRadius:'50%',background:'var(--bg3)',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'var(--font-mono)',fontSize:14,color:'var(--blue)',flexShrink:0,border:'1px solid var(--blue)30'}}>1</div>
-          <div>
-            <div style={{fontWeight:500,color:'var(--text-bright)',fontSize:14,marginBottom:4}}>Zone polygon containment</div>
-            <div style={{fontSize:13,color:'var(--text-dim)',lineHeight:1.7}}>Fast point-in-polygon test against the precomputed restricted zones. Instant answer.</div>
-          </div>
-        </div>
-        <div style={{background:'var(--bg2)',borderRadius:8,padding:'16px 20px',display:'flex',gap:16,alignItems:'flex-start'}}>
-          <div style={{width:36,height:36,borderRadius:'50%',background:'var(--bg3)',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'var(--font-mono)',fontSize:14,color:'var(--green)',flexShrink:0,border:'1px solid var(--green)30'}}>2</div>
-          <div>
-            <div style={{fontWeight:500,color:'var(--text-bright)',fontSize:14,marginBottom:4}}>Individual route verification</div>
-            <div style={{fontSize:13,color:'var(--text-dim)',lineHeight:1.7}}>Exact Valhalla <code style={{fontFamily:'var(--font-mono)',background:'var(--bg3)',padding:'1px 5px',borderRadius:3,fontSize:11}}>/route</code> calls to each nearby POI. Walking distance + route geometry for the map.</div>
-          </div>
-        </div>
-      </div>
-
-      <CodeBlock label="Final determination" code={`restricted =
-    zone_polygon_containment  // precomputed grid
-    || any_typeA_within_200m   // live route check
-    || any_typeB_within_100m  // live route check
-
-// Even if the precomputed zone has a gap,
-// the runtime check catches it.`}/>
-
-      <h3 style={{fontFamily:'var(--font-display)',fontSize:20,color:'var(--text-bright)',margin:'32px 0 16px',fontWeight:500}}>
-        Distance by POI Type
-      </h3>
-
-      <ComparisonTable
-        headers={['POI Type','Source Point','Distance']}
-        rows={[
-          ['Type A (with polygon)','Nearest point on building edge','200m'],
-          ['Type A (point only)','Centroid','200m'],
-          ['Type B','Centroid / entrance','100m'],
-        ]}
-      />
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════
-   STEP 8: PIPELINE & REFRESH
-   ═══════════════════════════════════════════════ */
-function PipelineViz(){
-  const [activeStage,setActiveStage]=useState(-1);
-
-  const stages=[
-    {name:'fetch-overpass',duration:'~30s',desc:'POIs, boundary, supplementary data',color:'var(--blue)',icon:'🗺'},
-    {name:'fetch-secondary',duration:'~2 min',desc:'Secondary source POIs (multiple categories × areas)',color:'var(--amber)',icon:'📍'},
-    {name:'merge-pois',duration:'~1s',desc:'Deduplicate by type + 20m proximity',color:'var(--green)',icon:'🔗'},
-    {name:'compute:grid',duration:'~5 min',desc:'15m grid × Valhalla matrix → GeoJSON',color:'var(--red)',icon:'⬛'},
-  ];
-
-  useEffect(()=>{
-    const t=setInterval(()=>{
-      setActiveStage(s=>(s+1)%(stages.length+1));
-    },1200);
-    return()=>clearInterval(t);
-  },[]);
-
-  return(
-    <div style={{margin:'24px 0'}}>
-      <div style={{display:'grid',gap:12}}>
-        {stages.map((s,i)=>(
-          <div key={i} style={{
-            background:i<=activeStage?'var(--bg3)':'var(--bg2)',
-            borderRadius:8,padding:'16px 20px',
-            borderLeft:`3px solid ${i<=activeStage?s.color:'var(--bg4)'}`,
-            transition:'all .4s',
-            opacity:i<=activeStage?1:0.4,
-            transform:i===activeStage?'translateX(4px)':'translateX(0)',
-          }}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
-              <div style={{fontFamily:'var(--font-mono)',fontSize:13,color:s.color,fontWeight:500}}>
-                Stage {i+1}: {s.name}
-              </div>
-              <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--text-dim)'}}>{s.duration}</div>
-            </div>
-            <div style={{fontSize:13,color:'var(--text-dim)'}}>{s.desc}</div>
-            {i===activeStage&&(
-              <div style={{marginTop:8,height:3,borderRadius:2,background:s.color,animation:'pulse 1s infinite',opacity:0.6}}/>
-            )}
-          </div>
-        ))}
-      </div>
-      <div style={{marginTop:16,textAlign:'center',fontFamily:'var(--font-mono)',fontSize:13}}>
-        <span style={{color:'var(--text-dim)'}}>Total: </span>
-        <span style={{color:'var(--text-bright)'}}>~8 minutes</span>
-        <span style={{color:'var(--text-dim)'}}> end-to-end</span>
-      </div>
-    </div>
-  );
-}
-
-function Step8(){
-  return(
-    <div>
-      <SectionLabel number={8} title="Pipeline & Refresh"/>
-
-      <p style={{fontSize:16,lineHeight:1.9,marginBottom:16}}>
-        The entire zone computation is a single command: <code style={{fontFamily:'var(--font-mono)',background:'var(--bg3)',padding:'2px 8px',borderRadius:3,fontSize:13}}>pnpm pipeline:grid:full</code>. Four stages, fully automated:
-      </p>
-
-      <PipelineViz/>
-
-      <h3 style={{fontFamily:'var(--font-display)',fontSize:20,color:'var(--text-bright)',margin:'32px 0 16px',fontWeight:500}}>
-        What Changes Over Time
-      </h3>
-
-      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',gap:12,margin:'16px 0'}}>
-        {[
-          {label:'Type A POIs',detail:'Open, close, renovations',freq:'Monthly check',color:'var(--red)'},
-          {label:'Type B POIs',detail:'Open/close frequently',freq:'Weekly ideal',color:'var(--amber)'},
-          {label:'Road Network',detail:'New streets, bridges',freq:'Quarterly rebuild',color:'var(--blue)'},
-          {label:'Rule Changes',detail:'Buffer distances, new categories',freq:'As needed',color:'var(--green)'},
-        ].map((item,i)=>(
-          <div key={i} style={{background:'var(--bg2)',borderRadius:8,padding:16,borderTop:`2px solid ${item.color}`}}>
-            <div style={{fontWeight:500,color:'var(--text-bright)',fontSize:14,marginBottom:4}}>{item.label}</div>
-            <div style={{fontSize:12,color:'var(--text-dim)',lineHeight:1.6}}>{item.detail}</div>
-            <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:item.color,marginTop:8}}>{item.freq}</div>
-          </div>
-        ))}
-      </div>
-
-      <h3 style={{fontFamily:'var(--font-display)',fontSize:20,color:'var(--text-bright)',margin:'32px 0 16px',fontWeight:500}}>
-        Recommended Schedule
-      </h3>
-
-      <ComparisonTable
-        headers={['Component','Frequency','Reason']}
-        rows={[
-          ['POI data (Overpass + secondary)','Weekly to monthly','Type B POIs change frequently'],
-          ['Valhalla tiles','Quarterly','Road network changes slowly'],
-          ['Zone recomputation','After every update','Zones depend on both'],
-          ['Full end-to-end','Monthly','Balance freshness vs. cost'],
-        ]}
-      />
-
-      <CodeBlock label="Automation (cron)" code={`# Monthly refresh — 1st of each month, 3 AM
-0 3 1 * * cd /path/to/project && pnpm pipeline:grid:full \\
-  >> /var/log/zones-refresh.log 2>&1`}/>
-
-      <InfoCard accent="var(--green)">
-        <strong style={{color:'var(--green)'}}>Resilience:</strong> The <code style={{fontFamily:'var(--font-mono)',fontSize:12}}>data/</code> directory caches previous fetches. If an API fails, the pipeline gracefully falls back to cached data — stale but functional.
-      </InfoCard>
 
       {/* Completion */}
       <div style={{textAlign:'center',margin:'48px 0 24px',padding:32,background:'var(--bg2)',borderRadius:12,border:'1px solid var(--bg4)'}}>
         <div style={{fontSize:32,fontFamily:'var(--font-display)',fontWeight:700,color:'var(--text-bright)',marginBottom:8}}>Lesson Complete</div>
         <p style={{color:'var(--text-dim)',fontSize:14,maxWidth:400,margin:'0 auto',lineHeight:1.7}}>
-          You've walked through the full pipeline: from understanding the problem, through isochrone limitations, to grid-exact computation with real-time verification.
+          You've walked through the full pipeline: from understanding the problem, through isochrone limitations, to grid-exact computation with marching squares polygon extraction.
         </p>
         <div style={{display:'flex',gap:12,justifyContent:'center',marginTop:24,flexWrap:'wrap'}}>
           <Tag color="var(--green)">Exact distances</Tag>
           <Tag color="var(--red)">Precision-critical</Tag>
-          <Tag color="var(--blue)">Dual verification</Tag>
+          <Tag color="var(--blue)">Grid-exact</Tag>
         </div>
       </div>
     </div>
@@ -1967,7 +1736,7 @@ function Step8(){
 function App(){
   const [step,setStep]=useState(0);
   const contentRef=useRef(null);
-  const totalSteps=9; // 0=landing + 8 lesson steps
+  const totalSteps=7; // 0=landing + 6 lesson steps
 
   const goTo=useCallback((s)=>{
     setStep(Math.max(0,Math.min(totalSteps-1,s)));
@@ -1995,8 +1764,6 @@ function App(){
     <Step4 key={4}/>,
     <Step5 key={5}/>,
     <Step6 key={6}/>,
-    <Step7 key={7}/>,
-    <Step8 key={8}/>,
   ];
 
   return(
